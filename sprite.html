@@ -1,0 +1,87 @@
+<html>
+<head>
+<title>Sprite Editor</title>
+<link rel="stylesheet" href="css/sprite.css" type="text/css"/>
+<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="js/cling-colors.js"></script>
+<script type="text/javascript" src="js/generatepng.js"></script>
+<script type="text/javascript" src="js/csscolorparser.js"></script>
+<script type="text/javascript" src="js/sprite.js"></script>
+
+</head>
+
+<body>
+<!--
+small (with bresenham!)
+medium
+big
+
+line
+rectangle
+filled rectangle
+circle
+filled circle
+
+flood fill
+clear
+
+color picker
+
+move (re-fill with transparent pixels)
+
+TODO: undo stack
+
+[DRAW]   [LINE]    [RECT]     [CIRC]
+[PICK]   [FLOOD]  [FILLRECT] [FILLCIRC}
+[UNDO]   [REDO]   [MOVE]    [CLEAR] 
+
+[small] [medium] [big] [huge]
+
+
+
+-->
+<div id='undo_stack' class='panel' style='height: 24px; width: 1176px; margin-bottom: 4px;'>
+</div>
+<div style='vertical-align: top; width: 155px; display: inline-block;'>
+<div id='sprites' class='panel'>
+</div>
+</div>
+
+<div style='display: inline-block;'>
+<div class='panel' style='margin-bottom: 4px;'>
+<div class='toolbutton tool' id='tool_draw' style='background: url(images/draw-freehand.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='tool_line' style='background: url(images/draw-line.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='tool_rect' style='background: url(images/draw-rectangle.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='tool_ellipse' style='background: url(images/draw-ellipse.png) center center no-repeat;'></div>
+<br />
+<div class='toolbutton tool' id='tool_picker' style='background: url(images/color-picker.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='tool_fill' style='background: url(images/color-fill.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='tool_fill_rect' style='background: url(images/fill-rectangle.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='tool_fill_ellipse' style='background: url(images/fill-ellipse.png) center center no-repeat;'></div>
+<br />
+<div class='toolbutton tool' id='tool_move' style='background: url(images/transform-move.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='tool_rotate' style='background: url(images/transform-rotate.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='load' style='background: url(images/document-open.png) center center no-repeat;'></div>
+<div class='toolbutton tool' id='save' style='background: url(images/document-save.png) center center no-repeat;'></div>
+<br />
+<div id='pen_width_1' class='toolbutton penwidth' style='background: url(images/pen-width-1.png) center center no-repeat;'></div>
+<div id='pen_width_2' class='toolbutton penwidth' style='background: url(images/pen-width-2.png) center center no-repeat;'></div>
+<div id='pen_width_3' class='toolbutton penwidth' style='background: url(images/pen-width-3.png) center center no-repeat;'></div>
+<div id='pen_width_4' class='toolbutton penwidth' style='background: url(images/pen-width-4.png) center center no-repeat;'></div>
+</div>
+<div class='panel' id='palette'></div>
+</div>
+
+<div id='container_big_pixels' class='panel' style='width: 600px; height: 600px; vertical-align: top; display: inline-block;'><table id='big_pixels'></table></div>
+<div style='vertical-align: top; display: inline-block;'>
+<div class='panel' style='vertical-align: top; display: inline-block; margin-bottom: 4px;'><canvas id='small_pixels_2' width='48' height='48'></canvas></div>
+<br />
+<div class='panel' style='vertical-align: top; display: inline-block; margin-bottom: 4px;'><canvas id='small_pixels_3' width='72' height='72'></canvas></div>
+<br />
+<div class='panel' style='vertical-align: top; display: inline-block; margin-bottom: 4px;'><canvas id='small_pixels_1_tile' width='72' height='72'></canvas></div>
+<div class='panel' style='vertical-align: top; display: inline-block; margin-bottom: 4px;'><canvas id='small_pixels_1_tile_v' width='24' height='72'></canvas></div>
+<br />
+<div class='panel' style='vertical-align: top; display: inline-block; margin-bottom: 4px;'><canvas id='small_pixels_1_tile_h' width='72' height='24'></canvas></div>
+</div>
+</body>
+</html>

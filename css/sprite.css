@@ -1,0 +1,123 @@
+body {
+    background-color: #222;
+    background-image: url(../images/background.jpg);
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+/*     cursor: url(../cursor.png) 16 16, crosshair; */
+}
+
+table {
+    display: inline-block;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+#big_pixels {
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0px;
+    width: 100%;
+    height: 100%;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background: url(../images/transparent.png) repeat;
+    cursor: crosshair;
+}
+
+#big_pixels td {
+    border: 1px solid #111;
+/*     cursor: pointer; */
+}
+
+.hover {
+    border: 1px solid #aaa!important;
+}
+
+.swatch {
+    width: 32px;
+    height: 32px;
+    border-radius: 2px;
+    border: 1px solid #000;
+    display: inline-block;
+    margin: 2px;
+/*     cursor: pointer; */
+}
+
+.swatch.darkcolor {
+    border: 1px solid #444;
+}
+
+.swatch:hover {
+    border: 1px solid #fff;
+}
+
+.swatch.active {
+    border: 1px solid #fff;
+    border-radius: 5px;
+}
+
+#palette {
+/*     background-color: #222; */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.panel {
+/*     background-color: #000;  */
+    background-color: rgba(0, 0, 0, 0.5); 
+    padding: 12px; 
+    border: 1px solid #666; 
+    box-shadow: 2px 2px 8px rgba(0,0,0,0.5); 
+    border-radius: 12px; 
+    color: #fff;     
+}
+
+.toolbutton {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #888; 
+    border-radius: 2px; 
+    display: inline-block;
+    background-color: #222!important;
+}
+
+.toolbutton:hover {
+    border: 1px solid #fff;
+}
+
+.toolbutton.active {
+    border: 1px solid #fff;
+    background-color: #444!important;
+    border-radius: 5px;
+}
+
+.sprite {
+    width: 24px;
+    height: 24px;
+    display: inline-block;
+    border: 1px solid #444;
+    padding: 1px;
+    background: url(../images/transparent-1.png) repeat;
+    border-radius: 2px;
+}
+
+.sprite:hover {
+    border: 1px solid #888;
+}
+
+.sprite.active {
+    border: 1px solid #fff;
+}
