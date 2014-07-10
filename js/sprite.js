@@ -1,11 +1,15 @@
-var currentColor = '';
+var currentColor = [0, 0, 0, 255];
 var currentTool = 'draw';
+var lastTool = null;
 var penWidth = 1;
 var imageWidth = 24;
 var imageHeight = 24;
 var MAX_UNDO_STACK = 42;
+var SELECTION_OPACITY = 0.7
 var lineStart = null;
 var drawingOperationPending = false;
+var selectionMask = [];
+var generatorHash = {};
 
 // current image data, with 4 byte RGBA pixels
 var imageData = [];
@@ -34,9 +38,6 @@ function setPixel(px, py, color)
     if (px < 0 || py < 0 || px >= imageWidth || py >= imageHeight)
         return;
     imageData[py][px] = color;
-    var htmlColor = 'rgba(' + color[0] + ',' + color[1] + ',' + color[2] + ',' + (color[3] / 255.0) + ')';
-    $('#pixel_' + px + '_' + py).css('background-color', htmlColor);
-    $('.small_pixels_' + px + '_' + py).css('background-color', htmlColor);
 }
 
 function drawLine(x0, y0, x1, y1, color, width)
@@ -70,6 +71,136 @@ function drawLine(x0, y0, x1, y1, color, width)
     }
 }
 
+function linePattern(x0, y0, x1, y1)
+{
+    var result = [];
+    var dx = Math.abs(x1 - x0);
+    var dy = Math.abs(y1 - y0);
+    var sx = (x0 < x1) ? 1 : -1;
+    var sy = (y0 < y1) ? 1 : -1;
+    var err = dx - dy;
+    
+    while (true) {
+        result.push([x0, y0]);
+        if (x0 == x1 && y0 == y1)
+            break;
+        var e2 = err * 2;
+        if (e2 > -dy)
+        {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dx)
+        {
+            err += dx;
+            y0 += sy;
+        }
+    }
+    return result;
+}
+
+function rectPattern(x0, y0, x1, y1)
+{
+    if (x0 > x1) { var t = x0; x0 = x1; x1 = t; }
+    if (y0 > y1) { var t = y0; y0 = y1; y1 = t; }
+    var result = [];
+    for (var x = x0; x <= x1; x++)
+    {
+        result.push([x, y0]);
+        result.push([x, y1]);
+    }
+    for (var y = y0 + 1; y < y1; y++)
+    {
+        result.push([x0, y]);
+        result.push([x1, y]);
+    }
+    return result;
+}
+
+function fillRectPattern(x0, y0, x1, y1)
+{
+    if (x0 > x1) { var t = x0; x0 = x1; x1 = t; }
+    if (y0 > y1) { var t = y0; y0 = y1; y1 = t; }
+    var result = [];
+    for (var y = y0; y <= y1; y++)
+    {
+        for (var x = x0; x <= x1; x++)
+        {
+            result.push([x, y]);
+        }
+    }
+    return result;
+}
+
+function ellipsePattern(x0, y0, x1, y1)
+{
+    var xm = x0;
+    var ym = y0;
+    var a = Math.abs(x1 - x0);
+    var b = Math.abs(y1 - y0);
+    if (a == 0)
+    if (a < 1 || b < 1)
+        return linePattern(xm - a, ym - b, xm + a, ym + b);
+    
+    var result = [];
+    var dx = 0;
+    var dy = b;
+    var a2 = a * a;
+    var b2 = b * b;
+    var err = b2 - (2 * b - 1) * a2;
+    
+    do {
+        result.push([xm + dx, ym + dy]);
+        result.push([xm - dx, ym + dy]);
+        result.push([xm + dx, ym - dy]);
+        result.push([xm - dx, ym - dy]);
+        var e2 = 2 * err;
+        if (e2 < (2 * dx + 1) * b2) { dx++; err += (2 * dx + 1) * b2; }
+        if (e2 > -(2 * dy - 1) * a2) { dy--; err -= (2 * dy - 1) * a2; }
+    } while (dy >= 0)
+    while (dx++ < a)
+    {
+        result.push([xm + dx, ym]);
+        result.push([xm - dx, ym]);
+    }
+    return result;
+}
+
+function fillEllipsePattern(x0, y0, x1, y1)
+{
+    var xm = x0;
+    var ym = y0;
+    var a = Math.abs(x1 - x0);
+    var b = Math.abs(y1 - y0);
+    if (a == 0)
+    if (a < 1 || b < 1)
+        return linePattern(xm - a, ym - b, xm + a, ym + b);
+    
+    var result = [];
+    var dx = 0;
+    var dy = b;
+    var a2 = a * a;
+    var b2 = b * b;
+    var err = b2 - (2 * b - 1) * a2;
+    
+    do {
+        for (var d = -dx; d <= dx; d++)
+        {
+            result.push([xm + d, ym + dy]);
+            result.push([xm + d, ym - dy]);
+        }
+        var e2 = 2 * err;
+        if (e2 < (2 * dx + 1) * b2) { dx++; err += (2 * dx + 1) * b2; }
+        if (e2 > -(2 * dy - 1) * a2) { dy--; err -= (2 * dy - 1) * a2; }
+    } while (dy >= 0)
+    while (dx++ < a)
+    {
+        for (var d = -dx; d <= dx; d++)
+            result.push([xm + d, ym]);
+    }
+    return result;
+}
+
 function floodFill(x, y, color)
 {
     function _fill(x, y, targetColor, replacementColor)
@@ -98,8 +229,13 @@ $().ready(function() {
     for (var y = 0; y < imageHeight; y++)
     {
         var line = [];
+        var mask_line = [];
         for (var x = 0; x < imageWidth; x++)
+        {
             line.push([0, 0, 0, 0]);
+            mask_line.push(0);
+        }
+        selectionMask.push(mask_line);
         imageData.push(line);
     }
     
@@ -120,18 +256,35 @@ $().ready(function() {
     for (var i = 1; i <= 4; i++)
     {
         $('#pen_width_' + i).mousedown(function(event) {
-            penWidth = Number($(event.target).attr('id').replace('pen_width_', ''));
-            $('.penwidth').removeClass('active');
-            $(event.target).addClass('active');
+            if (!(currentTool == 'picker' || currentTool == 'fill'))
+            {
+                penWidth = Number($(event.target).attr('id').replace('pen_width_', ''));
+                $('.penwidth').removeClass('active');
+                $(event.target).addClass('active');
+            }
         });
     }
     $('#pen_width_' + penWidth).addClass('active');
 
-    jQuery.each(['draw', 'fill'], function(_, x) {
+    jQuery.each(['draw', 'fill', 'line', 'rect', 'fill_rect', 'ellipse', 'fill_ellipse',
+        'picker', 'fill'], function(_, x) {
         $('#tool_' + x).mousedown(function(event) {
+            lastTool = currentTool;
             currentTool = $(event.target).attr('id').replace('tool_', '');
             $('.tool').removeClass('active');
             $(event.target).addClass('active');
+            if (x == 'picker' || x == 'fill')
+            {
+                penWidth = 1;
+                $('.penwidth').removeClass('active');
+                $('#pen_width_1').addClass('active');
+            }
+            if (x == 'fill')
+                $('#big_pixels').css('cursor', 'url(images/color-fill.png) 2 16, crosshair');
+            else if (x == 'picker')
+                $('#big_pixels').css('cursor', 'url(images/color-picker.png) 2 16, crosshair');
+            else
+                $('#big_pixels').css('cursor', 'crosshair');
         });
     });
     $('#tool_' + currentTool).addClass('active');
@@ -153,108 +306,35 @@ $().ready(function() {
 //         return "Wirklich?";
     };
     
-    for (y = 0; y < imageHeight; y++)
-    {
-        var row = $('<tr>');
-        var arrayRow = [];
-        for (var x = 0; x < imageWidth; x++)
-        {
-            var cell = $('<td>');
-            cell.addClass('big_pixel');
-            cell.data('x', x);
-            cell.data('y', y);
-            cell.attr('id', 'pixel_' + x + '_' + y);
-            cell.mouseenter(function(event) {
-                var e = event.target || event.srcElement;
-                var x = $(e).data('x');
-                var y = $(e).data('y');
-                $('.big_pixel').removeClass('hover');
-                jQuery.each(penPattern(penWidth), function(_, delta) {
-                    var dx = x + delta[0];
-                    var dy = y + delta[1];
-                    if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
-                        $(bigPixelGrid[dy][dx]).addClass('hover');
-                });
-                if (event.which == 1)
-                {
-                    if (currentTool == 'draw')
-                    {
-                        if (lineStart == null)
-                        {
-                            jQuery.each(penPattern(penWidth), function(_, delta) {
-                                var dx = x + delta[0];
-                                var dy = y + delta[1];
-                                if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
-                                    setPixel(dx, dy, currentColor);
-                            });
-                            lineStart = [$(e).data('x'), $(e).data('y')];
-                        }
-                        else
-                        {
-                            drawLine(lineStart[0], lineStart[1], $(e).data('x'), $(e).data('y'), currentColor, penWidth);
-                            lineStart = [$(e).data('x'), $(e).data('y')];
-                        }
-                    }
-                }
-            });
-            cell.mouseleave(function(event) {
-                $('.big_pixel').removeClass('hover');
-            });
-            cell.mousedown(function(event) {
-                var e = event.target || event.srcElement;
-                var x = $(e).data('x');
-                var y = $(e).data('y');
-                drawingOperationPending = true;
-                if (currentTool == 'draw')
-                {
-                    lineStart = [$(e).data('x'), $(e).data('y')];
-                    jQuery.each(penPattern(penWidth), function(_, delta) {
-                        var dx = x + delta[0];
-                        var dy = y + delta[1];
-                        if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
-                            setPixel(dx, dy, currentColor);
-                    });
-                }
-                else if (currentTool == 'fill')
-                {
-                    floodFill($(e).data('x'), $(e).data('y'), currentColor);
-                }
-            });
-            row.append(cell);
-            arrayRow.push(cell);
-        }
-        bigPixelGrid.push(arrayRow);
-        $('#big_pixels').append(row);
-        
-        var row = $('<tr>');
-        for (var x = 0; x < imageWidth; x++)
-        {
-            var cell = $('<td>');
-            cell.data('x', x);
-            cell.data('y', y);
-            cell.addClass('small_pixels_' + x + '_' + y);
-            row.append(cell);
-        }
-        $('.small_pixels_2').append(row);
-        
-        var row = $('<tr>');
-        for (var x = 0; x < imageWidth; x++)
-        {
-            var cell = $('<td>');
-            cell.data('x', x);
-            cell.data('y', y);
-            cell.addClass('small_pixels_' + x + '_' + y);
-            row.append(cell);
-        }
-        $('.small_pixels_1').append(row);
-    }
-    $(window).mouseup(function(event) {
-        if (drawingOperationPending)
-        {
+    $('#big_pixels').mouseenter(function(e) {
+        updateCursor(e.offsetX, e.offsetY);
+    });
+    $('#big_pixels').mousemove(function(e) {
+        handleDrawing(e.offsetX, e.offsetY);
+        if (!drawingOperationPending)
+            updateCursor(e.offsetX, e.offsetY);
+    });
+    $('#big_pixels').mouseleave(function(e) {
+        if (currentTool == 'draw')
             lineStart = null;
-            update_sprite(true);
-            drawingOperationPending = false;
-        }
+        clearMask();
+        updateCursor(null, null);
+    });
+    $('#big_pixels').mousedown(function(e) {
+        initiateDrawing(e.offsetX, e.offsetY);
+    });
+    $('#big_pixels').mouseup(function(e) {
+        finishDrawing(true);
+    });
+    
+    generatorHash['line'] = linePattern;
+    generatorHash['rect'] = rectPattern;
+    generatorHash['fill_rect'] = fillRectPattern;
+    generatorHash['ellipse'] = ellipsePattern;
+    generatorHash['fill_ellipse'] = fillEllipsePattern;
+    
+    $(window).mouseup(function(event) {
+        finishDrawing(false);
     });
     
     for (var py = 0; py < 3; py++)
@@ -308,6 +388,7 @@ $().ready(function() {
             swatch.css('background-color', color);
         swatch.data('list_color', listColor);
         $('#palette').append(swatch);
+        $('#palette').append(' ');
         swatch.mousedown(function(event) {
             var e = event.target || event.srcElement;
             $('.swatch').removeClass('active');
@@ -356,10 +437,9 @@ function update_sprite(add_to_undo_stack)
     {
         for (var x = 0; x < imageWidth; x++)
         {
-            var htmlColor = $('#pixel_' + x + '_' + y).css('background-color');
-            var color = parseCSSColor(htmlColor);
-            color[3] = color[3] * 255;
+            var color = imageData[y][x];
             s += String.fromCharCode(color[0], color[1], color[2], color[3]);
+            var htmlColor = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + (color[3] / 255.0) + ")";
             context2.fillStyle = htmlColor;
             context2.fillRect(x * 2, y * 2, 2, 2);
             context3.fillStyle = htmlColor;
@@ -401,12 +481,12 @@ function restore_image(element)
     for (var y = 0; y < imageHeight; y++)
     {
         for (var x = 0; x < imageWidth; x++)
-        {
-            for (var i = 0; i < 4; i++)
-                imageData[y][x][i] = data[(y * imageWidth + x) * 4 + i];
-            setPixel(x, y, imageData[y][x]);
-        }
+            setPixel(x, y, [data[(y * imageWidth + x) * 4 + 0],
+                            data[(y * imageWidth + x) * 4 + 1],
+                            data[(y * imageWidth + x) * 4 + 2],
+                            data[(y * imageWidth + x) * 4 + 3]]);
     }
+    updatePixels();
     update_sprite(false);
 }
 
@@ -421,7 +501,293 @@ function fix_sizes()
         bigPixelSize = 600;
     if (bigPixelSize < 200)
         bigPixelSize = 200;
-    console.log("Setting new size: ", bigPixelSize);
+//     console.log("Setting new size: ", bigPixelSize);
     $('#container_big_pixels').css('width', bigPixelSize);
     $('#container_big_pixels').css('height', bigPixelSize);
-};
+    $('#big_pixels').attr('width', bigPixelSize);
+    $('#big_pixels').attr('height', bigPixelSize);
+//     console.log($('#big_pixels').width());
+    renderGrid($('#big_pixels')[0].getContext('2d'));
+}
+
+function clearMask()
+{
+    for (var y = 0; y < imageHeight; y++)
+        for (var x = 0; x < imageWidth; x++)
+            selectionMask[y][x] = 0;
+}
+
+function renderImage(context)
+{
+    var width = $('#big_pixels').width();
+    var height = $('#big_pixels').height();
+    for (var y = 0; y < imageHeight; y++)
+    {
+        for (var x = 0; x < imageWidth; x++)
+        {
+            var x0 = Math.floor(x * width / imageWidth) + 0.5;
+            var y0 = Math.floor(y * height / imageHeight) + 0.5;
+            var x1 = Math.floor((x + 1) * width / imageWidth) + 0.5;
+            var y1 = Math.floor((y + 1) * height / imageHeight) + 0.5;
+            var color = imageData[y][x];
+            var htmlColor = "rgba(" + color[0] + "," + color[1] + "," + color[2] + "," + (color[3] / 255.0) + ")";
+            context.fillStyle = htmlColor;
+            context.fillRect(x0, y0, x1 - x0, y1 - y0);
+        }
+    }
+}
+
+function renderGrid(context)
+{
+    var width = $('#big_pixels').width();
+    var height = $('#big_pixels').height();
+
+    context.beginPath();
+    context.strokeStyle = 'rgba(255,255,255,0.3)';
+    for (var x = 0; x < imageWidth + 1; x++)
+    {
+        var x0 = Math.floor(x * width / imageWidth) + 0.5;
+        if (x == imageWidth)
+            x0--;
+        context.moveTo(x0 + 1, 0);
+        context.lineTo(x0 + 1, height);
+        context.moveTo(0, x0 + 1);
+        context.lineTo(width, x0 + 1);
+    }
+    context.stroke();
+
+    context.beginPath();
+    context.strokeStyle = '#222';
+    for (var x = 0; x < imageWidth + 1; x++)
+    {
+        var x0 = Math.floor(x * width / imageWidth) + 0.5;
+        if (x == imageWidth)
+            x0--;
+        context.moveTo(x0, 0);
+        context.lineTo(x0, height);
+        context.moveTo(0, x0);
+        context.lineTo(width, x0);
+    }
+    context.stroke();
+}
+
+function renderMaskOutline(context)
+{
+    var width = $('#big_pixels').width();
+    var height = $('#big_pixels').height();
+    context.strokeStyle = '#fff';
+    context.beginPath();
+    for (var y = 0; y < imageHeight + 1; y++)
+    {
+        for (var x = 0; x < imageWidth + 1; x++)
+        {
+            var here = 0;
+            if (x < imageWidth && y < imageHeight)
+                here = selectionMask[y][x];
+            
+            var other = 0;
+            if (y > 0 && x < imageWidth)
+                other = selectionMask[y - 1][x];
+            
+            if (here != other)
+            {
+                var x0 = Math.floor(x * width / imageWidth) + 0.5;
+                var y0 = Math.floor(y * height / imageHeight) + 0.5;
+                var x1 = Math.floor((x + 1) * width / imageWidth) + 0.5 - 1;
+                var y1 = Math.floor(y * height / imageHeight) + 0.5;
+                if (here < other)
+                {
+                    y0--; y1--;
+                }
+                context.moveTo(x0, y0);
+                context.lineTo(x1, y1);
+            }
+            
+            var other = 0;
+            if (x > 0 && y < imageHeight)
+                other = selectionMask[y][x - 1];
+            
+            if (here != other)
+            {
+                var x0 = Math.floor(x * width / imageWidth) + 0.5;
+                var y0 = Math.floor(y * height / imageHeight) + 0.5;
+                var x1 = Math.floor(x * width / imageWidth) + 0.5;
+                var y1 = Math.floor((y + 1) * height / imageHeight) + 0.5 - 1;
+                if (here < other)
+                {
+                    x0--; x1--;
+                }
+                context.moveTo(x0, y0);
+                context.lineTo(x1, y1);
+            }
+            if (!(currentTool == 'picker' || currentTool == 'fill'))
+            {
+                if (here == 1)
+                {
+                    var x0 = Math.floor(x * width / imageWidth) + 0.5;
+                    var y0 = Math.floor(y * height / imageHeight) + 0.5;
+                    var x1 = Math.floor((x + 1) * width / imageWidth) + 0.5;
+                    var y1 = Math.floor((y + 1) * height / imageHeight) + 0.5 - 1;
+                    context.fillStyle = 'rgba(' + currentColor[0] + ',' + currentColor[1] + ',' + currentColor[2] + ',' + (currentColor[3] * SELECTION_OPACITY / 255.0) + ')';
+                    context.fillRect(x0, y0, x1 - x0, y1 - y0);
+                }
+            }
+        }
+    }
+    context.stroke();
+}
+
+function updatePixels()
+{
+    var width = $('#big_pixels').width();
+    var height = $('#big_pixels').height();
+    var context = $('#big_pixels')[0].getContext('2d');
+    context.clearRect(0, 0, width, height);
+    if (!(drawingOperationPending && (currentTool in generatorHash)))
+        clearMask();
+    renderImage(context);
+    renderGrid(context);        
+}
+        
+function updateCursor(x, y)
+{
+    var width = $('#big_pixels').width();
+    var height = $('#big_pixels').height();
+    var context = $('#big_pixels')[0].getContext('2d');
+    updatePixels();
+    if (x != null && y != null)
+    {
+        var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
+        var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+        jQuery.each(penPattern(penWidth), function(_, delta) {
+            var dx = rx + delta[0];
+            var dy = ry + delta[1];
+            if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
+                selectionMask[dy][dx] = 1;
+        });
+    }
+    renderMaskOutline(context);
+}
+
+function initiateDrawing(x, y)
+{        
+    if (currentTool == 'picker')
+    {
+        var width = $('#big_pixels').width();
+        var height = $('#big_pixels').height();
+        var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
+        var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+        currentColor = imageData[ry][rx];
+        currentTool = lastTool;
+        $('.tool').removeClass('active');
+        $('#tool_' + currentTool).addClass('active');
+        $('.swatch').removeClass('active');
+        $('.swatch').each(function(_, e) {
+            if ($(e).data('list_color').join(',') == currentColor.join(','))
+                $(e).addClass('active');
+        });
+    }
+    else if (currentTool == 'fill')
+    {
+        var width = $('#big_pixels').width();
+        var height = $('#big_pixels').height();
+        var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
+        var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+        floodFill(rx, ry, currentColor);
+        updatePixels();
+        update_sprite(true);
+    }
+    else
+    {
+        var width = $('#big_pixels').width();
+        var height = $('#big_pixels').height();
+        var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
+        var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+        drawingOperationPending = true;
+        lineStart = null;
+        handleDrawing(x, y);
+    }
+}
+
+function handleDrawing(x, y)
+{
+    if (!drawingOperationPending)
+        return;
+    
+    var width = $('#big_pixels').width();
+    var height = $('#big_pixels').height();
+    var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
+    var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+    
+    if (currentTool == 'draw')
+    {
+        if (lineStart == null)
+        {
+            jQuery.each(penPattern(penWidth), function(_, delta) {
+                var dx = rx + delta[0];
+                var dy = ry + delta[1];
+                if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
+                    setPixel(dx, dy, currentColor);
+            });
+        }
+        else
+        {
+            jQuery.each(linePattern(lineStart[0], lineStart[1], rx, ry), function(_, p) {
+                jQuery.each(penPattern(penWidth), function(_, delta) {
+                    var dx = p[0] + delta[0];
+                    var dy = p[1] + delta[1];
+                    if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
+                        setPixel(dx, dy, currentColor);
+                });
+            });
+        }
+        lineStart = [rx, ry];
+        updateCursor(x, y);
+        update_sprite(false);
+    }
+    else if (currentTool in generatorHash)
+    {
+        var generator = generatorHash[currentTool];
+        clearMask();
+        if (lineStart == null)
+            lineStart = [rx, ry];
+        jQuery.each(generator(lineStart[0], lineStart[1], rx, ry), function(_, p) {
+            jQuery.each(penPattern(penWidth), function(_, delta) {
+                var dx = p[0] + delta[0];
+                var dy = p[1] + delta[1];
+                if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
+                    selectionMask[dy][dx] = 1;
+            });
+        });
+        updateCursor(null, null);
+    }
+}
+
+function finishDrawing(success)
+{
+    if (drawingOperationPending)
+    {
+        if (currentTool in generatorHash)
+        {
+            if (success)
+            {
+                for (var y = 0; y < imageHeight; y++)
+                {
+                    for (var x = 0; x < imageWidth; x++)
+                    {
+                        if (selectionMask[y][x] == 1)
+                            setPixel(x, y, currentColor);
+                    }
+                }
+                update_sprite(true);
+            }
+        }
+        else
+        {
+            update_sprite(true);
+        }
+        lineStart = null;
+        updatePixels();
+        drawingOperationPending = false;
+    }
+}

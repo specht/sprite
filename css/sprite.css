@@ -10,17 +10,7 @@ body {
 /*     cursor: url(../cursor.png) 16 16, crosshair; */
 }
 
-table {
-    display: inline-block;
-    margin: 0;
-    padding: 0;
-    border: 0;
-}
-
 #big_pixels {
-    table-layout: fixed;
-    border-collapse: separate;
-    border-spacing: 0px;
     width: 100%;
     height: 100%;
     -webkit-touch-callout: none;
@@ -33,11 +23,6 @@ table {
     cursor: crosshair;
 }
 
-#big_pixels td {
-    border: 1px solid #111;
-/*     cursor: pointer; */
-}
-
 .hover {
     border: 1px solid #aaa!important;
 }
@@ -48,21 +33,23 @@ table {
     border-radius: 2px;
     border: 1px solid #000;
     display: inline-block;
-    margin: 2px;
-/*     cursor: pointer; */
+    margin: 0px;
 }
 
 .swatch.darkcolor {
     border: 1px solid #444;
+    margin: 0px;
 }
 
 .swatch:hover {
     border: 1px solid #fff;
+    margin: 0px;
 }
 
 .swatch.active {
-    border: 1px solid #fff;
+    border: 2px solid #fff;
     border-radius: 5px;
+    margin: -1px;
 }
 
 #palette {
@@ -76,8 +63,7 @@ table {
 }
 
 .panel {
-/*     background-color: #000;  */
-    background-color: rgba(0, 0, 0, 0.5); 
+    background-color: rgba(0, 0, 0, 0.6); 
     padding: 12px; 
     border: 1px solid #666; 
     box-shadow: 2px 2px 8px rgba(0,0,0,0.5); 
@@ -85,13 +71,21 @@ table {
     color: #fff;     
 }
 
+.panel hr {
+    border: 0;
+    border-top: 1px solid #888;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
 .toolbutton {
     width: 32px;
     height: 32px;
     border: 1px solid #888; 
+    margin: 0px;
     border-radius: 2px; 
     display: inline-block;
-    background-color: #222!important;
+/*     background-color: #222!important; */
 }
 
 .toolbutton:hover {
@@ -99,7 +93,8 @@ table {
 }
 
 .toolbutton.active {
-    border: 1px solid #fff;
+    border: 2px solid #fff;
+    margin: -1px;
     background-color: #444!important;
     border-radius: 5px;
 }
