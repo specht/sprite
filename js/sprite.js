@@ -293,6 +293,9 @@ $().ready(function() {
         });
     });
     $('#tool_' + currentTool).addClass('active');
+    $('#tool_save').mousedown(function(event) {
+        download();
+    });
 
     document.onselectstart = function()
     {
@@ -408,21 +411,22 @@ $().ready(function() {
 
 function download()
 {
+    // http://eligrey.com/blog/post/saving-generated-files-on-the-client-side
+    // http://stackoverflow.com/a/10667687
     var s = '';
     for (var y = 0; y < imageHeight; y++)
     {
         for (var x = 0; x < imageWidth; x++)
         {
-            var color = parseCSSColor($('#pixel_' + x + '_' + y).css('background-color'));
-            color[3] = color[3] * 255;
+            var color = imageData[y][x];
             s += String.fromCharCode(color[0], color[1], color[2], color[3]);
         }
     }
     png_data = generatePng(imageWidth, imageHeight, s);
-    var pom = document.createElement('a');
-    pom.setAttribute('href', 'data:image/png;base64,' + Base64.encode(png_data));
-    pom.setAttribute('download', 'picture.png');
-    pom.click();
+    var pom = $('<a>');
+    pom.attr('href', 'data:image/png;base64,' + Base64.encode(png_data));
+    pom.attr('download', 'picture.png');
+    pom[0].click();
 }
 
 function update_sprite(add_to_undo_stack)
@@ -512,7 +516,7 @@ function fix_sizes()
     $('#big_pixels').attr('width', bigPixelSize);
     $('#big_pixels').attr('height', bigPixelSize);
 //     console.log($('#big_pixels').width());
-    renderGrid($('#big_pixels')[0].getContext('2d'));
+    updatePixels();
 }
 
 function clearMask()
