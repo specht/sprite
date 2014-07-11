@@ -224,6 +224,16 @@ function floodFill(x, y, color)
     _fill(x, y, imageData[y][x], color);
 }
 
+function updateMouseCursor()
+{
+    if (currentTool == 'fill')
+        $('#big_pixels').css('cursor', 'url(images/color-fill.png) 2 16, crosshair');
+    else if (currentTool == 'picker')
+        $('#big_pixels').css('cursor', 'url(images/color-picker.png) 2 16, crosshair');
+    else
+        $('#big_pixels').css('cursor', 'crosshair');
+}
+
 $().ready(function() {
 
     for (var y = 0; y < imageHeight; y++)
@@ -279,12 +289,7 @@ $().ready(function() {
                 $('.penwidth').removeClass('active');
                 $('#pen_width_1').addClass('active');
             }
-            if (x == 'fill')
-                $('#big_pixels').css('cursor', 'url(images/color-fill.png) 2 16, crosshair');
-            else if (x == 'picker')
-                $('#big_pixels').css('cursor', 'url(images/color-picker.png) 2 16, crosshair');
-            else
-                $('#big_pixels').css('cursor', 'crosshair');
+            updateMouseCursor();
         });
     });
     $('#tool_' + currentTool).addClass('active');
@@ -453,7 +458,7 @@ function update_sprite(add_to_undo_stack)
     img.attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
     if (add_to_undo_stack)
     {
-        img.click(function(event) {
+        img.mousedown(function(event) {
             restore_image(event.target);
         });
         $('#undo_stack').append(img);
@@ -686,6 +691,7 @@ function initiateDrawing(x, y)
             if ($(e).data('list_color').join(',') == currentColor.join(','))
                 $(e).addClass('active');
         });
+        updateMouseCursor();
     }
     else if (currentTool == 'fill')
     {
