@@ -415,6 +415,18 @@ $().ready(function() {
         handleDrawing(e.offsetX, e.offsetY);
         if (!drawingOperationPending)
             updateCursor(e.offsetX, e.offsetY);
+        e.preventDefault();
+    });
+    $(window).mousemove(function(e) {
+        if (currentTool === 'move' || currentTool === 'line' || 
+            currentTool === 'rect' || currentTool === 'ellipse' ||
+            currentTool === 'fill_rect' || currentTool === 'fill_ellipse')
+        {
+            var big_pixels_offset = $('#big_pixels').offset();
+            handleDrawing(e.pageX - big_pixels_offset.left, e.pageY - big_pixels_offset.top);
+            if (!drawingOperationPending)
+                updateCursor(e.pageX - big_pixels_offset.left, e.pageY - big_pixels_offset.top);
+        }
     });
     $('#big_pixels').mouseleave(function(e) {
         if (currentTool == 'draw')
@@ -425,7 +437,7 @@ $().ready(function() {
     $('#big_pixels').mousedown(function(e) {
         initiateDrawing(e.offsetX, e.offsetY);
     });
-    $('#big_pixels').mouseup(function(e) {
+    $(window).mouseup(function(e) {
         finishDrawing(true);
     });
     
@@ -817,10 +829,6 @@ function initiateDrawing(x, y)
     }
     else // include 'move'
     {
-        var width = $('#big_pixels').width();
-        var height = $('#big_pixels').height();
-        var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
-        var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
         drawingOperationPending = true;
         lineStart = null;
         handleDrawing(x, y);
@@ -934,6 +942,12 @@ function transform_sprite(f, is_destructive)
 
 function move_sprite(dx, dy)
 {
+    while (dx < 0)
+        dx += imageWidth;
+    while (dy < 0)
+        dy += imageHeight;
+    dx %= imageWidth;
+    dy %= imageHeight;
     transform_sprite(function(newImageData, imageData) {
         for (var y = 0; y < imageHeight; y++)
         {
