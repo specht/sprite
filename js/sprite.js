@@ -413,20 +413,25 @@ function download()
 {
     // http://eligrey.com/blog/post/saving-generated-files-on-the-client-side
     // http://stackoverflow.com/a/10667687
-    var s = '';
-    for (var y = 0; y < imageHeight; y++)
-    {
-        for (var x = 0; x < imageWidth; x++)
-        {
-            var color = imageData[y][x];
-            s += String.fromCharCode(color[0], color[1], color[2], color[3]);
-        }
-    }
-    png_data = generatePng(imageWidth, imageHeight, s);
-    var pom = $('<a>');
-    pom.attr('href', 'data:image/png;base64,' + Base64.encode(png_data));
-    pom.attr('download', 'picture.png');
-    pom[0].click();
+//     var s = '';
+//     for (var y = 0; y < imageHeight; y++)
+//     {
+//         for (var x = 0; x < imageWidth; x++)
+//         {
+//             var color = imageData[y][x];
+//             s += String.fromCharCode(color[0], color[1], color[2], color[3]);
+//         }
+//     }
+//     png_data = generatePng(imageWidth, imageHeight, s);
+//     var pom = $('<a>');
+//     pom.attr('href', 'data:image/png;base64,' + Base64.encode(png_data));
+//     pom.attr('download', 'picture.png');
+//     pom[0].click();
+    var canvas = $('#big_pixels')[0];
+    var link = document.createElement('a');
+    link.download = 'image.png';
+    link.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+    link.click();
 }
 
 function update_sprite(add_to_undo_stack)
