@@ -478,7 +478,7 @@ $().ready(function() {
         var color = '';
         var x = i % 4;
         var y = Math.floor(i / 4);
-        var k = x * 9 + y;
+        var k = x * 11 + y;
         if (k < cling_colors.length)
             color = cling_colors[k][0];
         swatch.data('html_color', color);
