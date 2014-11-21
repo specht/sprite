@@ -4,7 +4,7 @@ var lastTool = null;
 var penWidth = 1;
 var imageWidth = 24;
 var imageHeight = 24;
-var MAX_UNDO_STACK = 42;
+var MAX_UNDO_STACK = 41;
 var SELECTION_OPACITY = 0.7
 var lineStart = null;
 var drawingOperationPending = false;
@@ -314,6 +314,46 @@ $().ready(function() {
 //         return "Wirklich?";
     };
     
+    $(window).keydown(function(e) {
+        console.log(e);
+        if (e.which == 37)
+        {
+            if (e.shiftKey)
+                rotate_sprite(false);
+            else if (e.ctrlKey)
+                flip_sprite(true, false);
+            else
+                move_sprite(-1, 0);
+            e.preventDefault();
+        }
+        if (e.which == 39)
+        {
+            if (e.shiftKey)
+                rotate_sprite(true);
+            else if (e.ctrlKey)
+                flip_sprite(true, false);
+            else
+                move_sprite(1, 0);
+            e.preventDefault();
+        }
+        if (e.which == 38)
+        {
+            if (e.ctrlKey)
+                flip_sprite(false, true);
+            else
+                move_sprite(0, -1);
+            e.preventDefault();
+        }            
+        if (e.which == 40)
+        {
+            if (e.ctrlKey)
+                flip_sprite(false, true);
+            else
+                move_sprite(0, 1);
+            e.preventDefault();
+        }
+    });
+    
     $('#big_pixels').mouseenter(function(e) {
         updateCursor(e.offsetX, e.offsetY);
     });
@@ -467,13 +507,22 @@ function update_sprite(add_to_undo_stack)
     img.attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
     if (add_to_undo_stack)
     {
-        img.mousedown(function(event) {
-            restore_image(event.target);
-        });
-        $('#undo_stack').append(img);
         var undo_stack = $('#undo_stack').find('img');
-        if (undo_stack.length > MAX_UNDO_STACK)
-            $(undo_stack[0]).remove();
+        var same_image_dont_store = false;
+        if (undo_stack.length > 0)
+        {
+            if ($(undo_stack[undo_stack.length - 1]).attr('src') === img.attr('src'))
+                same_image_dont_store = true;
+        }
+        if (!same_image_dont_store)
+        {
+            img.mousedown(function(event) {
+                restore_image(event.target);
+            });
+            $('#undo_stack').append(img);
+            if (undo_stack.length > MAX_UNDO_STACK)
+                $(undo_stack[0]).remove();
+        }
     }
     for (var y = 0; y < 3; y++)
     {
@@ -776,6 +825,96 @@ function handleDrawing(x, y)
         });
         updateCursor(null, null);
     }
+}
+
+function transform_sprite(f)
+{
+    var newImageData = [];
+    for (var y = 0; y < imageHeight; y++)
+    {
+        var line = [];
+        for (var x = 0; x < imageWidth; x++)
+            line.push([0, 0, 0, 0]);
+        newImageData.push(line);
+    }
+    f(newImageData, imageData);
+    imageData = newImageData;
+    updatePixels();
+    update_sprite(false);
+    
+    var undo_stack = $('#undo_stack').find('img');
+    if (undo_stack.length > 0)
+    {
+        var s = '';
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+            {
+                var color = imageData[y][x];
+                s += String.fromCharCode(color[0], color[1], color[2], color[3]);
+            }
+        }
+        png_data = generatePng(imageWidth, imageHeight, s);
+        $('#sprite_0').attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+        var img = $('<img>');
+        img.addClass('sprite');
+        img.attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+        img.mousedown(function(event) {
+            restore_image(event.target);
+        });
+        $(undo_stack[undo_stack.length - 1]).remove();
+        $('#undo_stack').append(img);
+    }
+}
+
+function move_sprite(dx, dy)
+{
+    transform_sprite(function(newImageData, imageData) {
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+            {
+                var tx = (x + dx + imageWidth) % imageWidth;
+                var ty = (y + dy + imageHeight) % imageHeight;
+                newImageData[ty][tx] = imageData[y][x];
+            }
+        }
+    });
+}
+
+function flip_sprite(flip_x, flip_y)
+{
+    transform_sprite(function(newImageData, imageData) {
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+            {
+                var tx = x;
+                var ty = y;
+                if (flip_x)
+                    tx = imageWidth - x - 1;
+                if (flip_y)
+                    ty = imageHeight - y - 1;
+                newImageData[ty][tx] = imageData[y][x];
+            }
+        }
+    });
+}
+
+function rotate_sprite(right)
+{
+    transform_sprite(function(newImageData, imageData) {
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+            {
+                if (right)
+                    newImageData[x][y] = imageData[imageHeight - y - 1][x];
+                else
+                    newImageData[x][y] = imageData[y][imageWidth - x - 1];
+            }
+        }
+    });
 }
 
 function finishDrawing(success)
