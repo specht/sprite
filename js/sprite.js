@@ -234,6 +234,8 @@ function updateMouseCursor()
 {
     if (currentTool == 'fill')
         $('#big_pixels').css('cursor', 'url(images/color-fill.png) 2 16, crosshair');
+    else if (currentTool == 'move')
+        $('#big_pixels').css('cursor', 'url(images/transform-move.png) 11 11, crosshair');
     else if (currentTool == 'picker')
         $('#big_pixels').css('cursor', 'url(images/color-picker.png) 2 16, crosshair');
     else
@@ -255,7 +257,7 @@ $().ready(function() {
         imageData.push(line);
     }
     
-    for (var i = 0; i < 64; i++)
+    for (var i = 0; i < 80; i++)
     {
         var element = $('<img>');
         element.addClass('sprite');
@@ -272,7 +274,7 @@ $().ready(function() {
     for (var i = 1; i <= 5; i++)
     {
         $('#pen_width_' + i).mousedown(function(event) {
-            if (!(currentTool == 'picker' || currentTool == 'fill'))
+            if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move'))
             {
                 penWidth = Number($(event.target).attr('id').replace('pen_width_', ''));
                 $('.penwidth').removeClass('active');
@@ -283,13 +285,13 @@ $().ready(function() {
     $('#pen_width_' + penWidth).addClass('active');
 
     jQuery.each(['draw', 'fill', 'line', 'rect', 'fill_rect', 'ellipse', 'fill_ellipse',
-        'picker', 'fill'], function(_, x) {
+        'picker', 'fill', 'move'], function(_, x) {
         $('#tool_' + x).mousedown(function(event) {
             lastTool = currentTool;
             currentTool = $(event.target).attr('id').replace('tool_', '');
             $('.tool').removeClass('active');
             $(event.target).addClass('active');
-            if (x == 'picker' || x == 'fill')
+            if (x == 'picker' || x == 'fill' || x == 'move')
             {
                 penWidth = 1;
                 $('.penwidth').removeClass('active');
@@ -321,6 +323,14 @@ $().ready(function() {
         flip_sprite(false, true);
     });
     
+    $('#tool_rotate_left').mousedown(function(event) {
+        rotate_sprite(false);
+    });
+    
+    $('#tool_rotate_right').mousedown(function(event) {
+        rotate_sprite(true);
+    });
+    
     document.onselectstart = function()
     {
         window.getSelection().removeAllRanges();
@@ -345,17 +355,10 @@ $().ready(function() {
             87: 'tool_line',
             69: 'tool_rect',
             82: 'tool_ellipse',
-            84: 'tool_picker',
-            65: 'tool_move',
-            83: 'tool_rotate',
+            65: 'tool_picker',
+            83: 'tool_fill',
             68: 'tool_fill_rect',
-            70: 'tool_fill_ellipse',
-            71: 'tool_fill',
-            90: 'tool_flip_h',
-            88: 'tool_flip_v',
-            67: 'tool_clear',
-            86: 'tool_load',
-            66: 'tool_save',
+            70: 'tool_fill_ellipse'
         };
         
         if (typeof(mapping[e.which]) !== 'undefined')
@@ -458,12 +461,11 @@ $().ready(function() {
     
     for (var i = 0; i < cling_colors.length + 1; i++)
     {
-        console.log(cling_colors.length);
         var swatch = $('<span>');
         swatch.addClass('swatch');
         var color = '';
-        var x = i % 5;
-        var y = Math.floor(i / 5);
+        var x = i % 4;
+        var y = Math.floor(i / 4);
         var k = x * 9 + y;
         if (k < cling_colors.length)
             color = cling_colors[k][0];
@@ -495,7 +497,7 @@ $().ready(function() {
             currentColor = $(e).data('list_color');
             $(e).addClass('active');
         });
-        if (i % 5 == 4 && i < cling_colors.length - 1)
+        if (i % 4 == 3 && i < cling_colors.length - 1)
             $('#palette').append($('<br />'));
     }
     fix_sizes();
@@ -610,10 +612,10 @@ function fix_sizes()
     var width = window.innerWidth;
     var height = window.innerHeight;
     var bigPixelSize = height - 120;
-    if (bigPixelSize + 600 > width)
-        bigPixelSize = width - 600;
-    if (bigPixelSize > 600)
-        bigPixelSize = 600;
+    if (bigPixelSize + 650 > width)
+        bigPixelSize = width - 650;
+    if (bigPixelSize > 650)
+        bigPixelSize = 650;
     if (bigPixelSize < 200)
         bigPixelSize = 200;
 //     console.log("Setting new size: ", bigPixelSize);
@@ -735,7 +737,7 @@ function renderMaskOutline(context)
                 context.moveTo(x0, y0);
                 context.lineTo(x1, y1);
             }
-            if (!(currentTool == 'picker' || currentTool == 'fill'))
+            if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move'))
             {
                 if (here == 1)
                 {
@@ -813,7 +815,7 @@ function initiateDrawing(x, y)
         updatePixels();
         update_sprite(true);
     }
-    else
+    else // include 'move'
     {
         var width = $('#big_pixels').width();
         var height = $('#big_pixels').height();
@@ -857,6 +859,14 @@ function handleDrawing(x, y)
                 });
             });
         }
+        lineStart = [rx, ry];
+        updateCursor(x, y);
+        update_sprite(false);
+    }
+    else if (currentTool == 'move')
+    {
+        if (lineStart !== null)
+            move_sprite(rx - lineStart[0], ry - lineStart[1]);
         lineStart = [rx, ry];
         updateCursor(x, y);
         update_sprite(false);
