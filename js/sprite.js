@@ -360,8 +360,11 @@ $().ready(function() {
         
         if (typeof(mapping[e.which]) !== 'undefined')
         {
-            $('#' + mapping[e.which]).mousedown();
-            e.preventDefault();
+            if (!(e.shiftKey || e.ctrlKey || e.altKey))
+            {
+                $('#' + mapping[e.which]).mousedown();
+                e.preventDefault();
+            }
         }
         
         if (e.which == 37)
