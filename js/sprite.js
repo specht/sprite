@@ -303,6 +303,24 @@ $().ready(function() {
         download();
     });
 
+    $('#tool_clear').mousedown(function(event) {
+        transform_sprite(function(newImageData, imageData) {
+            for (var y = 0; y < imageHeight; y++)
+            {
+                for (var x = 0; x < imageWidth; x++)
+                    newImageData[x][y] = [0, 0, 0, 0];
+            }
+        }, true);
+    });
+    
+    $('#tool_flip_h').mousedown(function(event) {
+        flip_sprite(true, false);
+    });
+    
+    $('#tool_flip_v').mousedown(function(event) {
+        flip_sprite(false, true);
+    });
+    
     document.onselectstart = function()
     {
         window.getSelection().removeAllRanges();
@@ -322,7 +340,30 @@ $().ready(function() {
     };
     
     $(window).keydown(function(e) {
-        console.log(e);
+        var mapping = {
+            81: 'tool_draw',
+            87: 'tool_line',
+            69: 'tool_rect',
+            82: 'tool_ellipse',
+            84: 'tool_picker',
+            65: 'tool_move',
+            83: 'tool_rotate',
+            68: 'tool_fill_rect',
+            70: 'tool_fill_ellipse',
+            71: 'tool_fill',
+            90: 'tool_flip_h',
+            88: 'tool_flip_v',
+            67: 'tool_clear',
+            86: 'tool_load',
+            66: 'tool_save',
+        };
+        
+        if (typeof(mapping[e.which]) !== 'undefined')
+        {
+            $('#' + mapping[e.which]).mousedown();
+            e.preventDefault();
+        }
+        
         if (e.which == 37)
         {
             if (e.shiftKey)
@@ -835,8 +876,11 @@ function handleDrawing(x, y)
     }
 }
 
-function transform_sprite(f)
+function transform_sprite(f, is_destructive)
 {
+    if (typeof(is_destructive) === 'undefined')
+        is_destructive = false;
+    
     var newImageData = [];
     for (var y = 0; y < imageHeight; y++)
     {
@@ -848,7 +892,7 @@ function transform_sprite(f)
     f(newImageData, imageData);
     imageData = newImageData;
     updatePixels();
-    update_sprite(false);
+    update_sprite(is_destructive);
     
     var undo_stack = $('#undo_stack').find('img');
     if (undo_stack.length > 0)
