@@ -30,6 +30,12 @@ function penPattern(width)
                 [-1, 0], [0, 0], [1, 0], [2, 0],
                 [-1, 1], [0, 1], [1, 1], [2, 1],
                 [0, 2], [1, 2]];
+    else if (width == 5)
+        return [[-1, -2], [0, -2], [1, -2],
+                [-2, -1], [-1, -1], [0, -1], [1, -1], [2, -1],
+                [-2, 0], [-1, 0], [0, 0], [1, 0], [2, 0],
+                [-2, 1], [-1, 1], [0, 1], [1, 1], [2, 1],
+                [-1, 2], [0, 2], [1, 2]];
 }
 
 // color must be 4 byte RGBA
@@ -263,7 +269,7 @@ $().ready(function() {
         $('#sprites').append(" ");
     }
     
-    for (var i = 1; i <= 4; i++)
+    for (var i = 1; i <= 5; i++)
     {
         $('#pen_width_' + i).mousedown(function(event) {
             if (!(currentTool == 'picker' || currentTool == 'fill'))
@@ -302,9 +308,10 @@ $().ready(function() {
         window.getSelection().removeAllRanges();
     };
     
-    document.oncontextmenu = function()
+    document.oncontextmenu = function(e)
     {
-        return false;
+        if (!$(e.target).is('.has_context_menu'))
+            return false;
     };
     
     window.onresize = fix_sizes;
@@ -407,12 +414,13 @@ $().ready(function() {
     
     for (var i = 0; i < cling_colors.length + 1; i++)
     {
+        console.log(cling_colors.length);
         var swatch = $('<span>');
         swatch.addClass('swatch');
         var color = '';
-        var x = i % 4;
-        var y = Math.floor(i / 4);
-        var k = x * 11 + y;
+        var x = i % 5;
+        var y = Math.floor(i / 5);
+        var k = x * 9 + y;
         if (k < cling_colors.length)
             color = cling_colors[k][0];
         swatch.data('html_color', color);
@@ -443,7 +451,7 @@ $().ready(function() {
             currentColor = $(e).data('list_color');
             $(e).addClass('active');
         });
-        if (i % 4 == 3 && i < cling_colors.length - 1)
+        if (i % 5 == 4 && i < cling_colors.length - 1)
             $('#palette').append($('<br />'));
     }
     fix_sizes();
