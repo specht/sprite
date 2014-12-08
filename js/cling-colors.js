@@ -35,7 +35,7 @@ var cling_colors = [
     ['#7dcdc2', 'sea foam'],
     ['#00a8a8', 'teal'],
     ['#12959f', 'peacock'],
-//     ['#094e54', 'cyan'],
+    ['#094e54', 'cyan'],
     
     ['#381e11', 'chocolate'],
     ['#c05c20', 'terra cotta'],

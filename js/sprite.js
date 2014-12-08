@@ -4,12 +4,13 @@ var lastTool = null;
 var penWidth = 1;
 var imageWidth = 24;
 var imageHeight = 24;
-var MAX_UNDO_STACK = 41;
+var MAX_UNDO_STACK = 33;
 var SELECTION_OPACITY = 0.7
 var lineStart = null;
 var drawingOperationPending = false;
 var selectionMask = [];
 var generatorHash = {};
+var currentSpriteId = 0;
 
 // current image data, with 4 byte RGBA pixels
 var imageData = [];
@@ -242,6 +243,33 @@ function updateMouseCursor()
         $('#big_pixels').css('cursor', 'crosshair');
 }
 
+function setCurrentSprite(sprite_id)
+{
+    // do nothing if the sprite is already the current one
+    if (sprite_id == currentSpriteId)
+        return;
+    $('.sprite').removeClass('active');
+    currentSpriteId = sprite_id;
+    $('#sprite_' + currentSpriteId).addClass('active');
+    restore_image($('#sprite_' + currentSpriteId));
+    var imageIsEmpty = true;
+    for (var y = 0; y < imageHeight; y++)
+    {
+        for (var x = 0; x < imageWidth; x++)
+        {
+            if (imageData[y][x] != [0, 0, 0, 0])
+                imageIsEmpty = false;
+        }
+    }
+    transform_sprite(function(newImageData, imageData) {
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+                newImageData[x][y] = imageData[x][y];
+        }
+    }, !imageIsEmpty);
+}
+
 $().ready(function() {
 
     for (var y = 0; y < imageHeight; y++)
@@ -257,7 +285,7 @@ $().ready(function() {
         imageData.push(line);
     }
     
-    for (var i = 0; i < 80; i++)
+    for (var i = 0; i < 64; i++)
     {
         var element = $('<img>');
         element.addClass('sprite');
@@ -266,8 +294,15 @@ $().ready(function() {
         element.attr('height', imageHeight);
         element.attr('src', 'images/transparent-1.png');
         if (i == 0)
+        {
             element.addClass('active');
+        }
         $('#sprites').append(element);
+        element.data('sprite_id', i);
+        element.mousedown(function(e) {
+            var sprite_id = $(e.target).data('sprite_id');
+            setCurrentSprite(sprite_id);
+        });
         $('#sprites').append(" ");
     }
     
@@ -349,6 +384,18 @@ $().ready(function() {
 //         return "Wirklich?";
     };
     
+    $('.overlay').mousedown(function(e) {
+        $('#save_sprites').hide();
+    });
+    
+    $('.popup').mousedown(function(e) {
+        e.stopPropagation();
+    });
+    
+    $('.popup').mousemove(function(e) {
+        e.stopPropagation();
+    });
+    
     $(window).keydown(function(e) {
         var mapping = {
             81: 'tool_draw',
@@ -370,6 +417,17 @@ $().ready(function() {
             }
         }
         
+        if (e.which == 33)
+        {
+//             setCurrentSprite(currentSpriteId + 1);
+            // set previous sprite
+            e.preventDefault();
+        }
+        if (e.which == 34)
+        {
+            // set next sprite
+            e.preventDefault();
+        }
         if (e.which == 37)
         {
             if (e.shiftKey)
@@ -476,9 +534,9 @@ $().ready(function() {
         var swatch = $('<span>');
         swatch.addClass('swatch');
         var color = '';
-        var x = i % 4;
-        var y = Math.floor(i / 4);
-        var k = x * 11 + y;
+        var x = i % 5;
+        var y = Math.floor(i / 5);
+        var k = x * 9 + y;
         if (k < cling_colors.length)
             color = cling_colors[k][0];
         swatch.data('html_color', color);
@@ -509,7 +567,7 @@ $().ready(function() {
             currentColor = $(e).data('list_color');
             $(e).addClass('active');
         });
-        if (i % 4 == 3 && i < cling_colors.length - 1)
+        if (i % 5 == 4 && i < cling_colors.length - 1)
             $('#palette').append($('<br />'));
     }
     fix_sizes();
@@ -533,11 +591,47 @@ function download()
 //     pom.attr('href', 'data:image/png;base64,' + Base64.encode(png_data));
 //     pom.attr('download', 'picture.png');
 //     pom[0].click();
-    var canvas = $('#big_pixels')[0];
-    var link = document.createElement('a');
-    link.download = 'image.png';
-    link.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-    link.click();
+
+//     var canvas = $('#big_pixels')[0];
+//     var link = document.createElement('a');
+//     link.download = 'image.png';
+//     link.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+//     link.click();
+
+    var canvas = $('<canvas>').attr('width', imageWidth * 8).attr('height', imageHeight * 10)[0];
+    
+    var pixels = [];
+    for (var vi = 0; vi < 64 * imageHeight * imageWidth * 4; vi++)
+        pixels[vi] = 0;
+    
+    for (var vi = 0; vi < 64; vi++)
+    {
+        var local_image = $('#sprite_' + vi)[0];
+        if ($(local_image).attr('src').substr(0, 5) === 'data:')
+        {
+            var local_canvas = $('<canvas>').attr('width', imageWidth).attr('height', imageHeight)[0];
+            local_canvas.getContext('2d').drawImage(local_image, 0, 0, imageWidth, imageHeight);
+            var data = local_canvas.getContext('2d').getImageData(0, 0, imageWidth, imageHeight).data;
+            var vx = vi % 8;
+            var vy = Math.floor(vi / 8);
+            for (var y = 0; y < imageHeight; y++)
+            {
+                for (var x = 0; x < imageWidth; x++)
+                {
+                    for (var c = 0; c < 4; c++)
+                        pixels[((vy * imageWidth + y) * (imageWidth * 8) + vx * imageWidth + x) * 4 + c] = data[(y * imageHeight + x) * 4 + c];
+                }
+            }
+        }
+    }
+
+    var s = '';
+    for (var vi = 0; vi < 64 * imageHeight * imageWidth * 4; vi++)
+        s += String.fromCharCode(pixels[vi]);
+    
+    $('#save_sprites').show();
+    png_data = generatePng(imageWidth * 8, imageHeight * 10, s);
+    $('img#sprites_composed').attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
 }
 
 function update_sprite(add_to_undo_stack)
@@ -567,7 +661,7 @@ function update_sprite(add_to_undo_stack)
         }
     }
     png_data = generatePng(imageWidth, imageHeight, s);
-    $('#sprite_0').attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+    $('#sprite_' + currentSpriteId).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
     var img = $('<img>');
     img.addClass('sprite');
     img.attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
@@ -605,15 +699,26 @@ function restore_image(element)
 {
     var canvas = $('<canvas>').attr('width', imageWidth).attr('height', imageHeight)[0];
     var image = $(element)[0];
-    canvas.getContext('2d').drawImage(image, 0, 0, imageWidth, imageHeight);
-    var data = canvas.getContext('2d').getImageData(0, 0, imageWidth, imageHeight).data;
-    for (var y = 0; y < imageHeight; y++)
+    if ($(image).attr('src').substr(0, 5) === 'data:')
     {
-        for (var x = 0; x < imageWidth; x++)
-            setPixel(x, y, [data[(y * imageWidth + x) * 4 + 0],
-                            data[(y * imageWidth + x) * 4 + 1],
-                            data[(y * imageWidth + x) * 4 + 2],
-                            data[(y * imageWidth + x) * 4 + 3]]);
+        canvas.getContext('2d').drawImage(image, 0, 0, imageWidth, imageHeight);
+        var data = canvas.getContext('2d').getImageData(0, 0, imageWidth, imageHeight).data;
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+                setPixel(x, y, [data[(y * imageWidth + x) * 4 + 0],
+                                data[(y * imageWidth + x) * 4 + 1],
+                                data[(y * imageWidth + x) * 4 + 2],
+                                data[(y * imageWidth + x) * 4 + 3]]);
+        }
+    }
+    else
+    {
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+                setPixel(x, y, [0, 0, 0, 0]);
+        }
     }
     updatePixels();
     update_sprite(false);
@@ -624,8 +729,8 @@ function fix_sizes()
     var width = window.innerWidth;
     var height = window.innerHeight;
     var bigPixelSize = height - 120;
-    if (bigPixelSize + 650 > width)
-        bigPixelSize = width - 650;
+    if (bigPixelSize + 550 > width)
+        bigPixelSize = width - 550;
     if (bigPixelSize > 650)
         bigPixelSize = 650;
     if (bigPixelSize < 200)
@@ -928,7 +1033,7 @@ function transform_sprite(f, is_destructive)
             }
         }
         png_data = generatePng(imageWidth, imageHeight, s);
-        $('#sprite_0').attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+        $('#sprite_' + currentSpriteId).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
         var img = $('<img>');
         img.addClass('sprite');
         img.attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
