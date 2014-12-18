@@ -336,6 +336,51 @@ $().ready(function() {
         });
     });
     $('#tool_' + currentTool).addClass('active');
+    $('#tool_load').mousedown(function(event) {
+        $('#image_upload').click();
+        $('#image_upload').change(function(e) {
+            var reader = new FileReader(),
+            files = e.dataTransfer ? e.dataTransfer.files : e.target.files, i = 0;
+            reader.onload = onFileLoad;
+            while (files[i]) 
+                reader.readAsDataURL(files[i++]);
+        });
+
+        function onFileLoad(e) 
+        {
+            var data = e.target.result;
+            var image = $('<img>');
+            image.load(function() {
+                var totalWidth = 192;
+                var totalHeight = 240;
+                if (image.width() == totalWidth && image.height() == totalHeight)
+                {
+                    var local_canvas = $('<canvas>').attr('width', totalWidth).attr('height', totalHeight)[0];
+                    local_canvas.getContext('2d').drawImage(image[0], 0, 0, totalWidth, totalHeight);
+                    var data = local_canvas.getContext('2d').getImageData(0, 0, totalWidth, totalHeight).data;
+                    for (var i = 0; i < 64; i++)
+                    {
+                        var px = i % 8;
+                        var py = Math.floor(i / 8);
+                        var s = '';
+                        var offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
+                        for (var y = 0; y < imageHeight; y++)
+                        {
+                            for (var x = 0; x < imageWidth; x++)
+                                s += String.fromCharCode(data[offset++], data[offset++], data[offset++], data[offset++]);
+                            offset = offset - imageWidth * 4 + totalWidth * 4;
+                        }
+                        png_data = generatePng(imageWidth, imageHeight, s);
+                        $('#sprite_' + i).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+                    }
+                }
+                $(image).remove();
+                setCurrentSprite(0);
+            });
+            $('body').append(image);
+            image.attr('src', data);
+        }
+    });
     $('#tool_save').mousedown(function(event) {
         download();
     });
