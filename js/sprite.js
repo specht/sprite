@@ -375,6 +375,7 @@ $().ready(function() {
                     }
                 }
                 $(image).remove();
+                currentSpriteId = -1;
                 setCurrentSprite(0);
             });
             $('body').append(image);
