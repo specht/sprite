@@ -5,7 +5,7 @@ var penWidth = 1;
 var imageWidth = 24;
 var imageHeight = 24;
 var MAX_UNDO_STACK = 33;
-var SELECTION_OPACITY = 0.7
+var SELECTION_OPACITY = 0.7;
 var lineStart = null;
 var drawingOperationPending = false;
 var selectionMask = [];
@@ -284,7 +284,7 @@ $().ready(function() {
         selectionMask.push(mask_line);
         imageData.push(line);
     }
-    
+
     for (var i = 0; i < 64; i++)
     {
         var element = $('<img>');
@@ -304,8 +304,23 @@ $().ready(function() {
             setCurrentSprite(sprite_id);
         });
         $('#sprites').append(" ");
+        element.draggable({
+            containment: 'parent', 
+//             cursor: 'move', 
+            stack: '#sprites', 
+            delay: 100,
+            revert: true
+        });
+        element.droppable({ drop: function(event, ui) {
+            var draggable = ui.draggable;
+            var droppable = $(event.target);
+            var temp = draggable.attr('src');
+            draggable.attr('src', droppable.attr('src'));
+            droppable.attr('src', temp);
+            setCurrentSprite(droppable.data('sprite_id'));
+        }});
     }
-    
+
     for (var i = 1; i <= 5; i++)
     {
         $('#pen_width_' + i).mousedown(function(event) {
@@ -395,53 +410,53 @@ $().ready(function() {
             }
         }, true);
     });
-    
+
     $('#tool_flip_h').mousedown(function(event) {
         flip_sprite(true, false);
     });
-    
+
     $('#tool_flip_v').mousedown(function(event) {
         flip_sprite(false, true);
     });
-    
+
     $('#tool_rotate_left').mousedown(function(event) {
         rotate_sprite(false);
     });
-    
+
     $('#tool_rotate_right').mousedown(function(event) {
         rotate_sprite(true);
     });
-    
+
     document.onselectstart = function()
     {
         window.getSelection().removeAllRanges();
     };
-    
+
     document.oncontextmenu = function(e)
     {
         if (!$(e.target).is('.has_context_menu'))
             return false;
     };
-    
+
     window.onresize = fix_sizes;
-    
-    window.onbeforeunload = function()
-    {
+
+//     window.onbeforeunload = function()
+//     {
 //         return "Wirklich?";
-    };
-    
+//     };
+
     $('.overlay').mousedown(function(e) {
         $('#save_sprites').hide();
     });
-    
+
     $('.popup').mousedown(function(e) {
         e.stopPropagation();
     });
-    
+
     $('.popup').mousemove(function(e) {
         e.stopPropagation();
     });
-    
+
     $(window).keydown(function(e) {
         var mapping = {
             81: 'tool_draw',
@@ -453,7 +468,7 @@ $().ready(function() {
             68: 'tool_fill_rect',
             70: 'tool_fill_ellipse'
         };
-        
+
         if (typeof(mapping[e.which]) !== 'undefined')
         {
             if (!(e.shiftKey || e.ctrlKey || e.altKey))
@@ -462,7 +477,7 @@ $().ready(function() {
                 e.preventDefault();
             }
         }
-        
+
         if (e.which == 33)
         {
 //             setCurrentSprite(currentSpriteId + 1);
@@ -511,7 +526,7 @@ $().ready(function() {
             e.preventDefault();
         }
     });
-    
+
     $('#big_pixels').mouseenter(function(e) {
         updateCursor(e.offsetX, e.offsetY);
     });
@@ -544,17 +559,17 @@ $().ready(function() {
     $(window).mouseup(function(e) {
         finishDrawing(true);
     });
-    
+
     generatorHash['line'] = linePattern;
     generatorHash['rect'] = rectPattern;
     generatorHash['fill_rect'] = fillRectPattern;
     generatorHash['ellipse'] = ellipsePattern;
     generatorHash['fill_ellipse'] = fillEllipsePattern;
-    
+
     $(window).mouseup(function(event) {
         finishDrawing(false);
     });
-    
+
     for (var py = 0; py < 3; py++)
     {
         for (var y = 0; y < imageHeight; y++)
@@ -574,7 +589,7 @@ $().ready(function() {
             $('.small_pixels_1_tile').append(row);
         }
     }
-    
+
     for (var i = 0; i < cling_colors.length + 1; i++)
     {
         var swatch = $('<span>');
@@ -645,11 +660,11 @@ function download()
 //     link.click();
 
     var canvas = $('<canvas>').attr('width', imageWidth * 8).attr('height', imageHeight * 10)[0];
-    
+
     var pixels = [];
     for (var vi = 0; vi < 64 * imageHeight * imageWidth * 4; vi++)
         pixels[vi] = 0;
-    
+
     for (var vi = 0; vi < 64; vi++)
     {
         var local_image = $('#sprite_' + vi)[0];
@@ -674,7 +689,7 @@ function download()
     var s = '';
     for (var vi = 0; vi < 64 * imageHeight * imageWidth * 4; vi++)
         s += String.fromCharCode(pixels[vi]);
-    
+
     $('#save_sprites').show();
     png_data = generatePng(imageWidth * 8, imageHeight * 10, s);
     $('img#sprites_composed').attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
@@ -882,11 +897,11 @@ function renderMaskOutline(context)
                 context.moveTo(x0, y0);
                 context.lineTo(x1, y1);
             }
-            
+
             var other = 0;
             if (x > 0 && y < imageHeight)
                 other = selectionMask[y][x - 1];
-            
+
             if (here != other)
             {
                 var x0 = Math.floor(x * width / imageWidth) + 0.5;
@@ -926,9 +941,9 @@ function updatePixels()
     if (!(drawingOperationPending && (currentTool in generatorHash)))
         clearMask();
     renderImage(context);
-    renderGrid(context);        
+    renderGrid(context);
 }
-        
+
 function updateCursor(x, y)
 {
     var width = $('#big_pixels').width();
@@ -950,7 +965,7 @@ function updateCursor(x, y)
 }
 
 function initiateDrawing(x, y)
-{        
+{
     if (currentTool == 'picker')
     {
         var width = $('#big_pixels').width();
@@ -990,12 +1005,12 @@ function handleDrawing(x, y)
 {
     if (!drawingOperationPending)
         return;
-    
+
     var width = $('#big_pixels').width();
     var height = $('#big_pixels').height();
     var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
     var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
-    
+
     if (currentTool == 'draw')
     {
         if (lineStart == null)
@@ -1052,7 +1067,7 @@ function transform_sprite(f, is_destructive)
 {
     if (typeof(is_destructive) === 'undefined')
         is_destructive = false;
-    
+
     var newImageData = [];
     for (var y = 0; y < imageHeight; y++)
     {
@@ -1065,7 +1080,7 @@ function transform_sprite(f, is_destructive)
     imageData = newImageData;
     updatePixels();
     update_sprite(is_destructive);
-    
+
     var undo_stack = $('#undo_stack').find('img');
     if (undo_stack.length > 0)
     {
