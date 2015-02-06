@@ -641,7 +641,8 @@ $().ready(function() {
         if (i % 5 == 4 && i < cling_colors.length - 1)
             $('#palette').append($('<br />'));
     }
-    $('#color-adjust').mousemove(function(e) {
+    function adjust_color()
+    {
         if (swatchColor[3] > 0)
         {
             var adjust = $('#color-adjust').val();
@@ -665,6 +666,12 @@ $().ready(function() {
             }
             $('#swatch-adjusted').css('background-color', 'rgba(' + currentColor[0] + ',' + currentColor[1] + ',' + currentColor[2] + ',1.0)');
         }
+    }
+    $('#color-adjust').mousemove(function(e) {
+        adjust_color();
+    });
+    $('#color-adjust').change(function(e) {
+        adjust_color();
     });
     fix_sizes();
 });
