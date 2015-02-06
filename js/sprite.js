@@ -399,7 +399,7 @@ $().ready(function() {
     for (var i = 1; i <= 5; i++)
     {
         $('#pen_width_' + i).mousedown(function(event) {
-            if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move'))
+            if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move' || currentTool == 'spray'))
             {
                 penWidth = Number($(event.target).attr('id').replace('pen_width_', ''));
                 $('.penwidth').removeClass('active');
