@@ -8,11 +8,13 @@ var MAX_UNDO_STACK = 33;
 var MAX_SPRITES = 64;
 var SELECTION_OPACITY = 0.7;
 var lineStart = null;
+var lineEnd = null;
 var drawingOperationPending = false;
 var selectionMask = [];
 var generatorHash = {};
 var currentSpriteId = 0;
 var spray_pixels = [];
+var mouseDownColor = [];
 
 // current image data, with 4 byte RGBA pixels
 var imageData = [];
@@ -399,7 +401,7 @@ $().ready(function() {
     for (var i = 1; i <= 5; i++)
     {
         $('#pen_width_' + i).mousedown(function(event) {
-            if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move' || currentTool == 'spray'))
+            if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move' || currentTool == 'spray' || currentTool == 'gradient'))
             {
                 penWidth = Number($(event.target).attr('id').replace('pen_width_', ''));
                 $('.penwidth').removeClass('active');
@@ -410,13 +412,13 @@ $().ready(function() {
     $('#pen_width_' + penWidth).addClass('active');
 
     jQuery.each(['draw', 'fill', 'line', 'rect', 'fill_rect', 'ellipse', 'fill_ellipse',
-        'picker', 'fill', 'move', 'spray'], function(_, x) {
+        'picker', 'fill', 'move', 'spray', 'gradient'], function(_, x) {
         $('#tool_' + x).mousedown(function(event) {
             lastTool = currentTool;
             currentTool = $(event.target).attr('id').replace('tool_', '');
             $('.tool').removeClass('active');
             $(event.target).addClass('active');
-            if (x == 'picker' || x == 'fill' || x == 'move' || x == 'spray')
+            if (x == 'picker' || x == 'fill' || x == 'move' || x == 'spray' || x == 'gradient')
             {
                 penWidth = 1;
                 $('.penwidth').removeClass('active');
@@ -534,7 +536,7 @@ $().ready(function() {
     });
 
     $(window).keydown(function(e) {
-//         console.log(e.which);
+        console.log(e.which);
         var mapping = {
             81: 'tool_draw',
             87: 'tool_line',
@@ -543,7 +545,11 @@ $().ready(function() {
             65: 'tool_picker',
             83: 'tool_fill',
             68: 'tool_fill_rect',
-            70: 'tool_fill_ellipse'
+            70: 'tool_fill_ellipse',
+            89: 'tool_spray',
+            90: 'tool_spray',
+            88: 'tool_gradient',
+            67: 'tool_move'
         };
 
         if (typeof(mapping[e.which]) !== 'undefined')
@@ -639,6 +645,7 @@ $().ready(function() {
     });
 
     generatorHash['line'] = linePattern;
+    generatorHash['gradient'] = linePattern;
     generatorHash['rect'] = rectPattern;
     generatorHash['fill_rect'] = fillRectPattern;
     generatorHash['ellipse'] = ellipsePattern;
@@ -868,8 +875,8 @@ function fix_sizes()
     var width = window.innerWidth;
     var height = window.innerHeight;
     var bigPixelSize = height - 120;
-    if (bigPixelSize + 550 > width)
-        bigPixelSize = width - 550;
+    if (bigPixelSize + 600 > width)
+        bigPixelSize = width - 600;
     if (bigPixelSize > 650)
         bigPixelSize = 650;
     if (bigPixelSize < 200)
@@ -1097,7 +1104,6 @@ function initiateDrawing(x, y)
             }
         }
         shuffle(spray_pixels);
-        console.log(spray_pixels.length);
         spray_next();
     }
     else // include 'move'
@@ -1105,6 +1111,30 @@ function initiateDrawing(x, y)
         drawingOperationPending = true;
         lineStart = null;
         handleDrawing(x, y);
+    }
+    
+    if (currentTool == 'gradient')
+    {
+        var width = $('#big_pixels').width();
+        var height = $('#big_pixels').height();
+        var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
+        var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+        var referenceColor = imageData[ry][rx].slice();
+        referenceColor[3] /= 255.0;
+        referenceColor = tinycolor({r: referenceColor[0], g: referenceColor[1], b: referenceColor[2], a: referenceColor[3]});
+        spray_pixels = [];
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+            {
+                var color = imageData[y][x].slice();
+                color[3] /= 255.0;
+                color = tinycolor({r: color[0], g: color[1], b: color[2], a: color[3]});
+
+                if (tinycolor.equals(referenceColor, color))
+                    spray_pixels.push([x, y]);
+            }
+        }
     }
 }
 
@@ -1117,6 +1147,7 @@ function handleDrawing(x, y)
     var height = $('#big_pixels').height();
     var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
     var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+    lineEnd = [rx, ry];
 
     if (currentTool == 'draw')
     {
@@ -1277,12 +1308,46 @@ function finishDrawing(success)
         {
             if (success)
             {
-                for (var y = 0; y < imageHeight; y++)
+                if (currentTool === 'gradient')
                 {
-                    for (var x = 0; x < imageWidth; x++)
+                    var d = [lineEnd[0] - lineStart[0], lineEnd[1] - lineStart[1]];
+                    var dx2 = d[0] * d[0] + d[1] * d[1];
+                    if (dx2 > 0)
                     {
-                        if (selectionMask[y][x] == 1)
-                            setPixel(x, y, currentColor);
+                        var dx = Math.sqrt(dx2);
+                        d[0] /= dx;
+                        d[1] /= dx;
+                        while (spray_pixels.length > 0)
+                        {
+                            var p = spray_pixels.shift();
+                            var r = [p[0] - lineStart[0], p[1] - lineStart[1]];
+                            r[0] /= dx;
+                            r[1] /= dx;
+                            var g = r[0] * d[0] + r[1] * d[1];
+                            if (g < 0.0)
+                                g = 0.0;
+                            if (g > 1.0)
+                                g = 1.0;
+                            var a = imageData[p[1]][p[0]];
+                            var b = currentColor;
+                            var c = [0,0,0,0];
+                            c[0] = Math.floor(a[0] * (1.0 - g) + b[0] * g);
+                            c[1] = Math.floor(a[1] * (1.0 - g) + b[1] * g);
+                            c[2] = Math.floor(a[2] * (1.0 - g) + b[2] * g);
+                            c[3] = Math.floor(a[3] * (1.0 - g) + b[3] * g);
+                            setPixel(p[0], p[1], c);
+                        }
+                    }
+                }
+                else
+                {
+                    for (var y = 0; y < imageHeight; y++)
+                    {
+                        for (var x = 0; x < imageWidth; x++)
+                        {
+                            if (selectionMask[y][x] == 1)
+                                setPixel(x, y, currentColor);
+                        }
                     }
                 }
                 update_sprite(true);
