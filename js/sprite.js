@@ -1,10 +1,12 @@
 var currentColor = [0, 0, 0, 255];
+var swatchColor = [0, 0, 0, 255];
 var currentTool = 'draw';
 var lastTool = null;
 var penWidth = 1;
 var imageWidth = 24;
 var imageHeight = 24;
 var MAX_UNDO_STACK = 33;
+var MAX_SPRITES = 64;
 var SELECTION_OPACITY = 0.7;
 var lineStart = null;
 var drawingOperationPending = false;
@@ -285,7 +287,7 @@ $().ready(function() {
         imageData.push(line);
     }
 
-    for (var i = 0; i < 64; i++)
+    for (var i = 0; i < MAX_SPRITES; i++)
     {
         var element = $('<img>');
         element.addClass('sprite');
@@ -352,6 +354,7 @@ $().ready(function() {
     });
     $('#tool_' + currentTool).addClass('active');
     $('#tool_load').mousedown(function(event) {
+        console.log(event);
         $('#image_upload').click();
         $('#image_upload').change(function(e) {
             var reader = new FileReader(),
@@ -373,7 +376,7 @@ $().ready(function() {
                     var local_canvas = $('<canvas>').attr('width', totalWidth).attr('height', totalHeight)[0];
                     local_canvas.getContext('2d').drawImage(image[0], 0, 0, totalWidth, totalHeight);
                     var data = local_canvas.getContext('2d').getImageData(0, 0, totalWidth, totalHeight).data;
-                    for (var i = 0; i < 64; i++)
+                    for (var i = 0; i < MAX_SPRITES; i++)
                     {
                         var px = i % 8;
                         var py = Math.floor(i / 8);
@@ -458,6 +461,7 @@ $().ready(function() {
     });
 
     $(window).keydown(function(e) {
+//         console.log(e.which);
         var mapping = {
             81: 'tool_draw',
             87: 'tool_line',
@@ -480,13 +484,14 @@ $().ready(function() {
 
         if (e.which == 33)
         {
-//             setCurrentSprite(currentSpriteId + 1);
             // set previous sprite
+            setCurrentSprite((currentSpriteId + (MAX_SPRITES - 1)) % MAX_SPRITES);
             e.preventDefault();
         }
         if (e.which == 34)
         {
             // set next sprite
+            setCurrentSprite((currentSpriteId + 1) % MAX_SPRITES);
             e.preventDefault();
         }
         if (e.which == 37)
@@ -609,6 +614,8 @@ $().ready(function() {
         {
             swatch.addClass('active');
             currentColor = listColor;
+            swatchColor = currentColor;
+            $('#swatch-adjusted').css('background-color', color);
         }
         if (i == cling_colors.length - 8)
             swatch.addClass('darkcolor');
@@ -626,11 +633,39 @@ $().ready(function() {
             var e = event.target || event.srcElement;
             $('.swatch').removeClass('active');
             currentColor = $(e).data('list_color');
+            swatchColor = currentColor;
             $(e).addClass('active');
+            $('#swatch-adjusted').css('background-color', $(e).css('background-color'));
+            $('#color-adjust').val(0);
         });
         if (i % 5 == 4 && i < cling_colors.length - 1)
             $('#palette').append($('<br />'));
     }
+    $('#color-adjust').mousemove(function(e) {
+        if (swatchColor[3] > 0)
+        {
+            var adjust = $('#color-adjust').val();
+            if (adjust < 0)
+            {
+                adjust = -adjust / 100.0;
+                currentColor = [
+                    Math.floor(swatchColor[0] * (1.0 - adjust) + 0 * adjust),
+                    Math.floor(swatchColor[1] * (1.0 - adjust) + 0 * adjust),
+                    Math.floor(swatchColor[2] * (1.0 - adjust) + 0 * adjust),
+                    255];
+            }
+            else
+            {
+                adjust = adjust / 100.0;
+                currentColor = [
+                    Math.floor(swatchColor[0] * (1.0 - adjust) + 255 * adjust),
+                    Math.floor(swatchColor[1] * (1.0 - adjust) + 255 * adjust),
+                    Math.floor(swatchColor[2] * (1.0 - adjust) + 255 * adjust),
+                    255];
+            }
+            $('#swatch-adjusted').css('background-color', 'rgba(' + currentColor[0] + ',' + currentColor[1] + ',' + currentColor[2] + ',1.0)');
+        }
+    });
     fix_sizes();
 });
 
@@ -662,10 +697,10 @@ function download()
     var canvas = $('<canvas>').attr('width', imageWidth * 8).attr('height', imageHeight * 10)[0];
 
     var pixels = [];
-    for (var vi = 0; vi < 64 * imageHeight * imageWidth * 4; vi++)
+    for (var vi = 0; vi < MAX_SPRITES * imageHeight * imageWidth * 4; vi++)
         pixels[vi] = 0;
 
-    for (var vi = 0; vi < 64; vi++)
+    for (var vi = 0; vi < MAX_SPRITES; vi++)
     {
         var local_image = $('#sprite_' + vi)[0];
         if ($(local_image).attr('src').substr(0, 5) === 'data:')
@@ -687,7 +722,7 @@ function download()
     }
 
     var s = '';
-    for (var vi = 0; vi < 64 * imageHeight * imageWidth * 4; vi++)
+    for (var vi = 0; vi < MAX_SPRITES * imageHeight * imageWidth * 4; vi++)
         s += String.fromCharCode(pixels[vi]);
 
     $('#save_sprites').show();

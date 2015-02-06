@@ -55,6 +55,12 @@ body {
     margin: -1px;
 }
 
+.swatch-disabled:hover {
+    border: 1px solid #000;
+}
+
+
+
 #palette {
 /*     background-color: #222; */
     -webkit-touch-callout: none;
