@@ -1,5 +1,4 @@
 var currentColor = [0, 0, 0, 255];
-var swatchColor = [0, 0, 0, 255];
 var currentTool = 'draw';
 var lastTool = null;
 var penWidth = 1;
@@ -13,12 +12,86 @@ var drawingOperationPending = false;
 var selectionMask = [];
 var generatorHash = {};
 var currentSpriteId = 0;
+var spray_pixels = [];
 
 // current image data, with 4 byte RGBA pixels
 var imageData = [];
 
 // big pixel element for coordinates
 var bigPixelGrid = [];
+
+//+ Jonas Raoni Soares Silva
+//@ http://jsfromhell.com/array/shuffle [v1.0]
+function shuffle(o){ //v1.0
+    for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
+    return o;
+};
+
+function spray_next()
+{
+    if (spray_pixels.length == 0)
+        return;
+    var next_pos = spray_pixels.shift();
+    setPixel(next_pos[0], next_pos[1], currentColor);
+    updatePixels();
+    update_sprite(false);
+    if (spray_pixels.length > 0)
+        window.setTimeout(spray_next, 20);
+}
+
+function setCurrentColor(color, update_variations)
+{
+    if (typeof(update_variations) === 'undefined')
+        update_variations = true;
+    currentColor = color;
+    if (update_variations)
+    {
+        $('#color-variations').empty();
+        for (var h = -4; h <= 4; h++)
+        {
+            var variation = tinycolor({r: color[0], g: color[1], b: color[2], a: color[3] / 255.0});
+            if (h < 0)
+                variation.darken(-h * 10);
+            else
+                variation.lighten(h * 10);
+            var swatch = $("<span class='swatch swatch-mini'>");
+            var b = "linear-gradient("+variation.toRgbString()+","+variation.toRgbString()+"), url(images/transparent.png)";
+            swatch.css('background', b);
+            swatch.data('html_color', variation.toRgbString());
+            var rgb = variation.toRgb();
+            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.trunc(rgb.a * 255)]);
+            $('#color-variations').append(swatch);
+        }
+        $('#color-variations').append('<br />');
+        for (var h = -4; h <= 4; h++)
+        {
+            var variation = tinycolor({r: color[0], g: color[1], b: color[2], a: color[3] / 255.0});
+            if (h < 0)
+                variation.desaturate(-h * 20);
+            else
+                variation.saturate(h * 20);
+            var swatch = $("<span class='swatch swatch-mini'>");
+            var b = "linear-gradient("+variation.toRgbString()+","+variation.toRgbString()+"), url(images/transparent.png)";
+            swatch.css('background', b);
+            swatch.data('html_color', variation.toRgbString());
+            var rgb = variation.toRgb();
+            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.trunc(rgb.a * 255)]);
+            $('#color-variations').append(swatch);
+        }
+        $('#color-variations').append('<br />');
+        for (var h = 1; h <= 9; h++)
+        {
+            var variation = tinycolor({r: color[0], g: color[1], b: color[2], a: color[3] * h / 10.0 / 255.0});
+            var swatch = $("<span class='swatch swatch-mini'>");
+            var b = "linear-gradient("+variation.toRgbString()+","+variation.toRgbString()+"), url(images/transparent.png)";
+            swatch.css('background', b);
+            swatch.data('html_color', variation.toRgbString());
+            var rgb = variation.toRgb();
+            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.trunc(rgb.a * 255)]);
+            $('#color-variations').append(swatch);
+        }
+    }
+}
 
 function penPattern(width)
 {
@@ -184,14 +257,14 @@ function fillEllipsePattern(x0, y0, x1, y1)
     if (a == 0)
     if (a < 1 || b < 1)
         return linePattern(xm - a, ym - b, xm + a, ym + b);
-    
+
     var result = [];
     var dx = 0;
     var dy = b;
     var a2 = a * a;
     var b2 = b * b;
     var err = b2 - (2 * b - 1) * a2;
-    
+
     do {
         for (var d = -dx; d <= dx; d++)
         {
@@ -229,7 +302,7 @@ function floodFill(x, y, color)
         if (y < imageHeight - 1)
             _fill(x, y + 1, targetColor, replacementColor);
     }
-    
+
     _fill(x, y, imageData[y][x], color);
 }
 
@@ -337,13 +410,13 @@ $().ready(function() {
     $('#pen_width_' + penWidth).addClass('active');
 
     jQuery.each(['draw', 'fill', 'line', 'rect', 'fill_rect', 'ellipse', 'fill_ellipse',
-        'picker', 'fill', 'move'], function(_, x) {
+        'picker', 'fill', 'move', 'spray'], function(_, x) {
         $('#tool_' + x).mousedown(function(event) {
             lastTool = currentTool;
             currentTool = $(event.target).attr('id').replace('tool_', '');
             $('.tool').removeClass('active');
             $(event.target).addClass('active');
-            if (x == 'picker' || x == 'fill' || x == 'move')
+            if (x == 'picker' || x == 'fill' || x == 'move' || x == 'spray')
             {
                 penWidth = 1;
                 $('.penwidth').removeClass('active');
@@ -613,9 +686,7 @@ $().ready(function() {
         if (i == 0)
         {
             swatch.addClass('active');
-            currentColor = listColor;
-            swatchColor = currentColor;
-            $('#swatch-adjusted').css('background-color', color);
+            setCurrentColor(listColor, true);
         }
         if (i == cling_colors.length - 8)
             swatch.addClass('darkcolor');
@@ -629,49 +700,14 @@ $().ready(function() {
         swatch.data('list_color', listColor);
         $('#palette').append(swatch);
         $('#palette').append(' ');
-        swatch.mousedown(function(event) {
-            var e = event.target || event.srcElement;
-            $('.swatch').removeClass('active');
-            currentColor = $(e).data('list_color');
-            swatchColor = currentColor;
-            $(e).addClass('active');
-            $('#swatch-adjusted').css('background-color', $(e).css('background-color'));
-            $('#color-adjust').val(0);
-        });
         if (i % 5 == 4 && i < cling_colors.length - 1)
             $('#palette').append($('<br />'));
     }
-    function adjust_color()
-    {
-        if (swatchColor[3] > 0)
-        {
-            var adjust = $('#color-adjust').val();
-            if (adjust < 0)
-            {
-                adjust = -adjust / 100.0;
-                currentColor = [
-                    Math.floor(swatchColor[0] * (1.0 - adjust) + 0 * adjust),
-                    Math.floor(swatchColor[1] * (1.0 - adjust) + 0 * adjust),
-                    Math.floor(swatchColor[2] * (1.0 - adjust) + 0 * adjust),
-                    255];
-            }
-            else
-            {
-                adjust = adjust / 100.0;
-                currentColor = [
-                    Math.floor(swatchColor[0] * (1.0 - adjust) + 255 * adjust),
-                    Math.floor(swatchColor[1] * (1.0 - adjust) + 255 * adjust),
-                    Math.floor(swatchColor[2] * (1.0 - adjust) + 255 * adjust),
-                    255];
-            }
-            $('#swatch-adjusted').css('background-color', 'rgba(' + currentColor[0] + ',' + currentColor[1] + ',' + currentColor[2] + ',1.0)');
-        }
-    }
-    $('#color-adjust').mousemove(function(e) {
-        adjust_color();
-    });
-    $('#color-adjust').change(function(e) {
-        adjust_color();
+    $('body').on('mousedown', '.swatch', function(event) {
+        var e = event.target || event.srcElement;
+        $('.swatch').removeClass('active');
+        setCurrentColor($(e).data('list_color'), !$(e).hasClass('swatch-mini'));
+        $(e).addClass('active');
     });
     fix_sizes();
 });
@@ -1014,14 +1050,17 @@ function initiateDrawing(x, y)
         var height = $('#big_pixels').height();
         var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
         var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
-        currentColor = imageData[ry][rx];
+        setCurrentColor(imageData[ry][rx], true);
         currentTool = lastTool;
         $('.tool').removeClass('active');
         $('#tool_' + currentTool).addClass('active');
         $('.swatch').removeClass('active');
         $('.swatch').each(function(_, e) {
-            if ($(e).data('list_color').join(',') == currentColor.join(','))
+            if ($(e).data('list_color') && $(e).data('list_color').join(',') == currentColor.join(','))
+            {
                 $(e).addClass('active');
+                return false;
+            }
         });
         updateMouseCursor();
     }
@@ -1034,6 +1073,32 @@ function initiateDrawing(x, y)
         floodFill(rx, ry, currentColor);
         updatePixels();
         update_sprite(true);
+    }
+    else if (currentTool == 'spray')
+    {
+        var width = $('#big_pixels').width();
+        var height = $('#big_pixels').height();
+        var rx = Math.floor(x * imageWidth / width - ((penWidth + 1) % 2) * 0.5);
+        var ry = Math.floor(y * imageHeight / height - ((penWidth + 1) % 2) * 0.5);
+        var referenceColor = imageData[ry][rx].slice();
+        referenceColor[3] /= 255.0;
+        referenceColor = tinycolor({r: referenceColor[0], g: referenceColor[1], b: referenceColor[2], a: referenceColor[3]});
+        spray_pixels = [];
+        for (var y = 0; y < imageHeight; y++)
+        {
+            for (var x = 0; x < imageWidth; x++)
+            {
+                var color = imageData[y][x].slice();
+                color[3] /= 255.0;
+                color = tinycolor({r: color[0], g: color[1], b: color[2], a: color[3]});
+
+                if (tinycolor.equals(referenceColor, color))
+                    spray_pixels.push([x, y]);
+            }
+        }
+        shuffle(spray_pixels);
+        console.log(spray_pixels.length);
+        spray_next();
     }
     else // include 'move'
     {
@@ -1230,5 +1295,10 @@ function finishDrawing(success)
         lineStart = null;
         updatePixels();
         drawingOperationPending = false;
+    }
+    if (currentTool === 'spray')
+    {
+        spray_pixels = [];
+        update_sprite(true);
     }
 }
