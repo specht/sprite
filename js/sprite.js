@@ -1342,12 +1342,13 @@ function finishDrawing(success)
                             for (var i = 0; i < 4; i++)
                                 c[i] = Math.floor(a[i] * (1.0 - g) + b[i] * g);
                             c = tinycolor({r: c[0], g: c[1], b: c[2], a: c[3] / 255.0}).toHsl();
-                            var q = 16;
-                            c.l = Math.floor((c.l * 255.0 + (Math.random() * q - q * 0.5)) / q) * q / 255.0;
+                            var q = 1.0 / 16;
+                            c.l += Math.random() * q * 2.0 - q;
                             if (c.l < 0)
                                 c.l = 0;
                             if (c.l > 1.0)
                                 c.l = 1.0;
+                            c.l = Math.floor(c.l / q) * q;
                             c = tinycolor(c);
                             c = [Math.floor(c._r), Math.floor(c._g), Math.floor(c._b), Math.floor(c._a * 255.0)];
                             for (var i = 0; i < 4; i++)
