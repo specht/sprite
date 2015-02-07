@@ -2063,3 +2063,14 @@ java.net.SocketException: Socket closed
 	at java.io.FilterOutputStream.close(FilterOutputStream.java:158)
 	at davmail.AbstractConnection.close(AbstractConnection.java:258)
 	at davmail.imap.ImapConnection.run(ImapConnection.java:652)
+2015-02-06 23:58:01,932 DEBUG [Shutdown] davmail  - Stopping DavMail gateway
+2015-02-06 23:58:01,933 WARN  [davmail.imap.ImapServer] davmail  - Exception closing client output stream Socket closed
+java.net.SocketException: Socket closed
+	at java.net.SocketOutputStream.socketWrite(SocketOutputStream.java:116)
+	at java.net.SocketOutputStream.write(SocketOutputStream.java:153)
+	at java.io.BufferedOutputStream.flushBuffer(BufferedOutputStream.java:82)
+	at java.io.BufferedOutputStream.flush(BufferedOutputStream.java:140)
+	at java.io.FilterOutputStream.close(FilterOutputStream.java:158)
+	at davmail.AbstractConnection.close(AbstractConnection.java:258)
+	at davmail.AbstractServer.run(AbstractServer.java:194)
+2015-02-06 23:58:01,934 INFO  [Shutdown] davmail  - DavMail gateway stopped

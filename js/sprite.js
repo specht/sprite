@@ -287,22 +287,32 @@ function fillEllipsePattern(x0, y0, x1, y1)
 
 function floodFill(x, y, color)
 {
-    function _fill(x, y, targetColor, replacementColor)
+    var visited_pixels = [];
+    
+    function _fill(x, y, targetColor, _replacementColor)
     {
-        var color = imageData[y][x].join(',');
-        if (color == replacementColor.join(','))
+        if (typeof(visited_pixels[[x, y]]) !== 'undefined')
             return;
+        visited_pixels[[x, y]] = true;
+        var color = imageData[y][x].join(',');
+        var replacementColor = null;
+        if (typeof(_replacementColor) === 'function')
+            replacementColor = _replacementColor(x, y);
+        else
+            replacementColor = _replacementColor.slice();
+//         if (color == replacementColor.join(','))
+//             return;
         if (color != targetColor.join(','))
             return;
         setPixel(x, y, replacementColor);
         if (x > 0)
-            _fill(x - 1, y, targetColor, replacementColor);
+            _fill(x - 1, y, targetColor, _replacementColor);
         if (x < imageWidth - 1)
-            _fill(x + 1, y, targetColor, replacementColor);
+            _fill(x + 1, y, targetColor, _replacementColor);
         if (y > 0)
-            _fill(x, y - 1, targetColor, replacementColor);
+            _fill(x, y - 1, targetColor, _replacementColor);
         if (y < imageHeight - 1)
-            _fill(x, y + 1, targetColor, replacementColor);
+            _fill(x, y + 1, targetColor, _replacementColor);
     }
 
     _fill(x, y, imageData[y][x], color);
@@ -536,19 +546,18 @@ $().ready(function() {
     });
 
     $(window).keydown(function(e) {
-        console.log(e.which);
         var mapping = {
             81: 'tool_draw',
             87: 'tool_line',
             69: 'tool_rect',
             82: 'tool_ellipse',
-            65: 'tool_picker',
-            83: 'tool_fill',
+            65: 'tool_fill',
             68: 'tool_fill_rect',
             70: 'tool_fill_ellipse',
             89: 'tool_spray',
             90: 'tool_spray',
-            88: 'tool_gradient',
+            83: 'tool_gradient',
+            88: 'tool_picker',
             67: 'tool_move'
         };
 
@@ -1290,7 +1299,7 @@ function rotate_sprite(right)
         for (var y = 0; y < imageHeight; y++)
         {
             for (var x = 0; x < imageWidth; x++)
-            {
+                {
                 if (right)
                     newImageData[x][y] = imageData[imageHeight - y - 1][x];
                 else
@@ -1317,9 +1326,8 @@ function finishDrawing(success)
                         var dx = Math.sqrt(dx2);
                         d[0] /= dx;
                         d[1] /= dx;
-                        while (spray_pixels.length > 0)
-                        {
-                            var p = spray_pixels.shift();
+                        floodFill(lineStart[0], lineStart[1], function(x, y) {
+                            var p = [x, y];
                             var r = [p[0] - lineStart[0], p[1] - lineStart[1]];
                             r[0] /= dx;
                             r[1] /= dx;
@@ -1331,12 +1339,26 @@ function finishDrawing(success)
                             var a = imageData[p[1]][p[0]];
                             var b = currentColor;
                             var c = [0,0,0,0];
-                            c[0] = Math.floor(a[0] * (1.0 - g) + b[0] * g);
-                            c[1] = Math.floor(a[1] * (1.0 - g) + b[1] * g);
-                            c[2] = Math.floor(a[2] * (1.0 - g) + b[2] * g);
-                            c[3] = Math.floor(a[3] * (1.0 - g) + b[3] * g);
-                            setPixel(p[0], p[1], c);
-                        }
+                            for (var i = 0; i < 4; i++)
+                                c[i] = Math.floor(a[i] * (1.0 - g) + b[i] * g);
+                            c = tinycolor({r: c[0], g: c[1], b: c[2], a: c[3] / 255.0}).toHsl();
+                            var q = 16;
+                            c.l = Math.floor((c.l * 255.0 + (Math.random() * q - q * 0.5)) / q) * q / 255.0;
+                            if (c.l < 0)
+                                c.l = 0;
+                            if (c.l > 1.0)
+                                c.l = 1.0;
+                            c = tinycolor(c);
+                            c = [Math.floor(c._r), Math.floor(c._g), Math.floor(c._b), Math.floor(c._a * 255.0)];
+                            for (var i = 0; i < 4; i++)
+                            {
+                                if (c[i] < 0)
+                                    c[i] = 0;
+                                if (c[i] > 255)
+                                    c[i] = 255;
+                            }
+                            return c;
+                        });
                     }
                 }
                 else
