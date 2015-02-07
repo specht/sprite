@@ -1332,33 +1332,37 @@ function finishDrawing(success)
                             r[0] /= dx;
                             r[1] /= dx;
                             var g = r[0] * d[0] + r[1] * d[1];
-                            if (g < 0.0)
-                                g = 0.0;
-                            if (g > 1.0)
-                                g = 1.0;
-                            var a = imageData[p[1]][p[0]];
-                            var b = currentColor;
-                            var c = [0,0,0,0];
-                            for (var i = 0; i < 4; i++)
-                                c[i] = Math.floor(a[i] * (1.0 - g) + b[i] * g);
-                            c = tinycolor({r: c[0], g: c[1], b: c[2], a: c[3] / 255.0}).toHsl();
-                            var q = 1.0 / 16;
-                            c.l += Math.random() * q * 2.0 - q;
-                            if (c.l < 0)
-                                c.l = 0;
-                            if (c.l > 1.0)
-                                c.l = 1.0;
-                            c.l = Math.floor(c.l / q) * q;
-                            c = tinycolor(c);
-                            c = [Math.floor(c._r), Math.floor(c._g), Math.floor(c._b), Math.floor(c._a * 255.0)];
-                            for (var i = 0; i < 4; i++)
+                            if (g >= 0.0)
                             {
-                                if (c[i] < 0)
-                                    c[i] = 0;
-                                if (c[i] > 255)
-                                    c[i] = 255;
+                                if (g < 0.0)
+                                    g = 0.0;
+                                if (g > 1.0)
+                                    g = 1.0;
+                                var a = imageData[p[1]][p[0]];
+                                var b = currentColor;
+                                var c = [0,0,0,0];
+                                for (var i = 0; i < 4; i++)
+                                    c[i] = Math.floor(a[i] * (1.0 - g) + b[i] * g);
+                                c = tinycolor({r: c[0], g: c[1], b: c[2], a: c[3] / 255.0}).toHsl();
+                                var q = 1.0 / 16;
+                                c.l += Math.random() * q * 2.0 - q;
+                                if (c.l < 0)
+                                    c.l = 0;
+                                if (c.l > 1.0)
+                                    c.l = 1.0;
+                                c.l = Math.floor(c.l / q) * q;
+                                c = tinycolor(c);
+                                c = [Math.floor(c._r), Math.floor(c._g), Math.floor(c._b), Math.floor(c._a * 255.0)];
+                                for (var i = 0; i < 4; i++)
+                                {
+                                    if (c[i] < 0)
+                                        c[i] = 0;
+                                    if (c[i] > 255)
+                                        c[i] = 255;
+                                }
+                                return c;
                             }
-                            return c;
+                            return imageData[y][x].slice();
                         });
                     }
                 }
