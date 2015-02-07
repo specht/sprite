@@ -823,21 +823,21 @@ function update_sprite(add_to_undo_stack)
     if (add_to_undo_stack)
     {
         var undo_stack = $('#undo_stack').find('img');
-        var same_image_dont_store = false;
-        if (undo_stack.length > 0)
-        {
-            if ($(undo_stack[undo_stack.length - 1]).attr('src') === img.attr('src'))
-                same_image_dont_store = true;
-        }
-        if (!same_image_dont_store)
-        {
+//         var same_image_dont_store = false;
+//         if (undo_stack.length > 0)
+//         {
+//             if ($(undo_stack[undo_stack.length - 1]).attr('src') === img.attr('src'))
+//                 same_image_dont_store = true;
+//         }
+//         if (!same_image_dont_store)
+//         {
             img.mousedown(function(event) {
                 restore_image(event.target);
             });
             $('#undo_stack').append(img);
             if (undo_stack.length > MAX_UNDO_STACK)
                 $(undo_stack[0]).remove();
-        }
+//         }
     }
     for (var y = 0; y < 3; y++)
     {
