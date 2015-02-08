@@ -562,8 +562,22 @@ $().ready(function() {
             image.attr('src', data);
         }
     });
-    $('#tool_save').mousedown(function(event) {
-        download();
+    Downloadify.create('tool_save',{
+        filename: function() { return 'sprites.hs'; },
+        dataType: 'string',
+        data: function() { return get_zip_package(); },
+        onComplete: function(){  },
+        onCancel: function(){ },
+        onError: function(e){ },
+        swf: 'js/downloadify.swf',
+//         downloadImage: 'js/Downloadify-0.2.1/images/download.png',
+//         width: 100,
+//         height: 30,
+        downloadImage: 'images/document-save-4.png',
+        width: 24,
+        height: 24,
+        transparent: true,
+        append: false
     });
 
     $('#tool_clear').mousedown(function(event) {
@@ -969,73 +983,6 @@ function get_zip_package()
     zip.file("readme.txt", "Hackschule FTW!!!\n");
     zip.file("sprites.png", btoa(get_sprites_as_png()), {base64: true});
     return '' + zip.generate();
-}
-
-function download()
-{
-    // http://eligrey.com/blog/post/saving-generated-files-on-the-client-side
-    // http://stackoverflow.com/a/10667687
-//     var s = '';
-//     for (var y = 0; y < imageHeight; y++)
-//     {
-//         for (var x = 0; x < imageWidth; x++)
-//         {
-//             var color = imageData[y][x];
-//             s += String.fromCharCode(color[0], color[1], color[2], color[3]);
-//         }
-//     }
-//     png_data = generatePng(imageWidth, imageHeight, s);
-//     var pom = $('<a>');
-//     pom.attr('href', 'data:image/png;base64,' + Base64.encode(png_data));
-//     pom.attr('download', 'picture.png');
-//     pom[0].click();
-
-//     var canvas = $('#big_pixels')[0];
-//     var link = document.createElement('a');
-//     link.download = 'image.png';
-//     link.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-//     link.click();
-    
-    // see FileSaver.js
-    
-    $('#save_sprites').show();
-
-    var png_data = get_sprites_as_png();
-    $('img#sprites_composed').attr('src', 'data:image/png;base64,' + png_data);
-    
-//     $('#dl_button').downloadify({
-//         filename: 'sprites.txt',
-//         data: 'hello!',
-//         onComplete: function(){ 
-//         alert('Your File Has Been Saved!'); 
-//         },
-//         onCancel: function(){ 
-//         alert('You have cancelled the saving of this file.');
-//         },
-//         onError: function(){ 
-//         alert('Error.');
-//         },
-//         transparent: true,
-//         swf: 'js/Downloadify-0.2.1/media/downloadify.swf',
-//         downloadImage: 'js/Downloadify-0.2.1/images/download.png',
-//         width: 100,
-//         height: 30,
-//         append: false
-//     });
-    Downloadify.create('dl_button',{
-        filename: function() { return 'sprites.hs'; },
-        dataType: 'string',
-        data: function() { return get_zip_package(); },
-        onComplete: function(){  },
-        onCancel: function(){ },
-        onError: function(e){ },
-        swf: 'js/downloadify.swf',
-        downloadImage: 'js/Downloadify-0.2.1/images/download.png',
-        width: 100,
-        height: 30,
-        transparent: true,
-        append: false
-    });
 }
 
 function update_sprite(add_to_undo_stack)
