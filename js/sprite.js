@@ -24,6 +24,7 @@ var level_use = [];
 // offset, background
 var level_props = {};
 var current_level = 0;
+var loadWithShift = false;
 
 function set_field(x, y, v)
 {
@@ -55,23 +56,30 @@ function shuffle(o){ //v1.0
 
 function swap_sprites_in_all_levels(a, b)
 {
-    for (var key in level)
-    {
-        if (level[key] == a)
-            level[key] = b;
-        else if (level[key] == b)
-            level[key] = a;
-    }
+    jQuery.each(level, function(_, l) {
+        for (var key in l)
+        {
+            if (l[key] == a)
+                l[key] = b;
+            else if (l[key] == b)
+                l[key] = a;
+        }
+    });
 }
 
 function set_current_level(which)
 {
     if (!(which in level_props))
-        level_props[which] = {offset: [0, 0], background: which == 0 ? '#000' : '#008'}
+        level_props[which] = {offset: [0, 0], background: '#000'}
     current_level = which;
     draw_level();
     $('#level_lineup span').removeClass('active-level');
     $('span#level_' + which).addClass('active-level');
+    $('#use-level').prop('checked', level_use[current_level] === true);
+    if (level_use[current_level] === true)
+        $('span#level_' + which + ' div').removeClass('inactive');
+    else
+        $('span#level_' + which + ' div').addClass('inactive');
 }
 
 function switchPane(which)
@@ -432,6 +440,33 @@ function setCurrentSprite(sprite_id)
     }, !imageIsEmpty);
 }
 
+function loadSprites(data)
+{
+    $('#load_image').attr('src', data);
+}
+
+function loadLevels(info)
+{
+    if (loadWithShift)
+        return;
+    jQuery.each(info, function(i, l) {
+        set_current_level(i);
+        level_use[i] = l.use;
+        if (l.use)
+            $('span#level_' + i + ' div').removeClass('inactive');
+        else
+            $('span#level_' + i + ' div').addClass('inactive');
+
+        level_props[i].background = l.background;
+        level[i] = {};
+        jQuery.each(l.data, function(yd, row) {
+            jQuery.each(row, function(xd, cell) {
+                level[i]['' + (xd + l.xmin) + ',' + (yd + l.ymin)] = cell;
+            });
+        });
+    });
+}
+
 $().ready(function() {
     for (var y = 0; y < imageHeight; y++)
     {
@@ -516,7 +551,8 @@ $().ready(function() {
     });
     $('#tool_' + currentTool).addClass('active');
     $('#tool_load').mousedown(function(event) {
-        console.log(event);
+        loadWithShift = (event.shiftKey === true);
+        $('#image_upload').val('');
         $('#image_upload').click();
         $('#image_upload').change(function(e) {
             var reader = new FileReader(),
@@ -528,38 +564,49 @@ $().ready(function() {
 
         function onFileLoad(e) 
         {
-            var data = e.target.result;
-            var image = $('<img>');
-            image.load(function() {
-                var totalWidth = 192;
-                var totalHeight = 240;
-                if (image.width() == totalWidth && image.height() == totalHeight)
+            if (!loadWithShift)
+            {
+                level = {};
+                level_use = [];
+                level_props = {};
+            }
+            var data = '' + e.target.result;
+            if (e.target.result.substr(0, 14) === 'data:image/png')
+            {
+                loadSprites(data);
+                if (!loadWithShift)
                 {
-                    var local_canvas = $('<canvas>').attr('width', totalWidth).attr('height', totalHeight)[0];
-                    local_canvas.getContext('2d').drawImage(image[0], 0, 0, totalWidth, totalHeight);
-                    var data = local_canvas.getContext('2d').getImageData(0, 0, totalWidth, totalHeight).data;
-                    for (var i = 0; i < MAX_SPRITES; i++)
-                    {
-                        var px = i % 8;
-                        var py = Math.floor(i / 8);
-                        var s = '';
-                        var offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
-                        for (var y = 0; y < imageHeight; y++)
-                        {
-                            for (var x = 0; x < imageWidth; x++)
-                                s += String.fromCharCode(data[offset++], data[offset++], data[offset++], data[offset++]);
-                            offset = offset - imageWidth * 4 + totalWidth * 4;
-                        }
-                        png_data = generatePng(imageWidth, imageHeight, s);
-                        $('#sprite_' + i).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
-                    }
+                    set_current_level(0);
+                    level_use[0] = true;
                 }
-                $(image).remove();
-                currentSpriteId = -1;
-                setCurrentSprite(0);
-            });
-            $('body').append(image);
-            image.attr('src', data);
+            }
+            else
+            {
+                console.log('loading hs file...');
+                data = data.substr(data.indexOf('base64,') + 7);
+                data = atob(data);
+                data = atob(data);
+                var zip_buffer = new Uint8Array(data);
+                var zip = new JSZip(data);
+                $.each(zip.files, function (index, zipEntry) {
+                    console.log(zipEntry);
+                    if (zipEntry.name == 'sprites.png')
+                    {
+                        var blob = new Blob([zipEntry.asUint8Array()], {'type': 'image/png'});
+                        var urlCreator = window.URL || window.webkitURL;
+                        var imageUrl = urlCreator.createObjectURL(blob);
+                        loadSprites(imageUrl);
+                    }
+                    else if (zipEntry.name == 'levels.json')
+                    {
+                        var info = JSON.parse(zipEntry.asText());
+                        loadLevels(info);
+                    }
+                });
+            }
+            switchPane('sprites');
+            if (!loadWithShift)
+                set_current_level(0);
         }
     });
     Downloadify.create('tool_save',{
@@ -573,9 +620,9 @@ $().ready(function() {
 //         downloadImage: 'js/Downloadify-0.2.1/images/download.png',
 //         width: 100,
 //         height: 30,
-        downloadImage: 'images/document-save-4.png',
-        width: 24,
-        height: 24,
+        downloadImage: 'images/document-save-4-2.png',
+        width: 32,
+        height: 32,
         transparent: true,
         append: false
     });
@@ -935,6 +982,72 @@ $().ready(function() {
     });
 
     fix_sizes();
+    
+    $('#use-level').change(function(e) {
+        level_use[current_level] = $(e.target).is(':checked');
+        set_current_level(current_level);
+    });
+    $('#load_image').load(function(e) {
+        var image = $(e.target);
+        console.log('loadSprites', e);
+        var totalWidth = 192;
+        var totalHeight = 240;
+        var spriteIndex = currentSpriteId;
+        if (image.width() == totalWidth && image.height() == totalHeight)
+        {
+            var local_canvas = $('<canvas>').attr('width', totalWidth).attr('height', totalHeight)[0];
+            local_canvas.getContext('2d').drawImage(image[0], 0, 0, totalWidth, totalHeight);
+            var data = local_canvas.getContext('2d').getImageData(0, 0, totalWidth, totalHeight).data;
+            for (var i = 0; i < MAX_SPRITES; i++)
+            {
+                var px = i % 8;
+                var py = Math.floor(i / 8);
+                var s = '';
+                var offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
+                for (var y = 0; y < imageHeight; y++)
+                {
+                    for (var x = 0; x < imageWidth; x++)
+                        s += String.fromCharCode(data[offset++], data[offset++], data[offset++], data[offset++]);
+                    offset = offset - imageWidth * 4 + totalWidth * 4;
+                }
+                if (loadWithShift)
+                {
+                    // append to sprite set if not empty
+                    offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
+                    var imageIsEmpty = true;
+                    for (var y = 0; y < imageHeight; y++)
+                    {
+                        for (var x = 0; x < imageWidth * 4; x++)
+                        {
+                            if (data[offset++] != 0)
+                            {
+                                imageIsEmpty = false;
+                                break;
+                            }
+                        }
+                        if (!imageIsEmpty)
+                            break;
+                    }
+                    if (!imageIsEmpty)
+                    {
+                        if (currentSpriteId < MAX_SPRITES)
+                        {
+                            png_data = generatePng(imageWidth, imageHeight, s);
+                            $('#sprite_' + (spriteIndex++)).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+                        }
+                    }
+                }
+                else
+                {
+                    // set in any case
+                    png_data = generatePng(imageWidth, imageHeight, s);
+                    $('#sprite_' + i).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+                }
+            }
+        }
+        currentSpriteId = -1;
+        setCurrentSprite(0);
+    });
 });
 
 function get_sprites_as_png()
@@ -977,11 +1090,71 @@ function get_sprites_as_png()
     return png_data;
 }
 
+function get_level_descriptions()
+{
+    var levels = [];
+    for (var i = 0; i < MAX_LEVELS; i++)
+    {
+        if (!(i in level_props))
+            continue;
+        if (typeof(level[i]) === 'undefined')
+            continue;
+        var l = {};
+        l.use = level_use[i];
+        l.background = level_props[i].background;
+        // find x / y ranges
+        var xmin = null, xmax = null, ymin = null, ymax = null;
+        jQuery.each(Object.keys(level[i]), function(_, key) {
+            var k = key.split(',');
+            var x = new Number(k[0]).valueOf();
+            var y = new Number(k[1]).valueOf();
+            if (xmin === null)
+                xmin = x;
+            if (xmax === null)
+                xmax = x;
+            if (ymin === null)
+                ymin = y;
+            if (ymax === null)
+                ymax = y;
+            if (x < xmin)
+                xmin = x;
+            if (x > xmax)
+                xmax = x;
+            if (y < ymin)
+                ymin = y;
+            if (y > ymax)
+                ymax = y;
+        });
+        l.xmin = xmin;
+        l.ymin = ymin;
+        l.data = [];
+        if (xmin != null && xmax != null && ymin != null && ymax != null)
+        {
+            for (var y = ymin; y <= ymax; y++)
+            {
+                var row = [];
+                for (var x = xmin; x <= xmax; x++)
+                {
+                    var k = '' + x + ',' + y;
+                    if (k in level[i])
+                        row.push(level[i][k]);
+                    else
+                        row.push(-1);
+                }
+                l.data.push(row);
+            }
+        }
+        levels.push(l);
+    }
+    return levels;
+}
+
 function get_zip_package()
 {
     var zip = new JSZip();
     zip.file("readme.txt", "Hackschule FTW!!!\n");
     zip.file("sprites.png", btoa(get_sprites_as_png()), {base64: true});
+    zip.file("levels.json", btoa(JSON.stringify(get_level_descriptions())), {base64: true});
     return '' + zip.generate();
 }
 

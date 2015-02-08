@@ -35,15 +35,15 @@
 
 -->
 <div style='vertical-align: top; display: inline-block;'>
-<div id='main-switcher' class='panel' style='margin-bottom: 4px;'>
-<span class='toolbutton tool' id='tool_load' style='background: url(images/document-open.png) center center no-repeat;' title='Sprites laden'></span>
-<br />
-<span class='toolbutton tool' id='tool_save' style='' title='Sprites speichern'></span>
-</div>
 <div id='pane-switcher' class='panel'>
 <span class='toolbutton tool active-pane' id='pane_sprites' style='background: url(images/sprite.png) center center no-repeat;' title='Sprites laden'></span>
 <br />
 <span class='toolbutton tool' id='pane_levels' style='background: url(images/level.png) center center no-repeat;' title='Sprites laden'></span>
+</div>
+<div id='main-switcher' class='panel' style='margin-bottom: 4px;'>
+<span class='toolbutton tool' id='tool_load' style='background: url(images/document-open.png) center center no-repeat;' title='Sprites laden'></span>
+<br />
+<span class='toolbutton tool' id='tool_save' style='width: 32px; height: 32px;' title='Sprites speichern'></span>
 </div>
 </div>
 <!-- <div id='status_bar' class='panel' style='font-family: monospace; height: 24px; width: 1176px; margin-bottom: 4px;'> -->
@@ -63,7 +63,7 @@
 <div style='display: inline-block;'>
 
 <div class='panel' style='margin-bottom: 2px;'>
-<input style='display: none;' id='image_upload' type='file' accept='image/*' />
+<input style='display: none;' id='image_upload' type='file' />
 <span class='toolbutton tool' id='tool_draw' style='background: url(images/draw-freehand.png) center center no-repeat;' title='Stift'></span>
 <span class='toolbutton tool' id='tool_line' style='background: url(images/draw-line.png) center center no-repeat;' title='Linie'></span>
 <span class='toolbutton tool' id='tool_rect' style='background: url(images/draw-rectangle.png) center center no-repeat;' title='Rechteck'></span>
@@ -113,9 +113,13 @@
 <div class='pane' id='pane-levels' style='display: inline-block;'>
 <div id='level_lineup' class='panel' style='height: 24px; width: 750px; margin-bottom: 4px;'>
 </div>
-<div id='level' class='panel' style='display: inline-block;'>
+<div id='level' class='panel' style='display: inline-block; margin-bottom: 4px;'>
 <canvas id='level' style='width: 100%; height: 100%;'>
 </canvas>
+</div>
+<br />
+<div id='level-settings' class='panel' style='display: inline-block;'>
+<input type='checkbox' id='use-level' /><label for='use-level'>Level benutzen</label>
 </div>
 </div>
 
@@ -134,6 +138,8 @@ das Bild und w&auml;hle dann "Bild speichern unter..."
 <div id='dl_button'></div>
 </div>
 </div>
+
+<img id='load_image' style='display: none;' src='' />
 
 
 </body>
