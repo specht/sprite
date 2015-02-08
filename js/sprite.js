@@ -839,6 +839,8 @@ $().ready(function() {
         initiateDrawing(e.offsetX, e.offsetY);
     });
     $(window).mouseup(function(e) {
+        currentlyDrawingLevel = false;
+        console.log('currentlyDrawingLevel', currentlyDrawingLevel);
         finishDrawing(true);
     });
 
@@ -848,10 +850,6 @@ $().ready(function() {
     generatorHash['fill_rect'] = fillRectPattern;
     generatorHash['ellipse'] = ellipsePattern;
     generatorHash['fill_ellipse'] = fillEllipsePattern;
-
-    $(window).mouseup(function(event) {
-        finishDrawing(false);
-    });
 
     for (var py = 0; py < 3; py++)
     {
@@ -949,9 +947,6 @@ $().ready(function() {
         set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
         draw_level();
         currentlyDrawingLevel = true;
-    });
-    $('canvas#level').mouseup(function(e) {
-        currentlyDrawingLevel = false;
     });
 
     level_use = [];
