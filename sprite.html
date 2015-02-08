@@ -7,8 +7,11 @@
 <script type="text/javascript" src="js/cling-colors.js"></script>
 <script type="text/javascript" src="js/generatepng.js"></script>
 <script type="text/javascript" src="js/csscolorparser.js"></script>
-<script type="text/javascript" src="js/sprite.js"></script>
+<script type="text/javascript" src="js/jszip.min.js"></script>
+<script type="text/javascript" src="js/swfobject.js"></script>
+<script type="text/javascript" src="js/downloadify.min.js"></script>
 <script type="text/javascript" src="js/TinyColor-1.0.0/tinycolor.js"></script>
+<script type="text/javascript" src="js/sprite.js"></script>
 
 </head>
 
@@ -19,7 +22,7 @@
 [DUPLICATE] [DELETE] [ANIMATION]
 
 [DRAW]   [LINE]    [RECT]     [CIRC]
-[PICK]   [FLOOD]   [FILLRECT] [FILLCIRC}
+[PICK]   [FLOOD]   [FILLRECT] [FILLCIRC]
 [MOVE]   [ROT]     [FLIP X]   [FLIP Y]
 [CLEAR]  [LOAD]   [SAVE]
 
@@ -31,21 +34,30 @@
 
 
 -->
-<div id='undo_stack' class='panel' style='height: 24px; width: 960px; margin-bottom: 4px;'>
-</div>
-<!-- <div id='status_bar' class='panel' style='font-family: monospace; height: 24px; width: 1176px; margin-bottom: 4px;'> -->
-<!-- Sprite 0 -->
-<!-- </div> -->
 <div style='vertical-align: top; display: inline-block;'>
-<div id='main-switcher' class='panel'>
+<div id='main-switcher' class='panel' style='margin-bottom: 4px;'>
 <span class='toolbutton tool' id='tool_load' style='background: url(images/document-open.png) center center no-repeat;' title='Sprites laden'></span>
 <br />
 <span class='toolbutton tool' id='tool_save' style='background: url(images/document-save.png) center center no-repeat;' title='Sprites speichern'></span>
 </div>
+<div id='pane-switcher' class='panel'>
+<span class='toolbutton tool active-pane' id='pane_sprites' style='background: url(images/sprite.png) center center no-repeat;' title='Sprites laden'></span>
+<br />
+<span class='toolbutton tool' id='pane_levels' style='background: url(images/level.png) center center no-repeat;' title='Sprites laden'></span>
 </div>
+</div>
+<!-- <div id='status_bar' class='panel' style='font-family: monospace; height: 24px; width: 1176px; margin-bottom: 4px;'> -->
+<!-- Sprite 0 -->
+<!-- </div> -->
+
 <div style='vertical-align: top; width: 145px; display: inline-block;'>
 <div id='sprites' class='panel'>
 </div>
+</div>
+
+<div class='pane' id='pane-sprites' style='display: inline-block;'>
+
+<div id='undo_stack' class='panel' style='height: 24px; width: 750px; margin-bottom: 4px;'>
 </div>
 
 <div style='display: inline-block;'>
@@ -81,11 +93,8 @@
 </div>
 
 <div class='panel' id='palette' style='margin-bottom: 2px;'></div>
-<div class='panel' id='color-variations'>
+<div class='panel' id='color-variations'></div>
 </div>
-</div>
-</div>
-
 
 <div id='container_big_pixels' class='panel' style='width: 650px; height: 650px; vertical-align: top; display: inline-block;'><canvas id='big_pixels' style='width: 100%; height: 100%;'></canvas></div>
 <div style='vertical-align: top; display: inline-block;'>
@@ -99,6 +108,18 @@
 <div class='panel' style='vertical-align: top; display: inline-block; margin-bottom: 4px;'><canvas id='small_pixels_1_tile_h' width='72' height='24'></canvas></div>
 </div>
 
+</div>
+
+<div class='pane' id='pane-levels' style='display: inline-block;'>
+<div id='level_lineup' class='panel' style='height: 24px; width: 750px; margin-bottom: 4px;'>
+</div>
+<div id='level' class='panel' style='display: inline-block;'>
+<canvas id='level' style='width: 100%; height: 100%;'>
+</canvas>
+</div>
+</div>
+
+
 <div id='save_sprites' class='overlay' style='display: none;'>
 <div class='panel popup'>
 <p>
@@ -110,8 +131,10 @@ das Bild und w&auml;hle dann "Bild speichern unter..."
 <img id='sprites_composed' class='has_context_menu' />
 </p>
 <hr />
+<div id='dl_button'></div>
 </div>
 </div>
+
 
 </body>
 </html>

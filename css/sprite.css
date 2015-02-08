@@ -120,6 +120,20 @@ body {
     border-radius: 5px;
 }
 
+.toolbutton.active-pane {
+    border: 2px solid #fff;
+    margin: -1px;
+    background-color: #444!important;
+    border-radius: 5px;
+}
+
+.active-level {
+    border: 1px solid #fff;
+/*     margin: -1px; */
+    background-color: #444!important;
+    border-radius: 5px;
+}
+
 .sprite {
     width: 24px;
     height: 24px;
@@ -168,4 +182,15 @@ body {
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.7);
     cursor: default;
+}
+
+.level-number {
+    margin-top: 6px;
+    text-align: center;
+    font-size: 80%;
+}
+
+.level-number.inactive {
+    text-decoration: line-through;
+    color: #888;
 }

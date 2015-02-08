@@ -4,7 +4,10 @@ var lastTool = null;
 var penWidth = 1;
 var imageWidth = 24;
 var imageHeight = 24;
-var MAX_UNDO_STACK = 33;
+var levelWidth = 28;
+var levelHeight = 16;
+var MAX_UNDO_STACK = 25;
+var MAX_LEVELS = 25;
 var MAX_SPRITES = 64;
 var SELECTION_OPACITY = 0.7;
 var lineStart = null;
@@ -15,6 +18,27 @@ var generatorHash = {};
 var currentSpriteId = 0;
 var spray_pixels = [];
 var mouseDownColor = [];
+var level = {};
+var currentlyDrawingLevel = false;
+var level_use = [];
+// offset, background
+var level_props = {};
+var current_level = 0;
+
+function set_field(x, y, v)
+{
+    if (!(current_level in level))
+        level[current_level] = {};
+    level[current_level]['' + x + ',' + y] = v;
+}
+
+function get_field(x, y)
+{
+    if (!(current_level in level))
+        level[current_level] = {};
+    return level[current_level]['' + x + ',' + y];
+}
+
 
 // current image data, with 4 byte RGBA pixels
 var imageData = [];
@@ -28,6 +52,57 @@ function shuffle(o){ //v1.0
     for(var j, x, i = o.length; i; j = Math.floor(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x);
     return o;
 };
+
+function swap_sprites_in_all_levels(a, b)
+{
+    for (var key in level)
+    {
+        if (level[key] == a)
+            level[key] = b;
+        else if (level[key] == b)
+            level[key] = a;
+    }
+}
+
+function set_current_level(which)
+{
+    if (!(which in level_props))
+        level_props[which] = {offset: [0, 0], background: which == 0 ? '#000' : '#008'}
+    current_level = which;
+    draw_level();
+    $('#level_lineup span').removeClass('active-level');
+    $('span#level_' + which).addClass('active-level');
+}
+
+function switchPane(which)
+{
+    $('.pane').hide();
+    $('#pane-' + which).show();
+    $('#pane-switcher .toolbutton').removeClass('active-pane');
+    $('#pane-switcher #pane_' + which + '.toolbutton').addClass('active-pane');
+    if (which == 'levels')
+        draw_level();
+    if (which == 'sprites')
+        fix_sizes();
+}
+
+function draw_level()
+{
+    var context = $('canvas#level')[0].getContext('2d');
+    context.beginPath();
+    context.fillStyle = level_props[current_level].background;
+    context.rect(0, 0, levelWidth * imageWidth, levelHeight * imageHeight);
+    context.fill();
+    for (var y = 0; y < levelHeight; y++)
+    {
+        for (var x = 0; x < levelWidth; x++)
+        {
+            var v = get_field(x + level_props[current_level].offset[0], y + level_props[current_level].offset[1]);
+            if (v >= 0)
+                context.drawImage($('#sprite_' + v)[0], x * imageWidth, y * imageHeight, imageWidth, imageHeight);
+        }
+    }
+}
 
 function spray_next()
 {
@@ -358,7 +433,6 @@ function setCurrentSprite(sprite_id)
 }
 
 $().ready(function() {
-
     for (var y = 0; y < imageHeight; y++)
     {
         var line = [];
@@ -401,6 +475,9 @@ $().ready(function() {
         element.droppable({ drop: function(event, ui) {
             var draggable = ui.draggable;
             var droppable = $(event.target);
+            var aid = new Number(draggable.attr('id').replace('sprite_', '')).valueOf();
+            var bid = new Number(droppable.attr('id').replace('sprite_', '')).valueOf();
+            swap_sprites_in_all_levels(aid, bid);
             var temp = draggable.attr('src');
             draggable.attr('src', droppable.attr('src'));
             droppable.attr('src', temp);
@@ -546,6 +623,7 @@ $().ready(function() {
     });
 
     $(window).keydown(function(e) {
+//         console.log(e.which);
         var mapping = {
             81: 'tool_draw',
             87: 'tool_line',
@@ -582,40 +660,90 @@ $().ready(function() {
             setCurrentSprite((currentSpriteId + 1) % MAX_SPRITES);
             e.preventDefault();
         }
+        if (e.which == 36)
+        {
+            if ($('#pane-levels').is(':visible'))
+            {
+                level_props[current_level].offset = [0, 0];
+                draw_level();
+            }
+        }
         if (e.which == 37)
         {
-            if (e.shiftKey)
-                rotate_sprite(false);
-            else if (e.ctrlKey)
-                flip_sprite(true, false);
-            else
+            if ($('#pane-sprites').is(':visible'))
+            {
+                if (e.shiftKey)
+                    rotate_sprite(false);
+                else if (e.ctrlKey)
+                    flip_sprite(true, false);
+                else
                 move_sprite(-1, 0);
+            }
+            else if ($('#pane-levels').is(':visible'))
+            {
+                level_props[current_level].offset[0] -= 1;
+                draw_level();
+            }
             e.preventDefault();
         }
         if (e.which == 39)
         {
-            if (e.shiftKey)
-                rotate_sprite(true);
-            else if (e.ctrlKey)
-                flip_sprite(true, false);
-            else
-                move_sprite(1, 0);
+            if ($('#pane-sprites').is(':visible'))
+            {
+                if (e.shiftKey)
+                    rotate_sprite(true);
+                else if (e.ctrlKey)
+                    flip_sprite(true, false);
+                else
+                    move_sprite(1, 0);
+            }
+            else if ($('#pane-levels').is(':visible'))
+            {
+                level_props[current_level].offset[0] += 1;
+                draw_level();
+            }
             e.preventDefault();
         }
         if (e.which == 38)
         {
-            if (e.ctrlKey)
-                flip_sprite(false, true);
-            else
-                move_sprite(0, -1);
+            if ($('#pane-sprites').is(':visible'))
+            {
+                if (e.ctrlKey)
+                    flip_sprite(false, true);
+                else
+                    move_sprite(0, -1);
+            }
+            else if ($('#pane-levels').is(':visible'))
+            {
+                level_props[current_level].offset[1] -= 1;
+                draw_level();
+            }
             e.preventDefault();
-        }            
+        }
         if (e.which == 40)
         {
-            if (e.ctrlKey)
-                flip_sprite(false, true);
-            else
-                move_sprite(0, 1);
+            if ($('#pane-sprites').is(':visible'))
+            {
+                if (e.ctrlKey)
+                    flip_sprite(false, true);
+                else
+                    move_sprite(0, 1);
+            }
+            else if ($('#pane-levels').is(':visible'))
+            {
+                level_props[current_level].offset[1] += 1;
+                draw_level();
+            }
+            e.preventDefault();
+        }
+        if (e.which == 49)
+        {
+            switchPane('sprites');
+            e.preventDefault();
+        }
+        if (e.which == 50)
+        {
+            switchPane('levels');
             e.preventDefault();
         }
     });
@@ -725,34 +853,78 @@ $().ready(function() {
         setCurrentColor($(e).data('list_color'), !$(e).hasClass('swatch-mini'));
         $(e).addClass('active');
     });
+    $('canvas#level').attr('width', levelWidth * imageWidth).attr('height', levelHeight * imageHeight);
+    $('canvas#level').css('max-width', '' + levelWidth * imageWidth + 'px');
+    $('canvas#level').css('max-height', '' + levelHeight * imageHeight + 'px');
+    var level_canvas = $('canvas#level')[0];
+    level_canvas.getContext('2d').beginPath();
+    level_canvas.getContext('2d').fillStyle = '#000';
+    level_canvas.getContext('2d').rect(0, 0, levelWidth * imageWidth, levelHeight * imageHeight);
+    level_canvas.getContext('2d').fill();
+//     level_canvas.getContext('2d').drawImage(local_image, 0, 0, imageWidth, imageHeight);
+
+    $('canvas#level').mousemove(function(e) {
+        var context = $(e.target)[0].getContext('2d');
+        var rx = Math.trunc(e.offsetX / imageWidth);
+        var ry = Math.trunc(e.offsetY / imageHeight);
+        if (currentlyDrawingLevel)
+        {
+            set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
+        }
+        draw_level();
+        context.drawImage($('#sprite_' + currentSpriteId)[0], rx * imageWidth, ry * imageHeight, imageWidth, imageHeight);
+        context.beginPath();
+        context.strokeStyle = '#888';
+        context.penWidth = 1.0;
+        context.rect(rx * imageWidth + 0.5, ry * imageHeight + 0.5, imageWidth - 1, imageHeight - 1);
+        context.stroke();
+    });
+    $('canvas#level').mouseleave(function(e) {
+        draw_level();
+    });
+    $('canvas#level').mousedown(function(e) {
+        var rx = Math.trunc(e.offsetX / imageWidth);
+        var ry = Math.trunc(e.offsetY / imageHeight);
+        set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
+        draw_level();
+        currentlyDrawingLevel = true;
+    });
+    $('canvas#level').mouseup(function(e) {
+        currentlyDrawingLevel = false;
+    });
+
+    level_use = [];
+    for (var i = 0; i < MAX_LEVELS; i++)
+    {
+        level_use.push(i == 0 ? true : false);
+        var level_indicator = $('<span>');
+        level_indicator.addClass('sprite');
+        level_indicator.attr('id', 'level_' + i);
+        level_indicator.mousedown(function(e) {
+            var which = new Number($(e.currentTarget).attr('id').replace('level_', '')).valueOf();
+            set_current_level(which);
+        });
+        level_indicator.css('cursor', 'pointer');
+        var level_number = $("<div class='level-number'>" + (i + 1) + '</div>');
+        level_indicator.append(level_number);
+        if (!level_use[i])
+            level_number.addClass('inactive');
+
+        $('#level_lineup').append(level_indicator);
+    }
+    
+    set_current_level(0);
+
+    switchPane('sprites');
+    $('#pane-switcher .toolbutton').mousedown(function(e) {
+        switchPane($(e.target).attr('id').replace('pane_', ''));
+    });
+
     fix_sizes();
 });
 
-function download()
+function get_sprites_as_png()
 {
-    // http://eligrey.com/blog/post/saving-generated-files-on-the-client-side
-    // http://stackoverflow.com/a/10667687
-//     var s = '';
-//     for (var y = 0; y < imageHeight; y++)
-//     {
-//         for (var x = 0; x < imageWidth; x++)
-//         {
-//             var color = imageData[y][x];
-//             s += String.fromCharCode(color[0], color[1], color[2], color[3]);
-//         }
-//     }
-//     png_data = generatePng(imageWidth, imageHeight, s);
-//     var pom = $('<a>');
-//     pom.attr('href', 'data:image/png;base64,' + Base64.encode(png_data));
-//     pom.attr('download', 'picture.png');
-//     pom[0].click();
-
-//     var canvas = $('#big_pixels')[0];
-//     var link = document.createElement('a');
-//     link.download = 'image.png';
-//     link.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
-//     link.click();
-
     var canvas = $('<canvas>').attr('width', imageWidth * 8).attr('height', imageHeight * 10)[0];
 
     var pixels = [];
@@ -784,9 +956,86 @@ function download()
     for (var vi = 0; vi < MAX_SPRITES * imageHeight * imageWidth * 4; vi++)
         s += String.fromCharCode(pixels[vi]);
 
-    $('#save_sprites').show();
     png_data = generatePng(imageWidth * 8, imageHeight * 10, s);
-    $('img#sprites_composed').attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+//     console.log(png_data);
+//     return btoa(png_data);
+//     console.log(btoa(png_data));
+    return png_data;
+}
+
+function get_zip_package()
+{
+    var zip = new JSZip();
+    zip.file("readme.txt", "Hackschule FTW!!!\n");
+    zip.file("sprites.png", btoa(get_sprites_as_png()), {base64: true});
+    return '' + zip.generate();
+}
+
+function download()
+{
+    // http://eligrey.com/blog/post/saving-generated-files-on-the-client-side
+    // http://stackoverflow.com/a/10667687
+//     var s = '';
+//     for (var y = 0; y < imageHeight; y++)
+//     {
+//         for (var x = 0; x < imageWidth; x++)
+//         {
+//             var color = imageData[y][x];
+//             s += String.fromCharCode(color[0], color[1], color[2], color[3]);
+//         }
+//     }
+//     png_data = generatePng(imageWidth, imageHeight, s);
+//     var pom = $('<a>');
+//     pom.attr('href', 'data:image/png;base64,' + Base64.encode(png_data));
+//     pom.attr('download', 'picture.png');
+//     pom[0].click();
+
+//     var canvas = $('#big_pixels')[0];
+//     var link = document.createElement('a');
+//     link.download = 'image.png';
+//     link.href = canvas.toDataURL("image/png").replace("image/png", "image/octet-stream");
+//     link.click();
+    
+    // see FileSaver.js
+    
+    $('#save_sprites').show();
+
+    var png_data = get_sprites_as_png();
+    $('img#sprites_composed').attr('src', 'data:image/png;base64,' + png_data);
+    
+//     $('#dl_button').downloadify({
+//         filename: 'sprites.txt',
+//         data: 'hello!',
+//         onComplete: function(){ 
+//         alert('Your File Has Been Saved!'); 
+//         },
+//         onCancel: function(){ 
+//         alert('You have cancelled the saving of this file.');
+//         },
+//         onError: function(){ 
+//         alert('Error.');
+//         },
+//         transparent: true,
+//         swf: 'js/Downloadify-0.2.1/media/downloadify.swf',
+//         downloadImage: 'js/Downloadify-0.2.1/images/download.png',
+//         width: 100,
+//         height: 30,
+//         append: false
+//     });
+    Downloadify.create('dl_button',{
+        filename: function() { return 'sprites.hs'; },
+        dataType: 'string',
+        data: function() { return get_zip_package(); },
+        onComplete: function(){  },
+        onCancel: function(){ },
+        onError: function(e){ },
+        swf: 'js/downloadify.swf',
+        downloadImage: 'js/Downloadify-0.2.1/images/download.png',
+        width: 100,
+        height: 30,
+        transparent: true,
+        append: false
+    });
 }
 
 function update_sprite(add_to_undo_stack)
