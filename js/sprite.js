@@ -112,6 +112,23 @@ function draw_level()
     }
 }
 
+function rescue() 
+{
+    $('textarea').remove();
+    var textarea = $('<textarea>');
+    $('body').append(textarea);
+    textarea.css('width', '100%');
+    textarea.css('height', '400px');
+    var s = get_zip_package();
+    var text = "";
+    for (var i = 0; i < s.length; i += 70)
+        text += s.substr(i, 70) + "\n";
+    textarea.val(text);
+    textarea.focus();
+    textarea.select();
+    document.execCommand('Copy');
+}
+
 function spray_next()
 {
     if (spray_pixels.length == 0)
@@ -582,6 +599,7 @@ $().ready(function() {
             }
             else
             {
+//                 data = data.replace("\n", '');
                 console.log('loading hs file...');
                 data = data.substr(data.indexOf('base64,') + 7);
                 data = atob(data);
