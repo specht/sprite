@@ -144,7 +144,7 @@ function setCurrentColor(color, update_variations)
             swatch.css('background', b);
             swatch.data('html_color', variation.toRgbString());
             var rgb = variation.toRgb();
-            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.trunc(rgb.a * 255)]);
+            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.floor(rgb.a * 255)]);
             $('#color-variations').append(swatch);
         }
         $('#color-variations').append('<br />');
@@ -160,7 +160,7 @@ function setCurrentColor(color, update_variations)
             swatch.css('background', b);
             swatch.data('html_color', variation.toRgbString());
             var rgb = variation.toRgb();
-            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.trunc(rgb.a * 255)]);
+            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.floor(rgb.a * 255)]);
             $('#color-variations').append(swatch);
         }
         $('#color-variations').append('<br />');
@@ -172,7 +172,7 @@ function setCurrentColor(color, update_variations)
             swatch.css('background', b);
             swatch.data('html_color', variation.toRgbString());
             var rgb = variation.toRgb();
-            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.trunc(rgb.a * 255)]);
+            swatch.data('list_color', [rgb.r, rgb.g, rgb.b, Math.floor(rgb.a * 255)]);
             $('#color-variations').append(swatch);
         }
     }
@@ -924,8 +924,8 @@ $().ready(function() {
 
     $('canvas#level').mousemove(function(e) {
         var context = $(e.target)[0].getContext('2d');
-        var rx = Math.trunc(e.offsetX / imageWidth);
-        var ry = Math.trunc(e.offsetY / imageHeight);
+        var rx = Math.floor(e.offsetX / imageWidth);
+        var ry = Math.floor(e.offsetY / imageHeight);
         if (currentlyDrawingLevel)
         {
             set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
@@ -942,8 +942,8 @@ $().ready(function() {
         draw_level();
     });
     $('canvas#level').mousedown(function(e) {
-        var rx = Math.trunc(e.offsetX / imageWidth);
-        var ry = Math.trunc(e.offsetY / imageHeight);
+        var rx = Math.floor(e.offsetX / imageWidth);
+        var ry = Math.floor(e.offsetY / imageHeight);
         set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
         draw_level();
         currentlyDrawingLevel = true;
