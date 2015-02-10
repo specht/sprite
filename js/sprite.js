@@ -484,6 +484,17 @@ function loadLevels(info)
     });
 }
 
+function setPenWidth(w)
+{
+    var target = $('#pen_width_' + w);
+    if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move' || currentTool == 'spray' || currentTool == 'gradient'))
+    {
+        penWidth = w;
+        $('.penwidth').removeClass('active');
+        target.addClass('active');
+    }
+}
+
 $().ready(function() {
     for (var y = 0; y < imageHeight; y++)
     {
@@ -537,15 +548,10 @@ $().ready(function() {
         }});
     }
 
-    for (var i = 1; i <= 5; i++)
+    for (var i = 1; i <= 4; i++)
     {
         $('#pen_width_' + i).mousedown(function(event) {
-            if (!(currentTool == 'picker' || currentTool == 'fill' || currentTool == 'move' || currentTool == 'spray' || currentTool == 'gradient'))
-            {
-                penWidth = Number($(event.target).attr('id').replace('pen_width_', ''));
-                $('.penwidth').removeClass('active');
-                $(event.target).addClass('active');
-            }
+            setPenWidth(new Number($(event.target).attr('id').replace('pen_width_', '').valueOf()));
         });
     }
     $('#pen_width_' + penWidth).addClass('active');
@@ -702,7 +708,7 @@ $().ready(function() {
     });
 
     $(window).keydown(function(e) {
-//         console.log(e.which);
+        console.log(e.which);
         var mapping = {
             81: 'tool_draw',
             87: 'tool_line',
@@ -825,6 +831,27 @@ $().ready(function() {
             switchPane('levels');
             e.preventDefault();
         }
+        if (e.which == 77)
+        {
+            setPenWidth(1);
+            e.preventDefault();
+        }
+        if (e.which == 188)
+        {
+            setPenWidth(2);
+            e.preventDefault();
+        }
+        if (e.which == 190)
+        {
+            setPenWidth(3);
+            e.preventDefault();
+        }
+        if (e.which == 191)
+        {
+            setPenWidth(4);
+            e.preventDefault();
+        }
+        
     });
 
     $('#big_pixels').mouseenter(function(e) {
