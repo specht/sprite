@@ -2,6 +2,7 @@
 <head>
 <title>Sprite Editor</title>
 <link rel="stylesheet" href="css/sprite.css" type="text/css"/>
+<link rel="stylesheet" href="css/2dgame.css" type="text/css"/>
 <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui.min.js"></script>
 <script type="text/javascript" src="js/cling-colors.js"></script>
@@ -12,6 +13,7 @@
 <script type="text/javascript" src="js/downloadify.min.js"></script>
 <script type="text/javascript" src="js/TinyColor-1.0.0/tinycolor.js"></script>
 <script type="text/javascript" src="js/sprite.js"></script>
+<script type="text/javascript" src="js/2dgame.js"></script>
 
 </head>
 
@@ -35,6 +37,8 @@
 <div style='vertical-align: top; display: inline-block;'>
 <div id='pane-switcher' class='panel'>
 <span class='toolbutton tool active-pane' id='pane_sprites' style='background: url(images/sprite.png) center center no-repeat;' title='Sprites zeichnen'></span>
+<br />
+<span class='toolbutton tool' id='pane_options' style='background: url(images/wrench.png) center center no-repeat;' title='Einstellungen'></span>
 <br />
 <span class='toolbutton tool' id='pane_levels' style='background: url(images/level.png) center center no-repeat;' title='Level zeichnen'></span>
 <br />
@@ -110,6 +114,11 @@
 
 </div>
 
+<div class='pane' id='pane-options' style='display: inline-block;'>
+<div class='panel' id='sprite-options' style='display: inline-block; min-width: 600px;'>
+</div>
+</div>
+
 <div class='pane' id='pane-levels' style='display: inline-block;'>
 <div id='level_lineup' class='panel' style='height: 24px; width: 750px; margin-bottom: 4px;'>
 </div>
@@ -122,6 +131,7 @@
 <input type='checkbox' id='use-level' /><label for='use-level'>Level benutzen</label>
 </div>
 </div>
+
 
 
 <div id='save_sprites' class='overlay' style='display: none;'>

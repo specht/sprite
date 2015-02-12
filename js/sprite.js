@@ -25,6 +25,19 @@ var level_use = [];
 var level_props = {};
 var current_level = 0;
 var loadWithShift = false;
+var sprite_properties = [];
+
+var states = [];
+states.push(['actor_front', 'Spielfigur von vorn']);
+states.push(['actor_back', 'Spielfigur von hinten']);
+states.push(['actor_left', 'Spielfigur schaut nach links']);
+states.push(['actor_right', 'Spielfigur schaut nach rechts']);
+states.push(['can_stand_on', 'man kann drauf stehen (man f&auml;llt nicht runter, wenn man draufsteht)']);
+states.push(['is_solid', 'es ist fest (man kann nicht hineinlaufen)']);
+states.push(['can_climb_up', 'man kann hinauf klettern']);
+states.push(['can_climb_down', 'man kann herunter klettern']);
+states.push(['slide_down_left', 'man rutscht nach links hinunter']);
+states.push(['slide_down_right', 'man rutscht nach rechts hinunter']);
 
 function set_field(x, y, v)
 {
@@ -65,6 +78,10 @@ function swap_sprites_in_all_levels(a, b)
                 l[key] = a;
         }
     });
+    // also swap sprite properties
+    var temp = sprite_properties[a];
+    sprite_properties[a] = sprite_properties[b];
+    sprite_properties[b] = temp;
 }
 
 function set_current_level(which)
@@ -82,8 +99,18 @@ function set_current_level(which)
         $('span#level_' + which + ' div').addClass('inactive');
 }
 
+function updateSpriteProperties()
+{
+    $('#sprite-options input').each(function(_) {
+        var key = $(this).attr('id').replace('so-', '');
+        $(this).prop('checked', key in sprite_properties[currentSpriteId]);
+    });
+}
+
 function switchPane(which)
 {
+    if (which === 'play')
+        play();
     $('.pane').hide();
     $('#pane-' + which).show();
     $('#pane-switcher .toolbutton').removeClass('active-pane');
@@ -92,6 +119,8 @@ function switchPane(which)
         draw_level();
     if (which == 'sprites')
         fix_sizes();
+    if (which == 'options')
+        updateSpriteProperties();
 }
 
 function draw_level()
@@ -112,7 +141,7 @@ function draw_level()
     }
 }
 
-function rescue() 
+function rescue()
 {
     $('textarea').remove();
     var textarea = $('<textarea>');
@@ -204,7 +233,7 @@ function penPattern(width)
     else if (width == 3)
         return [[0, -1], [-1, 0], [0, 0], [1, 0], [0, 1]];
     else if (width == 4)
-        return [[0, -1], [1, -1], 
+        return [[0, -1], [1, -1],
                 [-1, 0], [0, 0], [1, 0], [2, 0],
                 [-1, 1], [0, 1], [1, 1], [2, 1],
                 [0, 2], [1, 2]];
@@ -231,7 +260,7 @@ function drawLine(x0, y0, x1, y1, color, width)
     var sx = (x0 < x1) ? 1 : -1;
     var sy = (y0 < y1) ? 1 : -1;
     var err = dx - dy;
-    
+
     while (true) {
         jQuery.each(penPattern(width), function(_, delta) {
             var dx = x0 + delta[0];
@@ -263,7 +292,7 @@ function linePattern(x0, y0, x1, y1)
     var sx = (x0 < x1) ? 1 : -1;
     var sy = (y0 < y1) ? 1 : -1;
     var err = dx - dy;
-    
+
     while (true) {
         result.push([x0, y0]);
         if (x0 == x1 && y0 == y1)
@@ -325,14 +354,14 @@ function ellipsePattern(x0, y0, x1, y1)
     if (a == 0)
     if (a < 1 || b < 1)
         return linePattern(xm - a, ym - b, xm + a, ym + b);
-    
+
     var result = [];
     var dx = 0;
     var dy = b;
     var a2 = a * a;
     var b2 = b * b;
     var err = b2 - (2 * b - 1) * a2;
-    
+
     do {
         result.push([xm + dx, ym + dy]);
         result.push([xm - dx, ym + dy]);
@@ -388,7 +417,7 @@ function fillEllipsePattern(x0, y0, x1, y1)
 function floodFill(x, y, color)
 {
     var visited_pixels = [];
-    
+
     function _fill(x, y, targetColor, _replacementColor)
     {
         if (typeof(visited_pixels[[x, y]]) !== 'undefined')
@@ -439,6 +468,7 @@ function setCurrentSprite(sprite_id)
     currentSpriteId = sprite_id;
     $('#sprite_' + currentSpriteId).addClass('active');
     restore_image($('#sprite_' + currentSpriteId));
+    updateSpriteProperties();
     var imageIsEmpty = true;
     for (var y = 0; y < imageHeight; y++)
     {
@@ -496,6 +526,8 @@ function setPenWidth(w)
 }
 
 $().ready(function() {
+    for (var i = 0; i < MAX_SPRITES; i++)
+        sprite_properties[i] = {};
     for (var y = 0; y < imageHeight; y++)
     {
         var line = [];
@@ -529,9 +561,9 @@ $().ready(function() {
         });
         $('#sprites').append(" ");
         element.draggable({
-            containment: 'parent', 
-//             cursor: 'move', 
-            stack: '#sprites', 
+            containment: 'parent',
+//             cursor: 'move',
+            stack: '#sprites',
             delay: 100,
             revert: true
         });
@@ -581,17 +613,19 @@ $().ready(function() {
             var reader = new FileReader(),
             files = e.dataTransfer ? e.dataTransfer.files : e.target.files, i = 0;
             reader.onload = onFileLoad;
-            while (files[i]) 
+            while (files[i])
                 reader.readAsDataURL(files[i++]);
         });
 
-        function onFileLoad(e) 
+        function onFileLoad(e)
         {
             if (!loadWithShift)
             {
                 level = {};
                 level_use = [];
                 level_props = {};
+                for (var i = 0; i < MAX_SPRITES; i++)
+                    sprite_properties[i] = {};
             }
             var data = '' + e.target.result;
             if (e.target.result.substr(0, 14) === 'data:image/png')
@@ -610,7 +644,6 @@ $().ready(function() {
                 data = data.substr(data.indexOf('base64,') + 7);
                 data = atob(data);
                 data = atob(data);
-                var zip_buffer = new Uint8Array(data);
                 var zip = new JSZip(data);
                 $.each(zip.files, function (index, zipEntry) {
                     console.log(zipEntry);
@@ -620,6 +653,11 @@ $().ready(function() {
                         var urlCreator = window.URL || window.webkitURL;
                         var imageUrl = urlCreator.createObjectURL(blob);
                         loadSprites(imageUrl);
+                    }
+                    else if (zipEntry.name == 'sprite_props.json')
+                    {
+                        var info = JSON.parse(zipEntry.asText());
+                        sprite_properties = info;
                     }
                     else if (zipEntry.name == 'levels.json')
                     {
@@ -708,7 +746,7 @@ $().ready(function() {
     });
 
     $(window).keydown(function(e) {
-        console.log(e.which);
+//         console.log(e.which);
         var mapping = {
             81: 'tool_draw',
             87: 'tool_line',
@@ -828,7 +866,17 @@ $().ready(function() {
         }
         if (e.which == 50)
         {
+            switchPane('options');
+            e.preventDefault();
+        }
+        if (e.which == 51)
+        {
             switchPane('levels');
+            e.preventDefault();
+        }
+        if (e.which == 52)
+        {
+            switchPane('play');
             e.preventDefault();
         }
         if (e.which == 77)
@@ -851,7 +899,7 @@ $().ready(function() {
             setPenWidth(4);
             e.preventDefault();
         }
-        
+
     });
 
     $('#big_pixels').mouseenter(function(e) {
@@ -864,7 +912,7 @@ $().ready(function() {
         e.preventDefault();
     });
     $(window).mousemove(function(e) {
-        if (currentTool === 'move' || currentTool === 'line' || 
+        if (currentTool === 'move' || currentTool === 'line' ||
             currentTool === 'rect' || currentTool === 'ellipse' ||
             currentTool === 'fill_rect' || currentTool === 'fill_ellipse')
         {
@@ -885,7 +933,7 @@ $().ready(function() {
     });
     $(window).mouseup(function(e) {
         currentlyDrawingLevel = false;
-        console.log('currentlyDrawingLevel', currentlyDrawingLevel);
+//         console.log('currentlyDrawingLevel', currentlyDrawingLevel);
         finishDrawing(true);
     });
 
@@ -927,7 +975,7 @@ $().ready(function() {
         if (k < cling_colors.length)
             color = cling_colors[k][0];
         swatch.data('html_color', color);
-        var listColor = [Number.parseInt(color.substr(1, 2), 16), 
+        var listColor = [Number.parseInt(color.substr(1, 2), 16),
                          Number.parseInt(color.substr(3, 2), 16),
                          Number.parseInt(color.substr(5, 2), 16), 255];
         swatch.attr('id', 'swatch_' + color.replace('#', ''));
@@ -1013,7 +1061,7 @@ $().ready(function() {
 
         $('#level_lineup').append(level_indicator);
     }
-    
+
     set_current_level(0);
 
     switchPane('sprites');
@@ -1022,7 +1070,7 @@ $().ready(function() {
     });
 
     fix_sizes();
-    
+
     $('#use-level').change(function(e) {
         level_use[current_level] = $(e.target).is(':checked');
         set_current_level(current_level);
@@ -1087,6 +1135,19 @@ $().ready(function() {
         }
         currentSpriteId = -1;
         setCurrentSprite(0);
+    });
+    jQuery.each(states, function(_, item) {
+        var key = item[0];
+        var label = item[1];
+        var snippet = $("<input id='so-" + key + "' type='checkbox' /><label for='so-" + key + "'>" + label + "</label><br />");
+        $('#sprite-options').append(snippet);
+        $('#so-' + key).change(function(e) {
+            var key = $(e.target).attr('id').replace('so-', '');
+            if ($(e.target).is(':checked'))
+                sprite_properties[currentSpriteId][key] = true;
+            else
+                delete sprite_properties[currentSpriteId][key];
+        });
     });
 });
 
@@ -1189,11 +1250,18 @@ function get_level_descriptions()
     return levels;
 }
 
+function get_sprite_properties()
+{
+//     var props = [];
+    return sprite_properties;
+}
+
 function get_zip_package()
 {
     var zip = new JSZip();
     zip.file("readme.txt", "Hackschule FTW!!!\n");
     zip.file("sprites.png", btoa(get_sprites_as_png()), {base64: true});
+    zip.file("sprite_props.json", btoa(JSON.stringify(get_sprite_properties())), {base64: true});
     zip.file("levels.json", btoa(JSON.stringify(get_level_descriptions())), {base64: true});
     return '' + zip.generate();
 }
@@ -1383,11 +1451,11 @@ function renderMaskOutline(context)
             var here = 0;
             if (x < imageWidth && y < imageHeight)
                 here = selectionMask[y][x];
-            
+
             var other = 0;
             if (y > 0 && x < imageWidth)
                 other = selectionMask[y - 1][x];
-            
+
             if (here != other)
             {
                 var x0 = Math.floor(x * width / imageWidth) + 0.5;
@@ -1531,7 +1599,7 @@ function initiateDrawing(x, y)
         lineStart = null;
         handleDrawing(x, y);
     }
-    
+
     if (currentTool == 'gradient')
     {
         var width = $('#big_pixels').width();
@@ -1803,4 +1871,9 @@ function finishDrawing(success)
         spray_pixels = [];
         update_sprite(true);
     }
+}
+
+function play()
+{
+    init_game(28 * 24, 16 * 24, 4, get_zip_package());
 }
