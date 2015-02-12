@@ -105,6 +105,8 @@ function game_logic_loop()
     else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
         move_player(1, 1);
     else if (!applies(_get_field(vars.player_x, vars.player_y + 1), 'can_stand_on') &&
+        !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb_up') ||
+         applies(_get_field(vars.player_x, vars.player_y), 'can_climb_down')) &&
         !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_up') ||
          applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_down')))
         move_player(0, 1);
@@ -140,7 +142,8 @@ function keydown(code)
     }
     if (code == 40)
     {
-        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_down'))
+        if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb_down') ||
+            applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_down'))
             move_player(0, 1);
     }
 }
@@ -215,6 +218,7 @@ function initLevel(which)
                 vars.player_x = x + vars.levels[which].xmin;
                 vars.player_y = y + vars.levels[which].ymin;
                 console.log('setting player at', vars.player_x, vars.player_y);
+                vars.player_sprite = cell;
                 row[x] = -1;
                 found_player = true;
             }
@@ -253,6 +257,27 @@ function init_game(width, height, supersampling, data)
         player_sprite_front: 0,
         player_sprite_back: 0
     };
+    if (typeof(supersampling) == 'undefined')
+        supersampling = 4;
+    vars.game_width = width;
+    vars.game_height = height;
+    vars.game_supersampling = supersampling;
+    var container = $('<div>');
+    container.attr('id', 'play_container');
+    var canvas = $('<canvas>');
+    canvas.attr('id', 'canvas');
+    canvas.attr('width', width * supersampling);
+    canvas.attr('height', height * supersampling);
+    canvas.css('position', 'absolute');
+    canvas.css('z-index', '1000');
+    canvas.css('left', 0);
+    canvas.css('top', 0);
+    var title = $('<div>');
+    title.addClass('ontop');
+//     title.html("Pyramide");
+    $(container).append(canvas);
+    $(container).append(title);
+    $('body').append(container);
     var zip = new JSZip(atob(data));
     $.each(zip.files, function (index, zipEntry) {
         console.log(zipEntry);
@@ -276,27 +301,6 @@ function init_game(width, height, supersampling, data)
 //             loadLevels(info);
         }
     });
-    if (typeof(supersampling) == 'undefined')
-        supersampling = 4;
-    vars.game_width = width;
-    vars.game_height = height;
-    vars.game_supersampling = supersampling;
-    var container = $('<div>');
-    container.attr('id', 'play_container');
-    var canvas = $('<canvas>');
-    canvas.attr('id', 'canvas');
-    canvas.attr('width', width * supersampling);
-    canvas.attr('height', height * supersampling);
-    canvas.css('position', 'absolute');
-    canvas.css('z-index', '1000');
-    canvas.css('left', 0);
-    canvas.css('top', 0);
-    var title = $('<div>');
-    title.addClass('ontop');
-//     title.html("Pyramide");
-    $(container).append(canvas);
-    $(container).append(title);
-    $('body').append(container);
     jQuery.each(vars.sprite_properties, function(_, props) {
         if ('actor_left' in props)
             vars.player_sprite_left = _;
@@ -316,7 +320,7 @@ function load_sprites(path, id)
     if (typeof(id) === 'undefined')
         id = 'sprites_default';
     var img = $('<img>').attr('id', id).attr('src', path).css('display', 'none');
-    $('body').append(img);
+    $('#play_container').append(img);
 }
 
 function load_game(url)
