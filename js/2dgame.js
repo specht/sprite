@@ -19,6 +19,20 @@ function _get_field(x, y)
     return clevel.data[ly][lx];
 }
 
+function _set_field(x, y, v)
+{
+    var clevel = vars.levels[vars.current_level];
+    if (clevel.use !== true)
+        return;
+    var ly = y - clevel.ymin;
+    if (ly < 0 || ly >= clevel.data.length)
+        return;
+    var lx = x - clevel.xmin;
+    if (lx < 0 || lx >= clevel.data[ly].length)
+        return;
+    clevel.data[ly][lx] = v;
+}
+
 function _fix_sizes()
 {
     var width = window.innerWidth;
@@ -67,31 +81,121 @@ function loop(time)
         for (var x = 0;  x < 28; x++)
         {
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
-            draw_sprite(x * 24 - (dx % 24), y * 24 - (dy % 24), v);
+            var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
+//             var drawn_something = false;
+//             for (var i = 0; i < vars.max_keys; i++)
+//             {
+//                 if (applies(v, 'door_' + (i + 1)))
+//                 {
+//                     draw_sprite_part_y(x * 24 - (dx % 24), y * 24 - (dy % 24), v, 'sprites_default', vars.door_open[i], 24 - vars.door_open[i], 0);
+//                     drawn_something = true;
+//                 }
+//             }
+//             if (!drawn_something)
+//                 draw_sprite(x * 24 - (dx % 24), y * 24 - (dy % 24), v);
+            if (poskey in vars.field_offset)
+            {
+                draw_sprite_special(x * 24 - (dx % 24) + vars.field_offset[poskey].dx,
+                                    y * 24 - (dy % 24) + vars.field_offset[poskey].dy,
+                                    v, 'sprites_default',
+                                    vars.field_offset[poskey].alpha,
+                                    vars.field_offset[poskey].osx, vars.field_offset[poskey].osy,
+                                    vars.field_offset[poskey].w, vars.field_offset[poskey].h,
+                                    vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
+            }
+            else
+                draw_sprite(x * 24 - (dx % 24), y * 24 - (dy % 24), v);
+
         }
     }
-    draw_sprite(vars.player_x * 24 - dx, vars.player_y * 24 - dy, vars.player_sprite);
+    var player_shift_x = 0;
+    var player_shift_y = 0;
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right'))
+        player_shift_y = 12;
+    draw_sprite(vars.player_x * 24 + player_shift_x - dx, vars.player_y * 24 + player_shift_y - dy, vars.player_sprite);
 }
 
 function move_player(move_x, move_y)
 {
+    if (move_y == 0 && move_x < 0)
+    {
+        // left
+        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_left'))
+            move_y -= 1;
+        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right'))
+            move_y += 1;
+    }
+    else if (move_y == 0 && move_x > 0)
+    {
+        // right
+        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_right'))
+            move_y -= 1;
+        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left'))
+            move_y += 1;
+    }
+
+
+    var move_ok = false;
     if (move_x != 0 || move_y != 0)
     {
         if (!applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'is_solid'))
+            move_ok = true;
+        // check if doors are open
+        for (var i = 0; i < vars.max_keys; i++)
         {
-            vars.player_x += move_x;
-            vars.player_y += move_y;
-            if (move_x < 0)
-                vars.player_sprite = vars.player_sprite_left;
-            else if (move_x > 0)
-                vars.player_sprite = vars.player_sprite_right;
-            else {
-                if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb_up') ||
-                    applies(_get_field(vars.player_x, vars.player_y), 'can_climb_down'))
-                    vars.player_sprite = vars.player_sprite_back;
-                else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_up') ||
-                    applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_down'))
-                    vars.player_sprite = vars.player_sprite_front;
+            if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'door_' + (i + 1)) && vars.door_open[i])
+                move_ok = true;
+        }
+    }
+
+    if (move_ok)
+    {
+        vars.player_x += move_x;
+        vars.player_y += move_y;
+        if (move_x < 0)
+            vars.player_sprite = vars.player_sprite_left;
+        else if (move_x > 0)
+            vars.player_sprite = vars.player_sprite_right;
+        else {
+            if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb'))
+                vars.player_sprite = vars.player_sprite_back;
+            else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb'))
+                vars.player_sprite = vars.player_sprite_front;
+        }
+
+        // see if we found a key
+        for (var i = 0; i < vars.max_keys; i++)
+        {
+            if (applies(_get_field(vars.player_x, vars.player_y), 'key_' + (i + 1)))
+            {
+                vars.got_key[i] = true;
+                var anim_key = '' + (vars.player_x) + '/' + vars.player_y;
+                if (!(anim_key in vars.animations))
+                {
+                    vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
+                        _set_field(x, y, -1);
+                    }};
+                }
+            }
+        }
+
+        // see if we can open a door
+        for (var i = 0; i < vars.max_keys; i++)
+        {
+            if (vars.got_key[i] && !vars.door_open[i])
+            {
+                for (var dx = -1; dx <= 1; dx += 2)
+                {
+                    if (applies(_get_field(vars.player_x + dx, vars.player_y), 'door_' + (i + 1)))
+                    {
+                        var anim_key = '' + (vars.player_x + dx) + '/' + vars.player_y;
+                        if (!(anim_key in vars.animations))
+                        {
+                            vars.animations[anim_key] = {type: 'slide_door_up', door: i};
+                        }
+                    }
+                }
             }
         }
     }
@@ -105,11 +209,54 @@ function game_logic_loop()
     else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
         move_player(1, 1);
     else if (!applies(_get_field(vars.player_x, vars.player_y + 1), 'can_stand_on') &&
-        !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb_up') ||
-         applies(_get_field(vars.player_x, vars.player_y), 'can_climb_down')) &&
-        !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_up') ||
-         applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_down')))
+        !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb')) &&
+        !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb')))
         move_player(0, 1);
+
+    // handle animations
+    var remove_animations = [];
+    jQuery.each(Object.keys(vars.animations), function(_, key) {
+        var info = vars.animations[key];
+        if (info.type == 'slide_door_up')
+        {
+            if (!(key in vars.field_offset))
+                vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
+            vars.field_offset[key].osy += 2;
+            vars.field_offset[key].h -= 2;
+            if (vars.field_offset[key].osy > 14)
+            {
+                vars.door_open[info.door] = true;
+            }
+            if (vars.field_offset[key].osy > 18)
+            {
+                if (typeof(info.done) === 'function')
+                {
+                    var xy = key.split('/');
+                    info.done(new Number(xy[0]).valueOf(), new Number(xy[1]).valueOf());
+                }
+                remove_animations.push(key);
+            }
+        }
+        if (info.type == 'pick_up')
+        {
+            if (!(key in vars.field_offset))
+                vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
+            vars.field_offset[key].dy -= 4;
+            vars.field_offset[key].alpha -= 0.15;
+            if (vars.field_offset[key].dy < -24)
+            {
+                if (typeof(info.done) === 'function')
+                {
+                    var xy = key.split('/');
+                    info.done(new Number(xy[0]).valueOf(), new Number(xy[1]).valueOf());
+                }
+                remove_animations.push(key);
+            }
+        }
+    });
+    jQuery.each(remove_animations, function(_, which) {
+        delete vars.animations[which];
+    });
 }
 
 function stopTheGame()
@@ -137,13 +284,13 @@ function keydown(code)
     }
     if (code == 38)
     {
-        if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb_up'))
+        if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb'))
             move_player(0, -1);
     }
     if (code == 40)
     {
-        if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb_down') ||
-            applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb_down'))
+        if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb') ||
+            applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb'))
             move_player(0, 1);
     }
 }
@@ -159,8 +306,8 @@ function init() {
     vars.imageContext.msImageSmoothingEnabled = false;
     vars.imageContext.imageSmoothingEnabled = false;
 
-    window.onresize = fix_sizes;
-    fix_sizes();
+    window.onresize = _fix_sizes;
+    _fix_sizes();
 
     function _loop(time)
     {
@@ -228,14 +375,16 @@ function initLevel(which)
         if (found_player)
             return false;
     });
+    // reset all keys
+    for (var i = 0; i < vars.max_keys; i++)
+    {
+        vars.got_key[i] = false;
+        vars.door_open[i] = false;
+    }
 }
 
 function init_game(width, height, supersampling, data)
 {
-    $('body').css('padding', '0');
-    $('body').css('margin', '0');
-    $('body').css('overflow', 'hidden');
-
     vars = {
         game_width: null,
         game_height: null,
@@ -255,7 +404,12 @@ function init_game(width, height, supersampling, data)
         player_sprite_left: 0,
         player_sprite_right: 0,
         player_sprite_front: 0,
-        player_sprite_back: 0
+        player_sprite_back: 0,
+        max_keys: 1,
+        got_key: [],
+        door_open: [],
+        animations: {},
+        field_offset: {},
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
@@ -275,8 +429,19 @@ function init_game(width, height, supersampling, data)
     var title = $('<div>');
     title.addClass('ontop');
 //     title.html("Pyramide");
+    var backdrop = $('<div>');
+    backdrop.css('position', 'absolute');
+    backdrop.css('background-color', '#000');
+    backdrop.css('top', '0px');
+    backdrop.css('bottom', '0px');
+    backdrop.css('left', '0px');
+    backdrop.css('right', '0px');
+    backdrop.css('z-index', 999);
+    $(container).append(backdrop);
     $(container).append(canvas);
     $(container).append(title);
+    backdrop.css('display', 'none');
+    canvas.css('display', 'none');
     $('body').append(container);
     var zip = new JSZip(atob(data));
     $.each(zip.files, function (index, zipEntry) {
@@ -311,8 +476,15 @@ function init_game(width, height, supersampling, data)
         if ('actor_back' in props)
             vars.player_sprite_back = _;
     });
-    init();
-    initLevel(0);
+    backdrop.fadeIn(function() {
+        $('body').css('padding', '0');
+        $('body').css('margin', '0');
+        $('body').css('overflow', 'hidden');
+        canvas.fadeIn();
+        switchPane('play', true);
+        init();
+        initLevel(0);
+    });
 }
 
 function load_sprites(path, id)
@@ -370,6 +542,45 @@ function draw_sprite(x, y, which, id)
     vars.imageContext.drawImage(document.getElementById(id), px * 24, py * 24, 24, 24,
                                 x * vars.game_supersampling, y * vars.game_supersampling,
                                 24 * vars.game_supersampling, 24 * vars.game_supersampling);
+}
+
+function draw_sprite_special(x, y, which, id, alpha, osx, osy, w, h, odx, ody)
+{
+    if (typeof(id) === 'undefined')
+        id = 'sprites_default';
+    if (which < 0)
+        return;
+    if (alpha != 1.0)
+    {
+        vars.imageContext.save();
+        vars.imageContext.globalAlpha = alpha;
+    }
+    x = Math.round(x);
+    y = Math.round(y);
+    var px = Math.floor(which % 8);
+    var py = Math.floor(which / 8);
+    vars.imageContext.drawImage(document.getElementById(id), px * 24 + osx, py * 24 + osy, w, h,
+                                (x + odx) * vars.game_supersampling, (y + ody) * vars.game_supersampling,
+                                w * vars.game_supersampling, h * vars.game_supersampling);
+    if (alpha != 1.0)
+    {
+        vars.imageContext.restore();
+    }
+}
+
+function draw_sprite_part_y(x, y, which, id, sy, h, dy)
+{
+    if (typeof(id) === 'undefined')
+        id = 'sprites_default';
+    if (which < 0)
+        return;
+    x = Math.round(x);
+    y = Math.round(y);
+    var px = Math.floor(which % 8);
+    var py = Math.floor(which / 8);
+    vars.imageContext.drawImage(document.getElementById(id), px * 24, py * 24 + sy, 24, h,
+                                x * vars.game_supersampling, (y + dy) * vars.game_supersampling,
+                                24 * vars.game_supersampling, h * vars.game_supersampling);
 }
 
 function draw_part(which, x, y, sx, sy, sw, sh, alpha)

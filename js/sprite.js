@@ -28,16 +28,19 @@ var loadWithShift = false;
 var sprite_properties = [];
 
 var states = [];
-states.push(['actor_front', 'Spielfigur von vorn']);
+states.push(['actor_front', 'Spielfigur von vorn', 'Figur']);
 states.push(['actor_back', 'Spielfigur von hinten']);
 states.push(['actor_left', 'Spielfigur schaut nach links']);
 states.push(['actor_right', 'Spielfigur schaut nach rechts']);
-states.push(['can_stand_on', 'man kann drauf stehen (man f&auml;llt nicht runter, wenn man draufsteht)']);
+states.push(['can_stand_on', 'man kann drauf stehen (man f&auml;llt nicht runter, wenn man draufsteht)', 'Feste Bl&ouml;cke']);
 states.push(['is_solid', 'es ist fest (man kann nicht hineinlaufen)']);
-states.push(['can_climb_up', 'man kann hinauf klettern']);
-states.push(['can_climb_down', 'man kann herunter klettern']);
-states.push(['slide_down_left', 'man rutscht nach links hinunter']);
+states.push(['can_climb', 'man kann rauf und runter klettern', 'Klettern']);
+states.push(['stairs_up_left', 'Treppe nach links oben']);
+states.push(['stairs_up_right', 'Treppe nach rechts oben']);
+states.push(['slide_down_left', 'man rutscht nach links hinunter', 'Rutschen']);
 states.push(['slide_down_right', 'man rutscht nach rechts hinunter']);
+states.push(['door_1', 'T&uuml;r 1', 'T&uuml;ren und Schl&uuml;ssel']);
+states.push(['key_1', 'Schl&uuml;ssel 1']);
 
 function set_field(x, y, v)
 {
@@ -107,10 +110,15 @@ function updateSpriteProperties()
     });
 }
 
-function switchPane(which)
+function switchPane(which, finishplaytransition)
 {
-    if (which === 'play')
+    if (typeof(finishplaytransition) === 'undefined')
+        finishplaytransition = false;
+    if (which === 'play' && (!finishplaytransition))
+    {
         play();
+        return;
+    }
     $('.pane').hide();
     $('#pane-' + which).show();
     $('#pane-switcher .toolbutton').removeClass('active-pane');
@@ -1137,6 +1145,11 @@ $().ready(function() {
         setCurrentSprite(0);
     });
     jQuery.each(states, function(_, item) {
+        if (item.length > 2)
+        {
+            var snippet = $("<span class='heading'>" +item[2] + "</span><br />");
+            $('#sprite-options').append(snippet);
+        }
         var key = item[0];
         var label = item[1];
         var snippet = $("<input id='so-" + key + "' type='checkbox' /><label for='so-" + key + "'>" + label + "</label><br />");
@@ -1875,5 +1888,5 @@ function finishDrawing(success)
 
 function play()
 {
-    init_game(28 * 24, 16 * 24, 4, get_zip_package());
+    init_game(28 * 24, 16 * 24, 2, get_zip_package());
 }

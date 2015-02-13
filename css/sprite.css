@@ -204,3 +204,14 @@ body {
     position: relative;
     top: -3px;
 }
+
+#sprite-options .heading {
+    display: block;
+    font-weight: bold;
+    margin-top: 5px;
+    margin-bottom: 0px;
+    border-top: 1px solid #aaa;
+    border-bottom: 1px solid #aaa;
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
