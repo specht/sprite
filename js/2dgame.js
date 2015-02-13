@@ -173,6 +173,7 @@ function move_player(move_x, move_y)
                 var anim_key = '' + (vars.player_x) + '/' + vars.player_y;
                 if (!(anim_key in vars.animations))
                 {
+                    vars.sounds['pick_up'].play();
                     vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
                         _set_field(x, y, -1);
                     }};
@@ -192,10 +193,23 @@ function move_player(move_x, move_y)
                         var anim_key = '' + (vars.player_x + dx) + '/' + vars.player_y;
                         if (!(anim_key in vars.animations))
                         {
+                            vars.sounds['power_up'].play();
                             vars.animations[anim_key] = {type: 'slide_door_up', door: i};
                         }
                     }
                 }
+            }
+        }
+
+        // see if we stand on a crumbling block
+        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'crumbles'))
+        {
+            var anim_key = '' + (vars.player_x) + '/' + (vars.player_y + 1);
+            if (!(anim_key in vars.animations))
+            {
+                vars.animations[anim_key] = {wait: 15, type: 'crumble', done: function(x, y) {
+                    _set_field(x, y, -1);
+                }};
             }
         }
     }
@@ -212,11 +226,24 @@ function game_logic_loop()
         !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb')) &&
         !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb')))
         move_player(0, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'crumbles') &&
+        ('' + vars.player_x + '/' + (vars.player_y + 1) in vars.field_offset))
+    {
+        move_player(0, 1);
+    }
 
     // handle animations
     var remove_animations = [];
     jQuery.each(Object.keys(vars.animations), function(_, key) {
         var info = vars.animations[key];
+        if (typeof(info.wait) !== 'undefined')
+        {
+            if (info.wait > 0)
+            {
+                info.wait--;
+                return;
+            }
+        }
         if (info.type == 'slide_door_up')
         {
             if (!(key in vars.field_offset))
@@ -242,14 +269,32 @@ function game_logic_loop()
             if (!(key in vars.field_offset))
                 vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
             vars.field_offset[key].dy -= 4;
-            vars.field_offset[key].alpha -= 0.15;
-            if (vars.field_offset[key].dy < -24)
+            if (vars.field_offset[key].dy < -20)
+                vars.field_offset[key].alpha -= 0.2;
+            if (vars.field_offset[key].dy < -40)
             {
                 if (typeof(info.done) === 'function')
                 {
                     var xy = key.split('/');
                     info.done(new Number(xy[0]).valueOf(), new Number(xy[1]).valueOf());
                 }
+                remove_animations.push(key);
+            }
+        }
+        if (info.type == 'crumble')
+        {
+            if (!(key in vars.field_offset))
+                vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
+            vars.field_offset[key].dy += 24;
+            var xy = key.split('/');
+            var x = new Number(xy[0]).valueOf();
+            var y = new Number(xy[1]).valueOf();
+            if (applies(_get_field(x, y + Math.floor(vars.field_offset[key].dy / 24.0)), 'is_solid'))
+            {
+                vars.sounds['hit_hurt'].currentTime = 0;
+                vars.sounds['hit_hurt'].play();
+                if (typeof(info.done) === 'function')
+                    info.done(x, y);
                 remove_animations.push(key);
             }
         }
@@ -262,6 +307,7 @@ function game_logic_loop()
 function stopTheGame()
 {
     vars.stopGame = true;
+    vars.sounds['music'].pause();
     $('body').removeAttr('style');
     $('#play_container').empty();
     $('#play_container').remove();
@@ -381,6 +427,7 @@ function initLevel(which)
         vars.got_key[i] = false;
         vars.door_open[i] = false;
     }
+    vars.sounds['music'].play();
 }
 
 function init_game(width, height, supersampling, data)
@@ -405,11 +452,12 @@ function init_game(width, height, supersampling, data)
         player_sprite_right: 0,
         player_sprite_front: 0,
         player_sprite_back: 0,
-        max_keys: 1,
+        max_keys: 4,
         got_key: [],
         door_open: [],
         animations: {},
         field_offset: {},
+        sounds: {},
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
@@ -443,6 +491,10 @@ function init_game(width, height, supersampling, data)
     backdrop.css('display', 'none');
     canvas.css('display', 'none');
     $('body').append(container);
+    vars.sounds['hit_hurt'] = new Audio('sounds/Hit_Hurt41.wav');
+    vars.sounds['pick_up'] = new Audio('sounds/Pickup_Coin36.wav');
+    vars.sounds['power_up'] = new Audio('sounds/Powerup28.wav');
+    vars.sounds['music'] = new Audio('sounds/music-low.mp3');
     var zip = new JSZip(atob(data));
     $.each(zip.files, function (index, zipEntry) {
         console.log(zipEntry);

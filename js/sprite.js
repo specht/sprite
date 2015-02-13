@@ -24,7 +24,7 @@ var level_use = [];
 // offset, background
 var level_props = {};
 var current_level = 0;
-var loadWithShift = false;
+var shiftPressed = false;
 var sprite_properties = [];
 
 var states = [];
@@ -32,15 +32,22 @@ states.push(['actor_front', 'Spielfigur von vorn', 'Figur']);
 states.push(['actor_back', 'Spielfigur von hinten']);
 states.push(['actor_left', 'Spielfigur schaut nach links']);
 states.push(['actor_right', 'Spielfigur schaut nach rechts']);
-states.push(['can_stand_on', 'man kann drauf stehen (man f&auml;llt nicht runter, wenn man draufsteht)', 'Feste Bl&ouml;cke']);
+states.push(['can_stand_on', 'man kann drauf stehen (man f&auml;llt nicht runter, wenn man draufsteht)', 'Feste und lose Bl&ouml;cke']);
 states.push(['is_solid', 'es ist fest (man kann nicht hineinlaufen)']);
-states.push(['can_climb', 'man kann rauf und runter klettern', 'Klettern']);
+states.push(['crumbles', 'Block f&auml;llt nach einer Weile runter']);
+states.push(['can_climb', 'man kann rauf und runter klettern (Leiter)', 'Leitern und Treppen']);
 states.push(['stairs_up_left', 'Treppe nach links oben']);
 states.push(['stairs_up_right', 'Treppe nach rechts oben']);
 states.push(['slide_down_left', 'man rutscht nach links hinunter', 'Rutschen']);
 states.push(['slide_down_right', 'man rutscht nach rechts hinunter']);
 states.push(['door_1', 'T&uuml;r 1', 'T&uuml;ren und Schl&uuml;ssel']);
 states.push(['key_1', 'Schl&uuml;ssel 1']);
+states.push(['door_2', 'T&uuml;r 2']);
+states.push(['key_2', 'Schl&uuml;ssel 2']);
+states.push(['door_3', 'T&uuml;r 3']);
+states.push(['key_3', 'Schl&uuml;ssel 3']);
+states.push(['door_4', 'T&uuml;r 4']);
+states.push(['key_4', 'Schl&uuml;ssel 4']);
 
 function set_field(x, y, v)
 {
@@ -502,7 +509,7 @@ function loadSprites(data)
 
 function loadLevels(info)
 {
-    if (loadWithShift)
+    if (shiftPressed)
         return;
     jQuery.each(info, function(i, l) {
         set_current_level(i);
@@ -614,7 +621,7 @@ $().ready(function() {
     });
     $('#tool_' + currentTool).addClass('active');
     $('#tool_load').mousedown(function(event) {
-        loadWithShift = (event.shiftKey === true);
+        shiftPressed = (event.shiftKey === true);
         $('#image_upload').val('');
         $('#image_upload').click();
         $('#image_upload').change(function(e) {
@@ -627,7 +634,7 @@ $().ready(function() {
 
         function onFileLoad(e)
         {
-            if (!loadWithShift)
+            if (!shiftPressed)
             {
                 level = {};
                 level_use = [];
@@ -639,7 +646,7 @@ $().ready(function() {
             if (e.target.result.substr(0, 14) === 'data:image/png')
             {
                 loadSprites(data);
-                if (!loadWithShift)
+                if (!shiftPressed)
                 {
                     set_current_level(0);
                     level_use[0] = true;
@@ -675,7 +682,7 @@ $().ready(function() {
                 });
             }
             switchPane('sprites');
-            if (!loadWithShift)
+            if (!shiftPressed)
                 set_current_level(0);
         }
     });
@@ -882,7 +889,7 @@ $().ready(function() {
             switchPane('levels');
             e.preventDefault();
         }
-        if (e.which == 52)
+        if (e.which == 80)
         {
             switchPane('play');
             e.preventDefault();
@@ -937,6 +944,7 @@ $().ready(function() {
         updateCursor(null, null);
     });
     $('#big_pixels').mousedown(function(e) {
+        shiftPressed = (e.shiftKey === true);
         initiateDrawing(e.offsetX, e.offsetY);
     });
     $(window).mouseup(function(e) {
@@ -1106,7 +1114,7 @@ $().ready(function() {
                         s += String.fromCharCode(data[offset++], data[offset++], data[offset++], data[offset++]);
                     offset = offset - imageWidth * 4 + totalWidth * 4;
                 }
-                if (loadWithShift)
+                if (shiftPressed)
                 {
                     // append to sprite set if not empty
                     offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
@@ -1835,7 +1843,7 @@ function finishDrawing(success)
                                 for (var i = 0; i < 4; i++)
                                     c[i] = Math.floor(a[i] * (1.0 - g) + b[i] * g);
                                 c = tinycolor({r: c[0], g: c[1], b: c[2], a: c[3] / 255.0}).toHsl();
-                                var q = 1.0 / 16;
+                                var q = 1.0 / (shiftPressed ? 256 : 16);
                                 c.l += Math.random() * q * 2.0 - q;
                                 if (c.l < 0)
                                     c.l = 0;
