@@ -448,7 +448,7 @@ function initLevel(which)
         vars.door_open = {};
     }
 
-//     vars.sounds['music'].play();
+    vars.sounds['music'].play();
 }
 
 function init_game(width, height, supersampling, data)
