@@ -73,8 +73,8 @@ function def(trait, elements)
 function loop(time)
 {
     clear('#000');
-    var dx = 0;
-    var dy = 0;
+    var dx = vars.vx;
+    var dy = vars.vy;
 //     dy = 100;
     for (var y = 0; y < 16; y++)
     {
@@ -142,11 +142,8 @@ function move_player(move_x, move_y)
         if (!applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'is_solid'))
             move_ok = true;
         // check if doors are open
-        for (var i = 0; i < vars.max_keys; i++)
-        {
-            if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'door_' + (i + 1)) && vars.door_open[i])
-                move_ok = true;
-        }
+        if (('' + (vars.player_x + move_x) + '/' + (vars.player_y + move_y)) in vars.door_open)
+            move_ok = true;
     }
 
     if (move_ok)
@@ -184,17 +181,20 @@ function move_player(move_x, move_y)
         // see if we can open a door
         for (var i = 0; i < vars.max_keys; i++)
         {
-            if (vars.got_key[i] && !vars.door_open[i])
+            if (vars.got_key[i])
             {
                 for (var dx = -1; dx <= 1; dx += 2)
                 {
                     if (applies(_get_field(vars.player_x + dx, vars.player_y), 'door_' + (i + 1)))
                     {
-                        var anim_key = '' + (vars.player_x + dx) + '/' + vars.player_y;
-                        if (!(anim_key in vars.animations))
+                        if (!(('' + (vars.player_x + dx) + '/' + vars.player_y) in vars.door_open))
                         {
-                            vars.sounds['power_up'].play();
-                            vars.animations[anim_key] = {type: 'slide_door_up', door: i};
+                            var anim_key = '' + (vars.player_x + dx) + '/' + vars.player_y;
+                            if (!(anim_key in vars.animations))
+                            {
+                                vars.sounds['power_up'].play();
+                                vars.animations[anim_key] = {type: 'slide_door_up'};
+                            }
                         }
                     }
                 }
@@ -218,6 +218,24 @@ function move_player(move_x, move_y)
 function game_logic_loop()
 {
 //     animation_phase++;
+    if (vars.player_y * 24 - vars.vy > 10 * 24)
+        vars.vy += 24;
+    if (vars.player_y * 24 - vars.vy < 5 * 24)
+        vars.vy -= 24;
+    if (vars.player_x * 24 - vars.vx > 20 * 24)
+        vars.vx += 24;
+    if (vars.player_x * 24 - vars.vx < 8 * 24)
+        vars.vx -= 24;
+
+    if (vars.vx < 0)
+        vars.vx = 0;
+    if (vars.vy < 0)
+        vars.vy = 0;
+    if (vars.vx > (vars.levels[current_level].data[0].length - 28) * 24)
+        vars.vx = (vars.levels[current_level].data[0].length - 28) * 24;
+    if (vars.vy > (vars.levels[current_level].data.length - 16) * 24)
+        vars.vy = (vars.levels[current_level].data.length - 16) * 24;
+
     if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left'))
         move_player(-1, 1);
     else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
@@ -252,7 +270,7 @@ function game_logic_loop()
             vars.field_offset[key].h -= 2;
             if (vars.field_offset[key].osy > 14)
             {
-                vars.door_open[info.door] = true;
+                vars.door_open[key] = true;
             }
             if (vars.field_offset[key].osy > 18)
             {
@@ -403,6 +421,8 @@ function init() {
 function initLevel(which)
 {
     var found_player = false;
+    vars.vx = 0;
+    vars.vy = 0;
     jQuery.each(vars.levels[which].data, function(y, row) {
         jQuery.each(row, function(x, cell) {
             if (applies(cell, 'actor_front') || applies(cell, 'actor_back') ||
@@ -425,14 +445,17 @@ function initLevel(which)
     for (var i = 0; i < vars.max_keys; i++)
     {
         vars.got_key[i] = false;
-        vars.door_open[i] = false;
+        vars.door_open = {};
     }
-    vars.sounds['music'].play();
+
+//     vars.sounds['music'].play();
 }
 
 function init_game(width, height, supersampling, data)
 {
     vars = {
+        vx: 0,
+        vy: 0,
         game_width: null,
         game_height: null,
         game_supersampling: null,
@@ -454,7 +477,7 @@ function init_game(width, height, supersampling, data)
         player_sprite_back: 0,
         max_keys: 4,
         got_key: [],
-        door_open: [],
+        door_open: {},
         animations: {},
         field_offset: {},
         sounds: {},
