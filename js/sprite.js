@@ -1227,25 +1227,28 @@ function get_level_descriptions()
         // find x / y ranges
         var xmin = null, xmax = null, ymin = null, ymax = null;
         jQuery.each(Object.keys(level[i]), function(_, key) {
-            var k = key.split(',');
-            var x = new Number(k[0]).valueOf();
-            var y = new Number(k[1]).valueOf();
-            if (xmin === null)
-                xmin = x;
-            if (xmax === null)
-                xmax = x;
-            if (ymin === null)
-                ymin = y;
-            if (ymax === null)
-                ymax = y;
-            if (x < xmin)
-                xmin = x;
-            if (x > xmax)
-                xmax = x;
-            if (y < ymin)
-                ymin = y;
-            if (y > ymax)
-                ymax = y;
+            if (level[i][key] != -1)
+            {
+                var k = key.split(',');
+                var x = new Number(k[0]).valueOf();
+                var y = new Number(k[1]).valueOf();
+                if (xmin === null)
+                    xmin = x;
+                if (xmax === null)
+                    xmax = x;
+                if (ymin === null)
+                    ymin = y;
+                if (ymax === null)
+                    ymax = y;
+                if (x < xmin)
+                    xmin = x;
+                if (x > xmax)
+                    xmax = x;
+                if (y < ymin)
+                    ymin = y;
+                if (y > ymax)
+                    ymax = y;
+            }
         });
         l.xmin = xmin;
         l.ymin = ymin;

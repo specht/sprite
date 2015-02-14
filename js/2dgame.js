@@ -1,36 +1,33 @@
 // fields: 28x16
 
-var vars = {};
+function mod(m, n) {
+    return ((m % n) + n) % n;
+}
 
-var CAN_STAND_ON = 1;
-var CAN_CLIMB = 2;
+var vars = {};
 
 function _get_field(x, y)
 {
-    var clevel = vars.levels[vars.current_level];
+    var clevel = vars.current_level_copy;
     if (clevel.use !== true)
         return -1;
-    var ly = y - clevel.ymin;
-    if (ly < 0 || ly >= clevel.data.length)
+    if (y < 0 || y >= clevel.data.length)
         return -1;
-    var lx = x - clevel.xmin;
-    if (lx < 0 || lx >= clevel.data[ly].length)
+    if (x < 0 || x >= clevel.data[y].length)
         return -1;
-    return clevel.data[ly][lx];
+    return clevel.data[y][x];
 }
 
 function _set_field(x, y, v)
 {
-    var clevel = vars.levels[vars.current_level];
+    var clevel = vars.current_level_copy;
     if (clevel.use !== true)
         return;
-    var ly = y - clevel.ymin;
-    if (ly < 0 || ly >= clevel.data.length)
+    if (y < 0 || y >= clevel.data.length)
         return;
-    var lx = x - clevel.xmin;
-    if (lx < 0 || lx >= clevel.data[ly].length)
+    if (x < 0 || x >= clevel.data[y].length)
         return;
-    clevel.data[ly][lx] = v;
+    clevel.data[y][x] = v;
 }
 
 function _fix_sizes()
@@ -78,7 +75,7 @@ function loop(time)
 //     dy = 100;
     for (var y = 0; y < 16; y++)
     {
-        for (var x = 0;  x < 28; x++)
+        for (var x = 0; x < 28; x++)
         {
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
             var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
@@ -93,15 +90,10 @@ function loop(time)
 //             }
 //             if (!drawn_something)
 //                 draw_sprite(x * 24 - (dx % 24), y * 24 - (dy % 24), v);
-            if (applies(v, 'actor_back') || applies(v, 'actor_front') ||
-                applies(v, 'actor_left') || applies(v, 'actor_right'))
+            if (poskey in vars.field_offset)
             {
-                // don't draw the actor
-            }
-            else if (poskey in vars.field_offset)
-            {
-                draw_sprite_special(x * 24 - (dx % 24) + vars.field_offset[poskey].dx,
-                                    y * 24 - (dy % 24) + vars.field_offset[poskey].dy,
+                draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
+                                    y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
                                     v, 'sprites_default',
                                     vars.field_offset[poskey].alpha,
                                     vars.field_offset[poskey].osx, vars.field_offset[poskey].osy,
@@ -109,7 +101,7 @@ function loop(time)
                                     vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
             }
             else
-                draw_sprite(x * 24 - (dx % 24), y * 24 - (dy % 24), v);
+                draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
 
         }
     }
@@ -223,23 +215,38 @@ function move_player(move_x, move_y)
 function game_logic_loop()
 {
 //     animation_phase++;
-    if (vars.player_y * 24 - vars.vy > 10 * 24)
-        vars.vy += 24;
-    if (vars.player_y * 24 - vars.vy < 5 * 24)
-        vars.vy -= 24;
-    if (vars.player_x * 24 - vars.vx > 20 * 24)
-        vars.vx += 24;
-    if (vars.player_x * 24 - vars.vx < 8 * 24)
-        vars.vx -= 24;
 
-    if (vars.vx < 0)
-        vars.vx = 0;
-    if (vars.vy < 0)
-        vars.vy = 0;
-    if (vars.vx > (vars.levels[vars.current_level].data[0].length - 28) * 24)
-        vars.vx = (vars.levels[vars.current_level].data[0].length - 28) * 24;
-    if (vars.vy > (vars.levels[vars.current_level].data.length - 16) * 24)
-        vars.vy = (vars.levels[vars.current_level].data.length - 16) * 24;
+    if (vars.current_level_copy.data[0].length < 28)
+    {
+        vars.vx = -Math.floor(((28 - vars.current_level_copy.data[0].length) / 2) * 24);
+    }
+    else
+    {
+        if (vars.player_x * 24 - vars.vx > 20 * 24)
+            vars.vx += 24;
+        if (vars.player_x * 24 - vars.vx < 8 * 24)
+            vars.vx -= 24;
+        if (vars.vx < 0)
+            vars.vx = 0;
+        if (vars.vx > (vars.current_level_copy.data[0].length - 28) * 24)
+            vars.vx = (vars.current_level_copy.data[0].length - 28) * 24;
+    }
+
+    if (vars.current_level_copy.data.length < 16)
+    {
+        vars.vy = -Math.floor(((16 - vars.current_level_copy.data.length) / 2) * 24);
+    }
+    else
+    {
+        if (vars.player_y * 24 - vars.vy > 10 * 24)
+            vars.vy += 24;
+        if (vars.player_y * 24 - vars.vy < 5 * 24)
+            vars.vy -= 24;
+        if (vars.vy < 0)
+            vars.vy = 0;
+        if (vars.vy > (vars.current_level_copy.data.length - 16) * 24)
+            vars.vy = (vars.current_level_copy.data.length - 16) * 24;
+    }
 
     if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left'))
         move_player(-1, 1);
@@ -439,19 +446,20 @@ function init() {
 function initLevel(which)
 {
     vars.current_level = which;
+    vars.current_level_copy = jQuery.extend(true, {}, vars.levels[vars.current_level])
     var found_player = false;
     vars.vx = 0;
     vars.vy = 0;
-    jQuery.each(vars.levels[which].data, function(y, row) {
+    jQuery.each(vars.current_level_copy.data, function(y, row) {
         jQuery.each(row, function(x, cell) {
             if (applies(cell, 'actor_front') || applies(cell, 'actor_back') ||
                 applies(cell, 'actor_left') || applies(cell, 'actor_right'))
             {
-                vars.player_x = x + vars.levels[which].xmin;
-                vars.player_y = y + vars.levels[which].ymin;
+                vars.player_x = x;
+                vars.player_y = y;
                 console.log('setting player at', vars.player_x, vars.player_y);
                 vars.player_sprite = cell;
-//                 row[x] = -1;
+                row[x] = -1;
                 found_player = true;
             }
             if (found_player)
@@ -460,6 +468,11 @@ function initLevel(which)
         if (found_player)
             return false;
     });
+    vars.got_key = [];
+    vars.door_open = {};
+    vars.animations = {};
+    vars.field_offset = {};
+
     // reset all keys
     for (var i = 0; i < vars.max_keys; i++)
     {
@@ -486,8 +499,8 @@ function init_game(width, height, supersampling, data)
         player_x: 0,
         player_y: 0,
         player_sprite: 0,
-        stopGame: false,
         current_level: 0,
+        current_level_copy: {},
         levels: [],
         sprite_properties: [],
         player_sprite_left: 0,
@@ -495,10 +508,6 @@ function init_game(width, height, supersampling, data)
         player_sprite_front: 0,
         player_sprite_back: 0,
         max_keys: 4,
-        got_key: [],
-        door_open: {},
-        animations: {},
-        field_offset: {},
         sounds: {},
     };
     if (typeof(supersampling) == 'undefined')
@@ -521,7 +530,7 @@ function init_game(width, height, supersampling, data)
 //     title.html("Pyramide");
     var backdrop = $('<div>');
     backdrop.css('position', 'absolute');
-    backdrop.css('background-color', '#000');
+    backdrop.css('background-color', '#004');
     backdrop.css('top', '0px');
     backdrop.css('bottom', '0px');
     backdrop.css('left', '0px');
