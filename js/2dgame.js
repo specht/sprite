@@ -93,7 +93,12 @@ function loop(time)
 //             }
 //             if (!drawn_something)
 //                 draw_sprite(x * 24 - (dx % 24), y * 24 - (dy % 24), v);
-            if (poskey in vars.field_offset)
+            if (applies(v, 'actor_back') || applies(v, 'actor_front') ||
+                applies(v, 'actor_left') || applies(v, 'actor_right'))
+            {
+                // don't draw the actor
+            }
+            else if (poskey in vars.field_offset)
             {
                 draw_sprite_special(x * 24 - (dx % 24) + vars.field_offset[poskey].dx,
                                     y * 24 - (dy % 24) + vars.field_offset[poskey].dy,
@@ -231,10 +236,10 @@ function game_logic_loop()
         vars.vx = 0;
     if (vars.vy < 0)
         vars.vy = 0;
-    if (vars.vx > (vars.levels[current_level].data[0].length - 28) * 24)
-        vars.vx = (vars.levels[current_level].data[0].length - 28) * 24;
-    if (vars.vy > (vars.levels[current_level].data.length - 16) * 24)
-        vars.vy = (vars.levels[current_level].data.length - 16) * 24;
+    if (vars.vx > (vars.levels[vars.current_level].data[0].length - 28) * 24)
+        vars.vx = (vars.levels[vars.current_level].data[0].length - 28) * 24;
+    if (vars.vy > (vars.levels[vars.current_level].data.length - 16) * 24)
+        vars.vy = (vars.levels[vars.current_level].data.length - 16) * 24;
 
     if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left'))
         move_player(-1, 1);
@@ -334,6 +339,19 @@ function stopTheGame()
 
 function keydown(code)
 {
+    if (code == 76)
+    {
+        // find next level
+        while (true)
+        {
+            vars.current_level = (vars.current_level + 1) % vars.levels.length;
+            if (vars.levels[vars.current_level].use)
+            {
+                initLevel(vars.current_level);
+                break;
+            }
+        }
+    }
     if (code == 27)
     {
         stopTheGame();
@@ -420,6 +438,7 @@ function init() {
 
 function initLevel(which)
 {
+    vars.current_level = which;
     var found_player = false;
     vars.vx = 0;
     vars.vy = 0;
@@ -432,7 +451,7 @@ function initLevel(which)
                 vars.player_y = y + vars.levels[which].ymin;
                 console.log('setting player at', vars.player_x, vars.player_y);
                 vars.player_sprite = cell;
-                row[x] = -1;
+//                 row[x] = -1;
                 found_player = true;
             }
             if (found_player)
@@ -468,9 +487,9 @@ function init_game(width, height, supersampling, data)
         player_y: 0,
         player_sprite: 0,
         stopGame: false,
+        current_level: 0,
         levels: [],
         sprite_properties: [],
-        current_level: 0,
         player_sprite_left: 0,
         player_sprite_right: 0,
         player_sprite_front: 0,
