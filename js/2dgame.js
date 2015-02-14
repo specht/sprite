@@ -530,7 +530,7 @@ function init_game(width, height, supersampling, data)
 //     title.html("Pyramide");
     var backdrop = $('<div>');
     backdrop.css('position', 'absolute');
-    backdrop.css('background-color', '#004');
+    backdrop.css('background-color', '#000');
     backdrop.css('top', '0px');
     backdrop.css('bottom', '0px');
     backdrop.css('left', '0px');
