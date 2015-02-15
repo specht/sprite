@@ -48,6 +48,7 @@ states.push(['door_3', 'T&uuml;r 3']);
 states.push(['key_3', 'Schl&uuml;ssel 3']);
 states.push(['door_4', 'T&uuml;r 4']);
 states.push(['key_4', 'Schl&uuml;ssel 4']);
+states.push(['appears', 'Block erscheint beim betreten', 'Erscheinende Bl&ouml;cke']);
 
 function set_field(x, y, v)
 {

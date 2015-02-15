@@ -101,7 +101,15 @@ function loop(time)
                                     vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
             }
             else
-                draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
+            {
+                if (applies(v, 'appears'))
+                {
+                    if (vars.block_visible[poskey])
+                        draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
+                }
+                else
+                    draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
+            }
 
         }
     }
@@ -206,6 +214,18 @@ function move_player(move_x, move_y)
             {
                 vars.animations[anim_key] = {wait: 15, type: 'crumble', done: function(x, y) {
                     _set_field(x, y, -1);
+                }};
+            }
+        }
+
+        // see if we stand on an appearing block
+        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'appears'))
+        {
+            var anim_key = '' + (vars.player_x) + '/' + (vars.player_y + 1);
+            if (!(anim_key in vars.animations))
+            {
+                vars.animations[anim_key] = {type: 'appear', done: function(x, y) {
+                    vars.block_visible[anim_key] = true;
                 }};
             }
         }
@@ -323,6 +343,18 @@ function game_logic_loop()
             {
                 vars.sounds['hit_hurt'].currentTime = 0;
                 vars.sounds['hit_hurt'].play();
+                if (typeof(info.done) === 'function')
+                    info.done(x, y);
+                remove_animations.push(key);
+            }
+        }
+        if (info.type == 'appear')
+        {
+            if (!(key in vars.field_offset))
+                vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 0, odx: 0, ody: 0};
+            vars.field_offset[key].h += 6;
+            if (vars.field_offset[key].h >= 24)
+            {
                 if (typeof(info.done) === 'function')
                     info.done(x, y);
                 remove_animations.push(key);
@@ -472,6 +504,7 @@ function initLevel(which)
     vars.door_open = {};
     vars.animations = {};
     vars.field_offset = {};
+    vars.block_visible = {}
 
     // reset all keys
     for (var i = 0; i < vars.max_keys; i++)
