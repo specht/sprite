@@ -218,15 +218,18 @@ function move_player(move_x, move_y)
             }
         }
 
-        // see if we stand on an appearing block
-        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'appears'))
+        for (var dy = 0; dy <= 1; dy++)
         {
-            var anim_key = '' + (vars.player_x) + '/' + (vars.player_y + 1);
-            if (!(anim_key in vars.animations))
+            // see if we stand on an appearing block
+            if (applies(_get_field(vars.player_x, vars.player_y + dy), 'appears'))
             {
-                vars.animations[anim_key] = {type: 'appear', done: function(x, y) {
-                    vars.block_visible[anim_key] = true;
-                }};
+                var anim_key = '' + (vars.player_x) + '/' + (vars.player_y + dy);
+                if (!(anim_key in vars.animations))
+                {
+                    vars.animations[anim_key] = {type: 'appear', done: function(x, y) {
+                        vars.block_visible[anim_key] = true;
+                    }};
+                }
             }
         }
     }
@@ -378,6 +381,8 @@ function stopTheGame()
 
 function keydown(code)
 {
+    if (current_pane !== 'play')
+        return;
     if (code == 76)
     {
         // find next level

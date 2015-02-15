@@ -26,6 +26,7 @@ var level_props = {};
 var current_level = 0;
 var shiftPressed = false;
 var sprite_properties = [];
+var current_pane = null;
 
 var states = [];
 states.push(['actor_front', 'Spielfigur von vorn', 'Figur']);
@@ -120,6 +121,7 @@ function updateSpriteProperties()
 
 function switchPane(which, finishplaytransition)
 {
+    current_pane = which;
     if (typeof(finishplaytransition) === 'undefined')
         finishplaytransition = false;
     if (which === 'play' && (!finishplaytransition))
@@ -763,6 +765,8 @@ $().ready(function() {
 
     $(window).keydown(function(e) {
 //         console.log(e.which);
+        if (current_pane == 'play')
+            return;
         var mapping = {
             81: 'tool_draw',
             87: 'tool_line',
