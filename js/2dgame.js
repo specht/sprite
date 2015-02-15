@@ -11,9 +11,9 @@ function _get_field(x, y)
     var clevel = vars.current_level_copy;
     if (clevel.use !== true)
         return -1;
-    if (y < 0 || y >= clevel.data.length)
+    if (y < 0 || y >= clevel.height)
         return -1;
-    if (x < 0 || x >= clevel.data[y].length)
+    if (x < 0 || x >= clevel.width)
         return -1;
     return clevel.data[y][x];
 }
@@ -23,11 +23,47 @@ function _set_field(x, y, v)
     var clevel = vars.current_level_copy;
     if (clevel.use !== true)
         return;
-    if (y < 0 || y >= clevel.data.length)
+    if (y < 0 || y >= clevel.height)
         return;
-    if (x < 0 || x >= clevel.data[y].length)
+    if (x < 0 || x >= clevel.width)
         return;
     clevel.data[y][x] = v;
+}
+
+function _get_reachable(x, y)
+{
+    var clevel = vars.current_level_copy;
+    if (y < 0 || y >= clevel.height)
+        return 0;
+    if (x < 0 || x >= clevel.width)
+        return 0;
+    return vars.reachable_blocks[y][x];
+}
+
+function _set_reachable(x, y, v)
+{
+    var clevel = vars.current_level_copy;
+    if (y < 0 || y >= clevel.height)
+        return;
+    if (x < 0 || x >= clevel.width)
+        return;
+    if (vars.reachable_xmin == null)
+        vars.reachable_xmin = x;
+    if (vars.reachable_xmax == null)
+        vars.reachable_xmax = x;
+    if (vars.reachable_ymin == null)
+        vars.reachable_ymin = y;
+    if (vars.reachable_ymax == null)
+        vars.reachable_ymax = y;
+    if (x < vars.reachable_xmin)
+        vars.reachable_xmin = x;
+    if (x > vars.reachable_xmax)
+        vars.reachable_xmax = x;
+    if (y < vars.reachable_ymin)
+        vars.reachable_ymin = y;
+    if (y > vars.reachable_ymax)
+        vars.reachable_ymax = y;
+    vars.reachable_blocks[y][x] = v;
 }
 
 function _fix_sizes()
@@ -72,7 +108,6 @@ function loop(time)
     clear('#000');
     var dx = vars.vx;
     var dy = vars.vy;
-//     dy = 100;
     for (var y = 0; y < 16; y++)
     {
         for (var x = 0; x < 28; x++)
@@ -110,7 +145,8 @@ function loop(time)
                 else
                     draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
             }
-
+//             if (_get_reachable(x + Math.floor(dx / 24), y + Math.floor(dy / 24)) > 0)
+//                 fill_rect_semi(x * 24 + 8, y * 24 + 8, x * 24 + 16, y * 24 + 16);
         }
     }
     var player_shift_x = 0;
@@ -190,11 +226,11 @@ function move_player(move_x, move_y)
         applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_left_1_2_bottom'))
         move_ok = true;
 
-    console.log('move_ok:', move_ok);
     if (move_ok)
     {
         vars.player_x += move_x;
         vars.player_y += move_y;
+        _set_reachable(vars.player_x, vars.player_y, 1);
         if (move_x < 0)
             vars.player_sprite = vars.player_sprite_left;
         else if (move_x > 0)
@@ -281,36 +317,36 @@ function game_logic_loop()
 {
 //     animation_phase++;
 
-    if (vars.current_level_copy.data[0].length < 28)
+    if (vars.current_level_copy.width < 28)
     {
-        vars.vx = -Math.floor(((28 - vars.current_level_copy.data[0].length) / 2) * 24);
+        vars.vx = -Math.floor(((28 - vars.current_level_copy.width) / 2) * 24);
     }
     else
     {
-        if (vars.player_x * 24 - vars.vx > 20 * 24)
+        if (vars.player_x * 24 - vars.vx > 20 * 24 && vars.vx < (vars.reachable_xmax - 28 + 2) * 24)
             vars.vx += 24;
-        if (vars.player_x * 24 - vars.vx < 8 * 24)
+        if (vars.player_x * 24 - vars.vx < 8 * 24 && vars.vx > (vars.reachable_xmin - 2) * 24)
             vars.vx -= 24;
         if (vars.vx < 0)
             vars.vx = 0;
-        if (vars.vx > (vars.current_level_copy.data[0].length - 28) * 24)
-            vars.vx = (vars.current_level_copy.data[0].length - 28) * 24;
+        if (vars.vx > (vars.current_level_copy.width - 28) * 24)
+            vars.vx = (vars.current_level_copy.width - 28) * 24;
     }
 
-    if (vars.current_level_copy.data.length < 16)
+    if (vars.current_level_copy.height < 16)
     {
-        vars.vy = -Math.floor(((16 - vars.current_level_copy.data.length) / 2) * 24);
+        vars.vy = -Math.floor(((16 - vars.current_level_copy.height) / 2) * 24);
     }
     else
     {
-        if (vars.player_y * 24 - vars.vy > 10 * 24)
+        if (vars.player_y * 24 - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 16 + 2) * 24)
             vars.vy += 24;
-        if (vars.player_y * 24 - vars.vy < 5 * 24)
+        if (vars.player_y * 24 - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
             vars.vy -= 24;
         if (vars.vy < 0)
             vars.vy = 0;
-        if (vars.vy > (vars.current_level_copy.data.length - 16) * 24)
-            vars.vy = (vars.current_level_copy.data.length - 16) * 24;
+        if (vars.vy > (vars.current_level_copy.height - 16) * 24)
+            vars.vy = (vars.current_level_copy.height - 16) * 24;
     }
 
     if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left'))
@@ -364,6 +400,8 @@ function game_logic_loop()
             if (vars.field_offset[key].osy > 14)
             {
                 vars.door_open[key] = true;
+                var xy = key.split('/');
+                find_reachable_blocks(new Number(xy[0]).valueOf(), new Number(xy[1]).valueOf());
             }
             if (vars.field_offset[key].osy > 18)
             {
@@ -539,6 +577,63 @@ function init() {
     setTimeout(_game_logic_loop, 66);
 }
 
+function find_reachable_blocks(x, y)
+{
+    var seen = {};
+    var stack = [];
+    stack.push([x, y]);
+    var iterations = 0;
+    while (stack.length > 0)
+    {
+        iterations++;
+        var position = stack.pop();
+        var x = position[0];
+        var y = position[1];
+        var xykey = '' + x + '/' + y;
+        seen[xykey] = true;
+        if (_get_reachable(x, y) == 0)
+        {
+            var proceed = false;
+            if (_get_field(x, y) == -1)
+                proceed = true;
+            else if (!(applies(_get_field(x, y), 'is_solid')))
+                proceed = true;
+            else if (vars.door_open['' + x + '/' + y])
+                proceed = true;
+//             else if (applies(_get_field(x, y), 'crumbles'))
+//                 proceed = true;
+            else if (applies(_get_field(x, y + 1), 'stairs_up_left'))
+                proceed = true;
+            else if (applies(_get_field(x, y + 1), 'stairs_up_right'))
+                proceed = true;
+            if (proceed)
+            {
+                _set_reachable(x, y, 1);
+                var tries = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+                if (applies(_get_field(x + 1, y), 'stairs_up_right'))
+                    tries.push([1, -1]);
+                if (applies(_get_field(x - 1, y), 'stairs_up_left'))
+                    tries.push([-1, -1]);
+                if (applies(_get_field(x, y + 1), 'stairs_up_left'))
+                    tries.push([1, 1]);
+                if (applies(_get_field(x, y + 1), 'stairs_up_right'))
+                    tries.push([-1, 1]);
+                jQuery.each(tries, function(_, t) {
+                    var tx = x + t[0];
+                    var ty = y + t[1];
+                    if (tx >= 0 && tx < vars.current_level_copy.width &&
+                        ty >= 0 && ty < vars.current_level_copy.height &&
+                        (!(('' + tx + '/' + ty) in seen)))
+                    {
+                        stack.push([tx, ty]);
+                    }
+                });
+            }
+        }
+    }
+    console.log("This took " + iterations + " iterations.");
+}
+
 function initLevel(which)
 {
     vars.current_level = which;
@@ -568,7 +663,21 @@ function initLevel(which)
     vars.door_open = {};
     vars.animations = {};
     vars.field_offset = {};
-    vars.block_visible = {}
+    vars.block_visible = {};
+    vars.reachable_blocks = [];
+    vars.reachable_xmin = null;
+    vars.reachable_xmax = null;
+    vars.reachable_ymin = null;
+    vars.reachable_ymax = null;
+
+    for (var y = 0; y < vars.current_level_copy.height; y++)
+    {
+        var row = [];
+        for (var x = 0; x < vars.current_level_copy.width; x++)
+            row.push(0);
+        vars.reachable_blocks.push(row);
+    }
+    find_reachable_blocks(vars.player_x, vars.player_y);
 
     // reset all keys
     for (var i = 0; i < vars.max_keys; i++)
@@ -718,7 +827,11 @@ function clear(color)
 
 function fill_rect_semi(x0, y0, x1, y1)
 {
-    vars.imageContext.fillStyle = 'rgba(0, 0, 0, 0.4)'
+    x0 *= vars.game_supersampling;
+    x1 *= vars.game_supersampling;
+    y0 *= vars.game_supersampling;
+    y1 *= vars.game_supersampling;
+    vars.imageContext.fillStyle = 'rgba(255, 255, 255, 0.4)'
     vars.imageContext.strokeStyle = "none";
     vars.imageContext.fillRect(x0 + 0.5, y0 + 0.5, x1 - x0 + 1, y1 - y0 + 1);
 }

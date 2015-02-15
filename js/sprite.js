@@ -68,7 +68,10 @@ function set_field(x, y, v)
 {
     if (!(current_level in level))
         level[current_level] = {};
-    level[current_level]['' + x + ',' + y] = v;
+    if (v == -1)
+        delete level[current_level]['' + x + ',' + y];
+    else
+        level[current_level]['' + x + ',' + y] = v;
 }
 
 function get_field(x, y)
@@ -1059,7 +1062,7 @@ $().ready(function() {
         var context = $(e.target)[0].getContext('2d');
         var rx = Math.floor(e.offsetX / imageWidth);
         var ry = Math.floor(e.offsetY / imageHeight);
-        if (currentlyDrawingLevel)
+        if (currentlyDrawingLevel && rx >= 0 && rx < 28 && ry >= 0 && ry < 16)
         {
             set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
         }
@@ -1077,9 +1080,12 @@ $().ready(function() {
     $('canvas#level').mousedown(function(e) {
         var rx = Math.floor(e.offsetX / imageWidth);
         var ry = Math.floor(e.offsetY / imageHeight);
-        set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
-        draw_level();
-        currentlyDrawingLevel = true;
+        if (rx >= 0 && rx < 28 && ry >= 0 && ry < 16)
+        {
+            set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
+            draw_level();
+            currentlyDrawingLevel = true;
+        }
     });
 
     level_use = [];
@@ -1288,6 +1294,8 @@ function get_level_descriptions()
         l.xmin = xmin;
         l.ymin = ymin;
         l.data = [];
+        l.width = xmax - xmin + 1;
+        l.height = ymax - ymin + 1;
         if (xmin != null && xmax != null && ymin != null && ymax != null)
         {
             for (var y = ymin; y <= ymax; y++)
