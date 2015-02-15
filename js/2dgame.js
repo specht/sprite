@@ -118,6 +118,33 @@ function loop(time)
     if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left') ||
         applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right'))
         player_shift_y = 12;
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left_2_1_left') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right_2_1_right'))
+        player_shift_y = 8;
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left_2_1_right') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right_2_1_left'))
+        player_shift_y = 16;
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
+        player_shift_y = 12;
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_right') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_left'))
+        player_shift_y = 8;
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_top') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_bottom'))
+    {
+        player_shift_x = 8;
+        player_shift_y = 12;
+    }
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_top') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_bottom'))
+    {
+        player_shift_x = -8;
+        player_shift_y = 12;
+    }
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_left') ||
+        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_right'))
+        player_shift_y = 16;
     draw_sprite(vars.player_x * 24 + player_shift_x - dx, vars.player_y * 24 + player_shift_y - dy, vars.player_sprite);
 }
 
@@ -128,7 +155,11 @@ function move_player(move_x, move_y)
         // left
         if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_left'))
             move_y -= 1;
+        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_left_2_1_right'))
+            move_y -= 1;
         if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right'))
+            move_y += 1;
+        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right_2_1_left'))
             move_y += 1;
     }
     else if (move_y == 0 && move_x > 0)
@@ -136,7 +167,11 @@ function move_player(move_x, move_y)
         // right
         if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_right'))
             move_y -= 1;
+        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_right_2_1_left'))
+            move_y -= 1;
         if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left'))
+            move_y += 1;
+        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left_2_1_right'))
             move_y += 1;
     }
 
@@ -151,6 +186,11 @@ function move_player(move_x, move_y)
             move_ok = true;
     }
 
+    if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_right_1_2_bottom') ||
+        applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_left_1_2_bottom'))
+        move_ok = true;
+
+    console.log('move_ok:', move_ok);
     if (move_ok)
     {
         vars.player_x += move_x;
@@ -175,7 +215,8 @@ function move_player(move_x, move_y)
                 var anim_key = '' + (vars.player_x) + '/' + vars.player_y;
                 if (!(anim_key in vars.animations))
                 {
-                    vars.sounds['pick_up'].play();
+                    if (vars.play_sounds)
+                        vars.sounds['pick_up'].play();
                     vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
                         _set_field(x, y, -1);
                     }};
@@ -197,7 +238,8 @@ function move_player(move_x, move_y)
                             var anim_key = '' + (vars.player_x + dx) + '/' + vars.player_y;
                             if (!(anim_key in vars.animations))
                             {
-                                vars.sounds['power_up'].play();
+                                if (vars.play_sounds)
+                                    vars.sounds['power_up'].play();
                                 vars.animations[anim_key] = {type: 'slide_door_up'};
                             }
                         }
@@ -275,6 +317,22 @@ function game_logic_loop()
         move_player(-1, 1);
     else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
         move_player(1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_right'))
+        move_player(-1, 0);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_left'))
+        move_player(-1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_left'))
+        move_player(1, 0);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_right'))
+        move_player(1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_top'))
+        move_player(0, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_bottom'))
+        move_player(-1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_top'))
+        move_player(0, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_bottom'))
+        move_player(1, 1);
     else if (!applies(_get_field(vars.player_x, vars.player_y + 1), 'can_stand_on') &&
         !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb')) &&
         !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb')))
@@ -345,7 +403,8 @@ function game_logic_loop()
             if (applies(_get_field(x, y + Math.floor(vars.field_offset[key].dy / 24.0)), 'is_solid'))
             {
                 vars.sounds['hit_hurt'].currentTime = 0;
-                vars.sounds['hit_hurt'].play();
+                if (vars.play_sounds)
+                    vars.sounds['hit_hurt'].play();
                 if (typeof(info.done) === 'function')
                     info.done(x, y);
                 remove_animations.push(key);
@@ -518,12 +577,14 @@ function initLevel(which)
         vars.door_open = {};
     }
 
-    vars.sounds['music'].play();
+    if (vars.play_sounds)
+        vars.sounds['music'].play();
 }
 
 function init_game(width, height, supersampling, data)
 {
     vars = {
+        play_sounds: false,
         vx: 0,
         vy: 0,
         game_width: null,

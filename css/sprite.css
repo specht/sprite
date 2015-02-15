@@ -195,17 +195,28 @@ body {
     color: #888;
 }
 
-#sprite-options {
+#pane-options {
+    position: relative;
+    top: -13px;
+}
+
+#pane-options div {
+    vertical-align: top;
+    margin-right: 5px;
+}
+
+
+#pane-options {
     font-size: 80%;
     line-height: 80%;
 }
 
-#sprite-options label {
+#pane-options label {
     position: relative;
     top: -3px;
 }
 
-#sprite-options .heading {
+#pane-options .heading {
     display: block;
     font-weight: bold;
     margin-top: 5px;

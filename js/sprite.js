@@ -29,18 +29,14 @@ var sprite_properties = [];
 var current_pane = null;
 
 var states = [];
-states.push(['actor_front', 'Spielfigur von vorn', 'Figur']);
+states.push(['actor_front', 'Spielfigur von vorn', 'Spielfigur']);
 states.push(['actor_back', 'Spielfigur von hinten']);
 states.push(['actor_left', 'Spielfigur schaut nach links']);
 states.push(['actor_right', 'Spielfigur schaut nach rechts']);
-states.push(['can_stand_on', 'man kann drauf stehen (man f&auml;llt nicht runter, wenn man draufsteht)', 'Feste und lose Bl&ouml;cke']);
-states.push(['is_solid', 'es ist fest (man kann nicht hineinlaufen)']);
+states.push(['can_stand_on', 'man f&auml;llt nicht runter, wenn man draufsteht', 'Feste und lose Bl&ouml;cke']);
+states.push(['is_solid', 'man kann nicht von der Seite hineinlaufen']);
+states.push(['appears', 'Block erscheint beim betreten', 'Verschwindende und erscheinende Bl&ouml;cke']);
 states.push(['crumbles', 'Block f&auml;llt nach einer Weile runter']);
-states.push(['can_climb', 'man kann rauf und runter klettern (Leiter)', 'Leitern und Treppen']);
-states.push(['stairs_up_left', 'Treppe nach links oben']);
-states.push(['stairs_up_right', 'Treppe nach rechts oben']);
-states.push(['slide_down_left', 'man rutscht nach links hinunter', 'Rutschen']);
-states.push(['slide_down_right', 'man rutscht nach rechts hinunter']);
 states.push(['door_1', 'T&uuml;r 1', 'T&uuml;ren und Schl&uuml;ssel']);
 states.push(['key_1', 'Schl&uuml;ssel 1']);
 states.push(['door_2', 'T&uuml;r 2']);
@@ -49,7 +45,24 @@ states.push(['door_3', 'T&uuml;r 3']);
 states.push(['key_3', 'Schl&uuml;ssel 3']);
 states.push(['door_4', 'T&uuml;r 4']);
 states.push(['key_4', 'Schl&uuml;ssel 4']);
-states.push(['appears', 'Block erscheint beim betreten', 'Erscheinende Bl&ouml;cke']);
+states.push('');
+states.push(['can_climb', 'man kann rauf und runter klettern (Leiter)', 'Leitern und Treppen']);
+states.push(['stairs_up_left', 'Treppe nach links oben']);
+states.push(['stairs_up_right', 'Treppe nach rechts oben']);
+states.push(['stairs_up_left_2_1_left', 'Treppe nach links oben (linke H&auml;lfte)', 'Breite Treppen (2x1)']);
+states.push(['stairs_up_left_2_1_right', 'Treppe nach links oben (rechte H&auml;lfte)']);
+states.push(['stairs_up_right_2_1_left', 'Treppe nach rechts oben (linke H&auml;lfte)']);
+states.push(['stairs_up_right_2_1_right', 'Treppe nach rechts oben (rechte H&auml;lfte)']);
+states.push(['slide_down_left', 'Rutsche nach links unten', 'Rutschen (1x1)']);
+states.push(['slide_down_right', 'Rutsche nach rechts unten']);
+states.push(['slide_down_left_2_1_left', 'Rutsche nach links unten (linke H&auml;lfte)', 'Breite Rutschen (2x1)']);
+states.push(['slide_down_left_2_1_right', 'Rutsche nach links unten (rechte H&auml;lfte)']);
+states.push(['slide_down_right_2_1_left', 'Rutsche nach rechts unten (linke H&auml;lfte)']);
+states.push(['slide_down_right_2_1_right', 'Rutsche nach rechts unten (rechte H&auml;lfte)']);
+states.push(['slide_down_left_1_2_top', 'Rutsche nach links unten (obere H&auml;lfte)', 'Hohe Rutschen (1x2)']);
+states.push(['slide_down_left_1_2_bottom', 'Rutsche nach links unten (untere H&auml;lfte)']);
+states.push(['slide_down_right_1_2_top', 'Rutsche nach rechts unten (obere H&auml;lfte)']);
+states.push(['slide_down_right_1_2_bottom', 'Rutsche nach rechts unten (untere H&auml;lfte)']);
 
 function set_field(x, y, v)
 {
@@ -113,7 +126,7 @@ function set_current_level(which)
 
 function updateSpriteProperties()
 {
-    $('#sprite-options input').each(function(_) {
+    $('#pane-options input').each(function(_) {
         var key = $(this).attr('id').replace('so-', '');
         $(this).prop('checked', key in sprite_properties[currentSpriteId]);
     });
@@ -575,7 +588,13 @@ $().ready(function() {
         element.data('sprite_id', i);
         element.mousedown(function(e) {
             var sprite_id = $(e.target).data('sprite_id');
-            setCurrentSprite(sprite_id);
+            if (e.shiftKey)
+            {
+                // set currentSpriteId to sprite_id multiplied with currentSpriteId's alpha channel
+                alphaMultiply(sprite_id, currentSpriteId);
+            }
+            else
+                setCurrentSprite(sprite_id);
         });
         $('#sprites').append(" ");
         element.draggable({
@@ -1157,23 +1176,34 @@ $().ready(function() {
         currentSpriteId = -1;
         setCurrentSprite(0);
     });
+    var panel = $('<div>').addClass('panel').css('display', 'inline-block');
+    $('#pane-options').append(panel);
+
     jQuery.each(states, function(_, item) {
-        if (item.length > 2)
+        if (item.length == 0)
         {
-            var snippet = $("<span class='heading'>" +item[2] + "</span><br />");
-            $('#sprite-options').append(snippet);
+            panel = $('<div>').addClass('panel').css('display', 'inline-block');
+            $('#pane-options').append(panel);
         }
-        var key = item[0];
-        var label = item[1];
-        var snippet = $("<input id='so-" + key + "' type='checkbox' /><label for='so-" + key + "'>" + label + "</label><br />");
-        $('#sprite-options').append(snippet);
-        $('#so-' + key).change(function(e) {
-            var key = $(e.target).attr('id').replace('so-', '');
-            if ($(e.target).is(':checked'))
-                sprite_properties[currentSpriteId][key] = true;
-            else
-                delete sprite_properties[currentSpriteId][key];
-        });
+        else
+        {
+            if (item.length > 2)
+            {
+                var snippet = $("<span class='heading'>" +item[2] + "</span><br />");
+                $(panel).append(snippet);
+            }
+            var key = item[0];
+            var label = item[1];
+            var snippet = $("<input id='so-" + key + "' type='checkbox' /><label for='so-" + key + "'>" + label + "</label><br />");
+            $(panel).append(snippet);
+            $('#so-' + key).change(function(e) {
+                var key = $(e.target).attr('id').replace('so-', '');
+                if ($(e.target).is(':checked'))
+                    sprite_properties[currentSpriteId][key] = true;
+                else
+                    delete sprite_properties[currentSpriteId][key];
+            });
+        }
     });
 });
 
@@ -1758,6 +1788,37 @@ function transform_sprite(f, is_destructive)
         $(undo_stack[undo_stack.length - 1]).remove();
         $('#undo_stack').append(img);
     }
+}
+
+function get_sprite_pixels(sprite_id)
+{
+    var pixels = [];
+    var local_image = $('#sprite_' + sprite_id)[0];
+    if ($(local_image).attr('src').substr(0, 5) === 'data:')
+    {
+        var local_canvas = $('<canvas>').attr('width', imageWidth).attr('height', imageHeight)[0];
+        local_canvas.getContext('2d').drawImage(local_image, 0, 0, imageWidth, imageHeight);
+        var data = local_canvas.getContext('2d').getImageData(0, 0, imageWidth, imageHeight).data;
+        return data;
+    }
+    return null;
+}
+
+function alphaMultiply(color_source, alpha_source)
+{
+    var c = get_sprite_pixels(color_source);
+    var a = get_sprite_pixels(alpha_source);
+    var p = 0;
+    for (var y = 0; y < imageHeight; y++)
+    {
+        for (var x = 0; x < imageWidth; x++)
+        {
+            setPixel(x, y, [c[p + 0], c[p + 1], c[p + 2], Math.floor((c[p + 3] / 255.0) * (a[p + 3] / 255.0) * 255)]);
+            p += 4;
+        }
+    }
+    update_sprite(true);
+    updatePixels();
 }
 
 function move_sprite(dx, dy)
