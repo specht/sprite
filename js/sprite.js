@@ -592,10 +592,9 @@ $().ready(function() {
         element.mousedown(function(e) {
             var sprite_id = $(e.target).data('sprite_id');
             if (e.shiftKey)
-            {
-                // set currentSpriteId to sprite_id multiplied with currentSpriteId's alpha channel
                 alphaMultiply(sprite_id, currentSpriteId);
-            }
+            else if (e.ctrlKey)
+                colorize(sprite_id, currentSpriteId);
             else
                 setCurrentSprite(sprite_id);
         });
@@ -1822,6 +1821,45 @@ function alphaMultiply(color_source, alpha_source)
         for (var x = 0; x < imageWidth; x++)
         {
             setPixel(x, y, [c[p + 0], c[p + 1], c[p + 2], Math.floor((c[p + 3] / 255.0) * (a[p + 3] / 255.0) * 255)]);
+            p += 4;
+        }
+    }
+    update_sprite(true);
+    updatePixels();
+}
+
+function colorize(pattern_source, color_source)
+{
+    var a = get_sprite_pixels(pattern_source);
+    var b = get_sprite_pixels(color_source);
+    var p = 0;
+    var maxg = 0.0;
+    for (var y = 0; y < imageHeight; y++)
+    {
+        for (var x = 0; x < imageWidth; x++)
+        {
+            var g = (a[p + 0] / 255.0) * 0.299 +
+                    (a[p + 1] / 255.0) * 0.587 +
+                    (a[p + 2] / 255.0) * 0.114;
+            if (g > maxg)
+                maxg = g;
+            p += 4;
+        }
+    }
+    if (maxg == 0.0)
+        return;
+    maxg = 1.0 / maxg;
+    p = 0;
+    for (var y = 0; y < imageHeight; y++)
+    {
+        for (var x = 0; x < imageWidth; x++)
+        {
+            var g = (a[p + 0] / 255.0) * 0.299 +
+                    (a[p + 1] / 255.0) * 0.587 +
+                    (a[p + 2] / 255.0) * 0.114;
+            g *= maxg;
+            setPixel(x, y, [Math.floor(b[p + 0] * g), Math.floor(b[p + 1] * g), Math.floor(b[p + 2] * g),
+                     Math.floor((b[p + 3] / 255.0) * (a[p + 3] / 255.0) * 255)]);
             p += 4;
         }
     }

@@ -114,17 +114,6 @@ function loop(time)
         {
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
             var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
-//             var drawn_something = false;
-//             for (var i = 0; i < vars.max_keys; i++)
-//             {
-//                 if (applies(v, 'door_' + (i + 1)))
-//                 {
-//                     draw_sprite_part_y(x * 24 - (dx % 24), y * 24 - (dy % 24), v, 'sprites_default', vars.door_open[i], 24 - vars.door_open[i], 0);
-//                     drawn_something = true;
-//                 }
-//             }
-//             if (!drawn_something)
-//                 draw_sprite(x * 24 - (dx % 24), y * 24 - (dy % 24), v);
             if (poskey in vars.field_offset)
             {
                 draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
@@ -302,11 +291,14 @@ function move_player(move_x, move_y)
             if (applies(_get_field(vars.player_x, vars.player_y + dy), 'appears'))
             {
                 var anim_key = '' + (vars.player_x) + '/' + (vars.player_y + dy);
-                if (!(anim_key in vars.animations))
+                if (!vars.block_visible[anim_key])
                 {
-                    vars.animations[anim_key] = {type: 'appear', done: function(x, y) {
-                        vars.block_visible[anim_key] = true;
-                    }};
+                    if (!(anim_key in vars.animations))
+                    {
+                        vars.animations[anim_key] = {type: 'appear', done: function(x, y) {
+                            vars.block_visible[anim_key] = true;
+                        }};
+                    }
                 }
             }
         }
@@ -693,7 +685,7 @@ function initLevel(which)
 function init_game(width, height, supersampling, data)
 {
     vars = {
-        play_sounds: false,
+        play_sounds: true,
         vx: 0,
         vy: 0,
         game_width: null,
