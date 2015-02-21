@@ -6,6 +6,15 @@ function mod(m, n) {
 
 var vars = {};
 
+function mark_dirty(x, y)
+{
+    var ydirty = y - Math.floor(vars.vy / 24);
+    var xdirty = x - Math.floor(vars.vx / 24);
+    if (xdirty >= 0 && xdirty < 28 && ydirty >= 0 && ydirty < 16)
+        vars.display_sprite[ydirty][xdirty] = -2;
+//     draw_rect(xdirty * 24, ydirty * 24, xdirty * 24 + 23, ydirty * 24 + 23, '#fff');
+}
+
 function _get_field(x, y)
 {
     var clevel = vars.current_level_copy;
@@ -105,39 +114,10 @@ function def(trait, elements)
 
 function loop(time)
 {
-    clear('#000');
+//     clear('#000');
     var dx = vars.vx;
     var dy = vars.vy;
-    for (var y = 0; y < 16; y++)
-    {
-        for (var x = 0; x < 28; x++)
-        {
-            var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
-            var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
-            if (poskey in vars.field_offset)
-            {
-                draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
-                                    y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
-                                    v, 'sprites_default',
-                                    vars.field_offset[poskey].alpha,
-                                    vars.field_offset[poskey].osx, vars.field_offset[poskey].osy,
-                                    vars.field_offset[poskey].w, vars.field_offset[poskey].h,
-                                    vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
-            }
-            else
-            {
-                if (applies(v, 'appears'))
-                {
-                    if (vars.block_visible[poskey])
-                        draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
-                }
-                else
-                    draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
-            }
-//             if (_get_reachable(x + Math.floor(dx / 24), y + Math.floor(dy / 24)) > 0)
-//                 fill_rect_semi(x * 24 + 8, y * 24 + 8, x * 24 + 16, y * 24 + 16);
-        }
-    }
+
     var player_shift_x = 0;
     var player_shift_y = 0;
     if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left') ||
@@ -170,6 +150,65 @@ function loop(time)
     if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_left') ||
         applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_right'))
         player_shift_y = 16;
+
+//     mark_dirty(vars.player_x, vars.player_y);
+//     if (player_shift_x < 0)
+//         mark_dirty(vars.player_x - 1, vars.player_y);
+//     else if (player_shift_x > 0)
+//         mark_dirty(vars.player_x + 1, vars.player_y);
+//     if (player_shift_y < 0)
+//         mark_dirty(vars.player_x, vars.player_y - 1);
+//     else if (player_shift_y > 0)
+//         mark_dirty(vars.player_x, vars.player_y + 1);
+
+    var counts = {
+        'a': 0,
+        'b': 0,
+        'c': 0,
+    };
+    for (var y = 0; y < 16; y++)
+    {
+        for (var x = 0; x < 28; x++)
+        {
+            var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
+            var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
+            if (poskey in vars.field_offset)
+            {
+                fill_rect(x * 24, y * 24, x * 24 + 23, y * 24 + 23, '#000');
+                draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
+                                    y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
+                                    v, 'sprites_default', vars.field_offset[poskey].alpha,
+                                    vars.field_offset[poskey].osx, vars.field_offset[poskey].osy,
+                                    vars.field_offset[poskey].w, vars.field_offset[poskey].h,
+                                    vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
+                counts['a']++;
+            }
+            else
+            {
+                if (applies(v, 'appears'))
+                {
+                    if (vars.block_visible[poskey])
+                    {
+                        draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
+                        counts['b']++;
+                    }
+                }
+                else
+                {
+                    if (vars.display_sprite[y][x] != v)
+                    {
+                        vars.display_sprite[y][x] = v;
+                        fill_rect(x * 24, y * 24, x * 24 + 23, y * 24 + 23, '#000');
+                        draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
+                        counts['c']++;
+                    }
+                }
+            }
+//             if (_get_reachable(x + Math.floor(dx / 24), y + Math.floor(dy / 24)) > 0)
+//                 fill_rect_semi(x * 24 + 8, y * 24 + 8, x * 24 + 16, y * 24 + 16);
+        }
+    }
+//     console.log(counts);
     draw_sprite(vars.player_x * 24 + player_shift_x - dx, vars.player_y * 24 + player_shift_y - dy, vars.player_sprite);
 }
 
@@ -217,6 +256,17 @@ function move_player(move_x, move_y)
 
     if (move_ok)
     {
+        // mark old position dirty
+        mark_dirty(vars.player_x - 1, vars.player_y);
+        mark_dirty(vars.player_x - 1, vars.player_y - 1);
+        mark_dirty(vars.player_x - 1, vars.player_y + 1);
+        mark_dirty(vars.player_x, vars.player_y);
+        mark_dirty(vars.player_x, vars.player_y - 1);
+        mark_dirty(vars.player_x, vars.player_y + 1);
+        mark_dirty(vars.player_x + 1, vars.player_y);
+        mark_dirty(vars.player_x + 1, vars.player_y - 1);
+        mark_dirty(vars.player_x + 1, vars.player_y + 1);
+
         vars.player_x += move_x;
         vars.player_y += move_y;
         _set_reachable(vars.player_x, vars.player_y, 1);
@@ -309,6 +359,39 @@ function game_logic_loop()
 {
 //     animation_phase++;
 
+    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left'))
+        move_player(-1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
+        move_player(1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_right'))
+        move_player(-1, 0);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_left'))
+        move_player(-1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_left'))
+        move_player(1, 0);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_right'))
+        move_player(1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_top'))
+        move_player(0, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_bottom'))
+        move_player(-1, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_top'))
+        move_player(0, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_bottom'))
+        move_player(1, 1);
+    else if (!applies(_get_field(vars.player_x, vars.player_y + 1), 'can_stand_on') &&
+        !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb')) &&
+        !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb')))
+        move_player(0, 1);
+    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'crumbles') &&
+        ('' + vars.player_x + '/' + (vars.player_y + 1) in vars.field_offset))
+    {
+        move_player(0, 1);
+    }
+
+    // handle camera
+    var oldvx = vars.vx;
+    var oldvy = vars.vy;
     if (vars.current_level_copy.width < 28)
     {
         vars.vx = -Math.floor(((28 - vars.current_level_copy.width) / 2) * 24);
@@ -340,41 +423,20 @@ function game_logic_loop()
         if (vars.vy > (vars.current_level_copy.height - 16) * 24)
             vars.vy = (vars.current_level_copy.height - 16) * 24;
     }
-
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left'))
-        move_player(-1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
-        move_player(1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_right'))
-        move_player(-1, 0);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_left'))
-        move_player(-1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_left'))
-        move_player(1, 0);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_right'))
-        move_player(1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_top'))
-        move_player(0, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_bottom'))
-        move_player(-1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_top'))
-        move_player(0, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_bottom'))
-        move_player(1, 1);
-    else if (!applies(_get_field(vars.player_x, vars.player_y + 1), 'can_stand_on') &&
-        !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb')) &&
-        !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb')))
-        move_player(0, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'crumbles') &&
-        ('' + vars.player_x + '/' + (vars.player_y + 1) in vars.field_offset))
+    if (oldvx != vars.vx || oldvy != vars.vy)
     {
-        move_player(0, 1);
+        for (var y = 0; y < 16; y++)
+            for (var x = 0; x < 28; x++)
+                vars.display_sprite[y][x] = -2;
     }
 
     // handle animations
     var remove_animations = [];
     jQuery.each(Object.keys(vars.animations), function(_, key) {
         var info = vars.animations[key];
+        var xy = key.split('/');
+        var x = new Number(xy[0]).valueOf();
+        var y = new Number(xy[1]).valueOf();
         if (typeof(info.wait) !== 'undefined')
         {
             if (info.wait > 0)
@@ -402,6 +464,7 @@ function game_logic_loop()
                     var xy = key.split('/');
                     info.done(new Number(xy[0]).valueOf(), new Number(xy[1]).valueOf());
                 }
+//                 delete vars.field_offset[key];
                 remove_animations.push(key);
             }
         }
@@ -410,6 +473,10 @@ function game_logic_loop()
             if (!(key in vars.field_offset))
                 vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
             vars.field_offset[key].dy -= 4;
+//             mark_dirty(x, y + 1);
+            mark_dirty(x, y - 1);
+            mark_dirty(x, y);
+//             mark_dirty(x, y - 1);
             if (vars.field_offset[key].dy < -20)
                 vars.field_offset[key].alpha -= 0.2;
             if (vars.field_offset[key].dy < -40)
@@ -419,6 +486,7 @@ function game_logic_loop()
                     var xy = key.split('/');
                     info.done(new Number(xy[0]).valueOf(), new Number(xy[1]).valueOf());
                 }
+                delete vars.field_offset[key];
                 remove_animations.push(key);
             }
         }
@@ -426,17 +494,19 @@ function game_logic_loop()
         {
             if (!(key in vars.field_offset))
                 vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
+//             mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24) - 2);
+            mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24) - 1);
+            mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24));
+            mark_dirty(x, y);
             vars.field_offset[key].dy += 24;
-            var xy = key.split('/');
-            var x = new Number(xy[0]).valueOf();
-            var y = new Number(xy[1]).valueOf();
-            if (applies(_get_field(x, y + Math.floor(vars.field_offset[key].dy / 24.0)), 'is_solid'))
+            if (applies(_get_field(x, y + Math.floor(vars.field_offset[key].dy / 24)), 'is_solid'))
             {
                 vars.sounds['hit_hurt'].currentTime = 0;
                 if (vars.play_sounds)
                     vars.sounds['hit_hurt'].play();
                 if (typeof(info.done) === 'function')
                     info.done(x, y);
+                delete vars.field_offset[key];
                 remove_animations.push(key);
             }
         }
@@ -449,6 +519,7 @@ function game_logic_loop()
             {
                 if (typeof(info.done) === 'function')
                     info.done(x, y);
+                delete vars.field_offset[key];
                 remove_animations.push(key);
             }
         }
@@ -623,7 +694,7 @@ function find_reachable_blocks(x, y)
             }
         }
     }
-    console.log("This took " + iterations + " iterations.");
+//     console.log("This took " + iterations + " iterations.");
 }
 
 function initLevel(which)
@@ -661,7 +732,15 @@ function initLevel(which)
     vars.reachable_xmax = null;
     vars.reachable_ymin = null;
     vars.reachable_ymax = null;
+    vars.display_sprite = [];
 
+    for (var y = 0; y < 16; y++)
+    {
+        var display_sprite_row = [];
+        for (var x = 0; x < 28; x++)
+            display_sprite_row.push(-2);
+        vars.display_sprite.push(display_sprite_row);
+    }
     for (var y = 0; y < vars.current_level_copy.height; y++)
     {
         var row = [];
@@ -685,7 +764,7 @@ function initLevel(which)
 function init_game(width, height, supersampling, data)
 {
     vars = {
-        play_sounds: true,
+        play_sounds: false,
         vx: 0,
         vy: 0,
         game_width: null,
@@ -694,6 +773,7 @@ function init_game(width, height, supersampling, data)
         canvas: null,
         imageContext: null,
         fields: [],
+        display_sprite: [],
         game_logic_loop_counter: 0,
         pressed_keys: {},
         player_x: 0,
@@ -709,6 +789,7 @@ function init_game(width, height, supersampling, data)
         player_sprite_back: 0,
         max_keys: 4,
         sounds: {},
+        sprites_repo: null,
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
@@ -748,13 +829,14 @@ function init_game(width, height, supersampling, data)
     vars.sounds['music'] = new Audio('sounds/music-low.mp3');
     var zip = new JSZip(atob(data));
     $.each(zip.files, function (index, zipEntry) {
-        console.log(zipEntry);
+//         console.log(zipEntry);
         if (zipEntry.name == 'sprites.png')
         {
             var blob = new Blob([zipEntry.asUint8Array()], {'type': 'image/png'});
             var urlCreator = window.URL || window.webkitURL;
             var imageUrl = urlCreator.createObjectURL(blob);
             load_sprites(imageUrl);
+            vars.sprites_repo = $('#sprites_default')[0];
         }
         else if (zipEntry.name == 'levels.json')
         {
@@ -807,14 +889,19 @@ function load_game(url)
 
 function fill_rect(x0, y0, x1, y1, color)
 {
+    x0 *= vars.game_supersampling;
+    x1 *= vars.game_supersampling;
+    y0 *= vars.game_supersampling;
+    y1 *= vars.game_supersampling;
     vars.imageContext.fillStyle = color;
     vars.imageContext.strokeStyle = "none";
-    vars.imageContext.fillRect(x0 + 0.5, y0 + 0.5, x1 - x0 + 1, y1 - y0 + 1);
+//     vars.imageContext.fillRect(x0 + 0.5, y0 + 0.5, x1 - x0 + 1, y1 - y0 + 1);
+    vars.imageContext.fillRect(x0, y0, x1 - x0 + vars.game_supersampling, y1 - y0 + vars.game_supersampling);
 }
 
 function clear(color)
 {
-    fill_rect(0, 0, vars.game_width * vars.game_supersampling, vars.game_height * vars.game_supersampling, color);
+    fill_rect(0, 0, vars.game_width, vars.game_height, color);
 }
 
 function fill_rect_semi(x0, y0, x1, y1)
@@ -830,31 +917,31 @@ function fill_rect_semi(x0, y0, x1, y1)
 
 function draw_rect(x0, y0, x1, y1, color)
 {
-    vars.imageContext.strokeStyle = window.defaultHtml[color % 16];
-    vars.imageContext.fillStyle = "none";
+    x0 *= vars.game_supersampling;
+    x1 *= vars.game_supersampling;
+    y0 *= vars.game_supersampling;
+    y1 *= vars.game_supersampling;
+    vars.imageContext.strokeStyle = color;
+    vars.imageContext.fillStyle = "rgba(255,255,255,0.1);";
     vars.imageContext.strokeWidth = 1.0;
-    vars.imageContext.strokeRect(x0 + 0.5, y0 + 0.5, x1 - x0 + 1, y1 - y0 + 1);
+    vars.imageContext.strokeRect(x0, y0, x1 - x0 + vars.game_supersampling, y1 - y0 + vars.game_supersampling);
 }
 
 function draw_sprite(x, y, which, id)
 {
-    if (typeof(id) === 'undefined')
-        id = 'sprites_default';
     if (which < 0)
         return;
     x = Math.round(x);
     y = Math.round(y);
     var px = Math.floor(which % 8);
     var py = Math.floor(which / 8);
-    vars.imageContext.drawImage(document.getElementById(id), px * 24, py * 24, 24, 24,
+    vars.imageContext.drawImage(vars.sprites_repo, px * 24, py * 24, 24, 24,
                                 x * vars.game_supersampling, y * vars.game_supersampling,
                                 24 * vars.game_supersampling, 24 * vars.game_supersampling);
 }
 
 function draw_sprite_special(x, y, which, id, alpha, osx, osy, w, h, odx, ody)
 {
-    if (typeof(id) === 'undefined')
-        id = 'sprites_default';
     if (which < 0)
         return;
     if (alpha != 1.0)
@@ -866,7 +953,7 @@ function draw_sprite_special(x, y, which, id, alpha, osx, osy, w, h, odx, ody)
     y = Math.round(y);
     var px = Math.floor(which % 8);
     var py = Math.floor(which / 8);
-    vars.imageContext.drawImage(document.getElementById(id), px * 24 + osx, py * 24 + osy, w, h,
+    vars.imageContext.drawImage(vars.sprites_repo, px * 24 + osx, py * 24 + osy, w, h,
                                 (x + odx) * vars.game_supersampling, (y + ody) * vars.game_supersampling,
                                 w * vars.game_supersampling, h * vars.game_supersampling);
     if (alpha != 1.0)
@@ -877,37 +964,13 @@ function draw_sprite_special(x, y, which, id, alpha, osx, osy, w, h, odx, ody)
 
 function draw_sprite_part_y(x, y, which, id, sy, h, dy)
 {
-    if (typeof(id) === 'undefined')
-        id = 'sprites_default';
     if (which < 0)
         return;
     x = Math.round(x);
     y = Math.round(y);
     var px = Math.floor(which % 8);
     var py = Math.floor(which / 8);
-    vars.imageContext.drawImage(document.getElementById(id), px * 24, py * 24 + sy, 24, h,
+    vars.imageContext.drawImage(vars.sprites_repo, px * 24, py * 24 + sy, 24, h,
                                 x * vars.game_supersampling, (y + dy) * vars.game_supersampling,
                                 24 * vars.game_supersampling, h * vars.game_supersampling);
-}
-
-function draw_part(which, x, y, sx, sy, sw, sh, alpha)
-{
-    vars.imageContext.save();
-    vars.imageContext.globalAlpha = alpha;
-    x = Math.round(x);
-    y = Math.round(y);
-    vars.imageContext.drawImage(document.getElementById(which), sx, sy, sw, sh,
-                                x * vars.game_supersampling, y * vars.game_supersampling,
-                                sw * vars.game_supersampling, sh * vars.game_supersampling);
-    vars.imageContext.restore();
-}
-
-function draw_image(which, x, y)
-{
-    x = Math.round(x);
-    y = Math.round(y);
-    var img = $('#' + which);
-    vars.imageContext.drawImage(document.getElementById(which), 0, 0, img.width(), img.height(),
-                                  x * vars.game_supersampling, y * vars.game_supersampling,
-                                  img.width() * vars.game_supersampling, img.height() * vars.game_supersampling);
 }

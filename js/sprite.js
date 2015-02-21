@@ -679,13 +679,13 @@ $().ready(function() {
             else
             {
 //                 data = data.replace("\n", '');
-                console.log('loading hs file...');
+//                 console.log('loading hs file...');
                 data = data.substr(data.indexOf('base64,') + 7);
                 data = atob(data);
                 data = atob(data);
                 var zip = new JSZip(data);
                 $.each(zip.files, function (index, zipEntry) {
-                    console.log(zipEntry);
+//                     console.log(zipEntry);
                     if (zipEntry.name == 'sprites.png')
                     {
                         var blob = new Blob([zipEntry.asUint8Array()], {'type': 'image/png'});
