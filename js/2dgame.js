@@ -685,7 +685,7 @@ function initLevel(which)
 function init_game(width, height, supersampling, data)
 {
     vars = {
-        play_sounds: false,
+        play_sounds: true,
         vx: 0,
         vy: 0,
         game_width: null,
