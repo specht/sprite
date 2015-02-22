@@ -118,40 +118,14 @@ function loop(time)
     var dx = vars.vx;
     var dy = vars.vy;
 
+    var pix = Math.floor(vars.player_x / 24);
+    var piy = Math.floor(vars.player_y / 24);
     var player_shift_x = 0;
     var player_shift_y = 0;
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right'))
-        player_shift_y = 12;
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left_2_1_left') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right_2_1_right'))
-        player_shift_y = 8;
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left_2_1_right') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right_2_1_left'))
-        player_shift_y = 16;
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
-        player_shift_y = 12;
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_right') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_left'))
-        player_shift_y = 8;
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_top') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_bottom'))
-    {
-        player_shift_x = 8;
-        player_shift_y = 12;
-    }
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_top') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_bottom'))
-    {
-        player_shift_x = -8;
-        player_shift_y = 12;
-    }
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_left') ||
-        applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_right'))
-        player_shift_y = 16;
 
-//     mark_dirty(vars.player_x, vars.player_y);
+    for (var y = -1; y <= 1; y++)
+        for (var x = -1; x <= 1; x++)
+            mark_dirty(pix + x, piy + y);
 //     if (player_shift_x < 0)
 //         mark_dirty(vars.player_x - 1, vars.player_y);
 //     else if (player_shift_x > 0)
@@ -166,15 +140,16 @@ function loop(time)
         'b': 0,
         'c': 0,
     };
-    for (var y = 0; y < 16; y++)
+    for (var y = 0; y < 17; y++)
     {
-        for (var x = 0; x < 28; x++)
+        for (var x = 0; x < 29; x++)
         {
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
             var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
             if (poskey in vars.field_offset)
             {
-                fill_rect(x * 24, y * 24, x * 24 + 23, y * 24 + 23, '#000');
+                vars.display_sprite[y][x] = v;
+                fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
                 draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
                                     y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
                                     v, 'sprites_default', vars.field_offset[poskey].alpha,
@@ -189,8 +164,17 @@ function loop(time)
                 {
                     if (vars.block_visible[poskey])
                     {
+                        fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
                         draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
                         counts['b']++;
+                    }
+                    else
+                    {
+                        if (vars.display_sprite[y][x] != v)
+                        {
+                            vars.display_sprite[y][x] = v;
+                            fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
+                        }
                     }
                 }
                 else
@@ -198,8 +182,9 @@ function loop(time)
                     if (vars.display_sprite[y][x] != v)
                     {
                         vars.display_sprite[y][x] = v;
-                        fill_rect(x * 24, y * 24, x * 24 + 23, y * 24 + 23, '#000');
+                        fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
                         draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
+//                         draw_rect(x * 24 + 1, y * 24 + 1, x * 24 + 23, y * 24 + 23, '#080');
                         counts['c']++;
                     }
                 }
@@ -209,85 +194,235 @@ function loop(time)
         }
     }
 //     console.log(counts);
-    draw_sprite(vars.player_x * 24 + player_shift_x - dx, vars.player_y * 24 + player_shift_y - dy, vars.player_sprite);
+    var use_sprite = vars.player_sprite;
+    if (vars.jumping)
+    {
+        if (use_sprite == vars.player_sprite_left && vars.player_sprite_jump_left >= 0)
+            use_sprite = vars.player_sprite_jump_left;
+        else if (use_sprite == vars.player_sprite_right && vars.player_sprite_jump_right >= 0)
+            use_sprite = vars.player_sprite_jump_right;
+    }
+    else if (vars.player_walk_phase > 1)
+    {
+        if (use_sprite == vars.player_sprite_left && vars.player_sprite_walk_left >= 0)
+            use_sprite = vars.player_sprite_walk_left;
+        else if (use_sprite == vars.player_sprite_right && vars.player_sprite_walk_right >= 0)
+            use_sprite = vars.player_sprite_walk_right;
+    }
+    draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
+//     draw_rect(vars.player_x + player_shift_x - dx - 1, vars.player_y + player_shift_y - dy - 1,
+//               vars.player_x + player_shift_x - dx + 1, vars.player_y + player_shift_y - dy + 1, '#fff');
 }
 
 function move_player(move_x, move_y)
 {
-    if (move_y == 0 && move_x < 0)
+    move_player_small(move_x * 24, move_y * 24);
+}
+
+function move_player_small(move_x, move_y)
+{
+    var x = 0;
+    var y = 0;
+    while (y != move_y)
     {
-        // left
-        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_left'))
-            move_y -= 1;
-        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_left_2_1_right'))
-            move_y -= 1;
-        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right'))
-            move_y += 1;
-        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right_2_1_left'))
-            move_y += 1;
+        var dy = 0;
+        if (y < move_y)
+            dy = 1;
+        else if (y > move_y)
+            dy = -1;
+        if (!_move_player_small(0, dy))
+            break;
+        y += dy;
     }
-    else if (move_y == 0 && move_x > 0)
+    while (x != move_x)
     {
-        // right
-        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_right'))
-            move_y -= 1;
-        if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_right_2_1_left'))
-            move_y -= 1;
-        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left'))
-            move_y += 1;
-        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left_2_1_right'))
-            move_y += 1;
+        var dx = 0;
+        if (x < move_x)
+            dx = 1;
+        else if (x > move_x)
+            dx = -1;
+        if (!_move_player_small(dx, 0))
+            break;
+        x += dx;
     }
+//     while (x != move_x || y != move_y)
+//     {
+//         var dx = 0;
+//         var dy = 0;
+//         if (x < move_x)
+//             dx = 1;
+//         else if (x > move_x)
+//             dx = -1;
+//         if (y < move_y)
+//             dy = 1;
+//         else if (y > move_y)
+//             dy = -1;
+//         if (!_move_player_small(dx, dy))
+//             break;
+//         x += dx;
+//         y += dy;
+//     }
+}
+
+function field_has_silhouette(px, py)
+{
+    return (
+        applies(_get_field(px, py), 'slide_down_left') ||
+        applies(_get_field(px, py), 'slide_down_left_2_1_left') ||
+        applies(_get_field(px, py), 'slide_down_left_2_1_right') ||
+        applies(_get_field(px, py), 'slide_down_left_1_2_top') ||
+        applies(_get_field(px, py), 'slide_down_left_1_2_bottom') ||
+        applies(_get_field(px, py), 'slide_down_right') ||
+        applies(_get_field(px, py), 'slide_down_right_2_1_left') ||
+        applies(_get_field(px, py), 'slide_down_right_2_1_right') ||
+        applies(_get_field(px, py), 'slide_down_right_1_2_top') ||
+        applies(_get_field(px, py), 'slide_down_right_1_2_bottom') ||
+        applies(_get_field(px, py), 'stairs_up_left') ||
+        applies(_get_field(px, py), 'stairs_up_left_2_1_left') ||
+        applies(_get_field(px, py), 'stairs_up_left_2_1_right') ||
+        applies(_get_field(px, py), 'stairs_up_right') ||
+        applies(_get_field(px, py), 'stairs_up_right_2_1_left') ||
+        applies(_get_field(px, py), 'stairs_up_right_2_1_right'));
+}
+
+function _move_player_small(move_x, move_y)
+{
+    var pix = Math.floor(vars.player_x / 24);
+    var piy = Math.floor(vars.player_y / 24);
+
+    // mark old position dirty
+    mark_dirty(pix - 1, piy);
+    mark_dirty(pix - 1, piy - 1);
+    mark_dirty(pix - 1, piy + 1);
+    mark_dirty(pix, piy);
+    mark_dirty(pix, piy - 1);
+    mark_dirty(pix, piy + 1);
+    mark_dirty(pix + 1, piy);
+    mark_dirty(pix + 1, piy - 1);
+    mark_dirty(pix + 1, piy + 1);
+
+//     if (move_y == 0 && move_x < 0)
+//     {
+//         // left
+//         if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_left'))
+//             move_y -= 1;
+//         if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_left_2_1_right'))
+//             move_y -= 1;
+//         if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right'))
+//             move_y += 1;
+//         if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_right_2_1_left'))
+//             move_y += 1;
+//     }
+//     else if (move_y == 0 && move_x > 0)
+//     {
+//         // right
+//         if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_right'))
+//             move_y -= 1;
+//         if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'stairs_up_right_2_1_left'))
+//             move_y -= 1;
+//         if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left'))
+//             move_y += 1;
+//         if (applies(_get_field(vars.player_x, vars.player_y + 1), 'stairs_up_left_2_1_right'))
+//             move_y += 1;
+//     }
 
 
+    var stopped_jump = false;
     var move_ok = false;
     if (move_x != 0 || move_y != 0)
     {
-        if (!applies(_get_field(vars.player_x + move_x, vars.player_y + move_y), 'is_solid'))
-            move_ok = true;
-        // check if doors are open
-        if (('' + (vars.player_x + move_x) + '/' + (vars.player_y + move_y)) in vars.door_open)
+        var p = [];
+        p.push([0, 0]);
+//         p.push([0, -18]);
+//         p.push([-8, 0]);
+//         p.push([8, 0]);
+        var ok = true;
+        jQuery.each(p, function(_, pm) {
+            if (applies(_get_field(Math.floor((vars.player_x + move_x + pm[0]) / 24), Math.floor((vars.player_y + move_y + pm[1]) / 24)), 'is_solid') &&
+                !(('' + Math.floor((vars.player_x + move_x + pm[0]) / 24) + '/' + Math.floor((vars.player_y + move_y + pm[1]) / 24)) in vars.door_open))
+            {
+                ok = false;
+                if ((vars.ay < -0.0001) && (Math.floor(vars.player_y / 24) != Math.floor((vars.player_y + move_y) / 24)))
+                {
+                    vars.ay = 0.0;
+                    stopped_jump = true;
+                    vars.jumping = false;
+//                     console.log('stopping jump');
+                }
+            }
+        });
+        if (ok)
             move_ok = true;
     }
 
-    if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_right_1_2_bottom') ||
-        applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_left_1_2_bottom'))
-        move_ok = true;
+//     if (applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_right_1_2_bottom') ||
+//         applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_left_1_2_bottom'))
+//         move_ok = true;
+
+    var currently_on_silhouette_field = field_has_silhouette(pix, piy);
+    var target_has_silhouette = field_has_silhouette(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24));
+    var above_target_has_silhouette = field_has_silhouette(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24 - 1));
+//     console.log('move:', move_x, move_y, 'player:', Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24), pix, piy, 'flags:', currently_on_silhouette_field, target_has_silhouette, above_target_has_silhouette, 'move_ok:', move_ok, 'stopped_jump:', stopped_jump);
+
+    if (!stopped_jump)
+    {
+        if (!move_ok)
+        {
+            if (target_has_silhouette)
+            {
+                move_ok = true;
+//                 console.log('A');
+            }
+        }
+
+//         if (!move_ok)
+//         {
+            if (currently_on_silhouette_field && above_target_has_silhouette)
+            {
+                move_y -= 24;
+                move_ok = true;
+//                 console.log('B');
+            }
+//         }
+
+        if (!move_ok)
+        {
+            if (currently_on_silhouette_field &&
+                applies(_get_field(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24)), 'can_stand_on') &&
+                (!applies(_get_field(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24 - 1)), 'can_stand_on')))
+            {
+                move_y -= 24;
+                move_ok = true;
+//                 console.log('C');
+            }
+        }
+    }
 
     if (move_ok)
     {
-        // mark old position dirty
-        mark_dirty(vars.player_x - 1, vars.player_y);
-        mark_dirty(vars.player_x - 1, vars.player_y - 1);
-        mark_dirty(vars.player_x - 1, vars.player_y + 1);
-        mark_dirty(vars.player_x, vars.player_y);
-        mark_dirty(vars.player_x, vars.player_y - 1);
-        mark_dirty(vars.player_x, vars.player_y + 1);
-        mark_dirty(vars.player_x + 1, vars.player_y);
-        mark_dirty(vars.player_x + 1, vars.player_y - 1);
-        mark_dirty(vars.player_x + 1, vars.player_y + 1);
-
         vars.player_x += move_x;
         vars.player_y += move_y;
-        _set_reachable(vars.player_x, vars.player_y, 1);
+        var pix = Math.floor(vars.player_x / 24);
+        var piy = Math.floor(vars.player_y / 24);
+        _set_reachable(pix, piy, 1);
         if (move_x < 0)
             vars.player_sprite = vars.player_sprite_left;
         else if (move_x > 0)
             vars.player_sprite = vars.player_sprite_right;
         else {
-            if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb'))
+            if (applies(_get_field(pix, piy), 'can_climb'))
                 vars.player_sprite = vars.player_sprite_back;
-            else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb'))
+            else if (applies(_get_field(pix, piy + 1), 'can_climb'))
                 vars.player_sprite = vars.player_sprite_front;
         }
 
         // see if we found a key
         for (var i = 0; i < vars.max_keys; i++)
         {
-            if (applies(_get_field(vars.player_x, vars.player_y), 'key_' + (i + 1)))
+            if (applies(_get_field(pix, piy), 'key_' + (i + 1)))
             {
                 vars.got_key[i] = true;
-                var anim_key = '' + (vars.player_x) + '/' + vars.player_y;
+                var anim_key = '' + (pix) + '/' + piy;
                 if (!(anim_key in vars.animations))
                 {
                     if (vars.play_sounds)
@@ -306,11 +441,11 @@ function move_player(move_x, move_y)
             {
                 for (var dx = -1; dx <= 1; dx += 2)
                 {
-                    if (applies(_get_field(vars.player_x + dx, vars.player_y), 'door_' + (i + 1)))
+                    if (applies(_get_field(pix + dx, piy), 'door_' + (i + 1)))
                     {
-                        if (!(('' + (vars.player_x + dx) + '/' + vars.player_y) in vars.door_open))
+                        if (!(('' + (pix + dx) + '/' + piy) in vars.door_open))
                         {
-                            var anim_key = '' + (vars.player_x + dx) + '/' + vars.player_y;
+                            var anim_key = '' + (pix + dx) + '/' + piy;
                             if (!(anim_key in vars.animations))
                             {
                                 if (vars.play_sounds)
@@ -324,9 +459,9 @@ function move_player(move_x, move_y)
         }
 
         // see if we stand on a crumbling block
-        if (applies(_get_field(vars.player_x, vars.player_y + 1), 'crumbles'))
+        if (applies(_get_field(pix, piy + 1), 'crumbles'))
         {
-            var anim_key = '' + (vars.player_x) + '/' + (vars.player_y + 1);
+            var anim_key = '' + (pix) + '/' + (piy + 1);
             if (!(anim_key in vars.animations))
             {
                 vars.animations[anim_key] = {wait: 15, type: 'crumble', done: function(x, y) {
@@ -338,9 +473,9 @@ function move_player(move_x, move_y)
         for (var dy = 0; dy <= 1; dy++)
         {
             // see if we stand on an appearing block
-            if (applies(_get_field(vars.player_x, vars.player_y + dy), 'appears'))
+            if (applies(_get_field(pix, piy + dy), 'appears'))
             {
-                var anim_key = '' + (vars.player_x) + '/' + (vars.player_y + dy);
+                var anim_key = '' + (pix) + '/' + (piy + dy);
                 if (!vars.block_visible[anim_key])
                 {
                     if (!(anim_key in vars.animations))
@@ -353,40 +488,67 @@ function move_player(move_x, move_y)
             }
         }
     }
+    return move_ok;
 }
 
 function game_logic_loop()
 {
 //     animation_phase++;
 
-    if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left'))
-        move_player(-1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right'))
-        move_player(1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_right'))
-        move_player(-1, 0);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_2_1_left'))
-        move_player(-1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_left'))
-        move_player(1, 0);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_2_1_right'))
-        move_player(1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_top'))
-        move_player(0, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_left_1_2_bottom'))
-        move_player(-1, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_top'))
-        move_player(0, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'slide_down_right_1_2_bottom'))
-        move_player(1, 1);
-    else if (!applies(_get_field(vars.player_x, vars.player_y + 1), 'can_stand_on') &&
-        !(applies(_get_field(vars.player_x, vars.player_y), 'can_climb')) &&
-        !(applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb')))
-        move_player(0, 1);
-    else if (applies(_get_field(vars.player_x, vars.player_y + 1), 'crumbles') &&
-        ('' + vars.player_x + '/' + (vars.player_y + 1) in vars.field_offset))
+    vars.player_walk_phase = (vars.player_walk_phase + 1) % 4;
+
+    var pix = Math.floor(vars.player_x / 24);
+    var piy = Math.floor(vars.player_y / 24);
+
+    // slide down slides
+    if (applies(_get_field(pix, piy), 'slide_down_left') ||
+        applies(_get_field(pix, piy), 'slide_down_left_2_1_left') ||
+        applies(_get_field(pix, piy), 'slide_down_left_2_1_right') ||
+        applies(_get_field(pix, piy), 'slide_down_left_1_2_bottom') ||
+        applies(_get_field(pix, piy), 'slide_down_left_1_2_top'))
     {
+//         console.log('sliding down left');
+        for (var i = 0; i < 13; i++)
+            move_player_small(-1, 0);
+    }
+    else if (applies(_get_field(pix, piy), 'slide_down_right') ||
+        applies(_get_field(pix, piy), 'slide_down_right_2_1_left') ||
+        applies(_get_field(pix, piy), 'slide_down_right_2_1_right') ||
+        applies(_get_field(pix, piy), 'slide_down_right_1_2_bottom') ||
+        applies(_get_field(pix, piy), 'slide_down_right_1_2_top'))
+    {
+//         console.log('sliding down right');
+        for (var i = 0; i < 13; i++)
+            move_player_small(1, 0);
+    }
+
+    if (!(applies(_get_field(pix, piy), 'can_climb')) &&
+        !(applies(_get_field(pix, piy + 1), 'can_climb')) &&
+        !(applies(_get_field(pix, piy), 'can_stand_on') && field_has_silhouette(pix, piy)) &&
+        !(applies(_get_field(pix, piy + 1), 'can_stand_on')))
+        // falling down!
+    {
+//         console.log('falling down');
         move_player(0, 1);
+    }
+    else if (vars.ay < -0.0001)
+    {
+//         console.log("falling down anyway because we're jumping up");
+        move_player(0, 1);
+    }
+    else if (applies(_get_field(pix, piy + 1), 'crumbles') &&
+        ('' + pix + '/' + (piy + 1) in vars.field_offset))
+    {
+//         console.log('falling down because of crumbling field');
+        move_player(0, 1);
+    }
+    else if (mod(vars.player_y, 24) < 23)
+    {
+        if (!applies(_get_field(pix, piy), 'can_climb'))
+        {
+//             console.log('dropping to bottom');
+            vars.player_y = Math.floor(vars.player_y / 24) * 24 + 23;
+        }
     }
 
     // handle camera
@@ -398,10 +560,10 @@ function game_logic_loop()
     }
     else
     {
-        if (vars.player_x * 24 - vars.vx > 20 * 24 && vars.vx < (vars.reachable_xmax - 28 + 2) * 24)
-            vars.vx += 24;
-        if (vars.player_x * 24 - vars.vx < 8 * 24 && vars.vx > (vars.reachable_xmin - 2) * 24)
-            vars.vx -= 24;
+        if (vars.player_x - vars.vx > 20 * 24 && vars.vx < (vars.reachable_xmax - 28 + 2) * 24)
+            vars.vx += 12;
+        if (vars.player_x - vars.vx < 8 * 24 && vars.vx > (vars.reachable_xmin - 2) * 24)
+            vars.vx -= 12;
         if (vars.vx < 0)
             vars.vx = 0;
         if (vars.vx > (vars.current_level_copy.width - 28) * 24)
@@ -414,9 +576,9 @@ function game_logic_loop()
     }
     else
     {
-        if (vars.player_y * 24 - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 16 + 2) * 24)
+        if (vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 16 + 2) * 24)
             vars.vy += 24;
-        if (vars.player_y * 24 - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
+        if (vars.player_y - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
             vars.vy -= 24;
         if (vars.vy < 0)
             vars.vy = 0;
@@ -425,10 +587,158 @@ function game_logic_loop()
     }
     if (oldvx != vars.vx || oldvy != vars.vy)
     {
-        for (var y = 0; y < 16; y++)
-            for (var x = 0; x < 28; x++)
+        for (var y = 0; y < 17; y++)
+            for (var x = 0; x < 29; x++)
                 vars.display_sprite[y][x] = -2;
     }
+
+    // handle keys, move player
+    if (vars.pressed_keys[37])
+    {
+        // left
+        vars.ax -= 6.0;
+        if (vars.ax < -12.0)
+            vars.ax = -12.0;
+    }
+    else if (vars.pressed_keys[39])
+    {
+        // right
+        vars.ax += 6.0;
+        if (vars.ax > 12.0)
+            vars.ax = 12.0;
+    }
+    else
+    {
+        if (vars.ax > 0.0)
+        {
+            vars.ax -= 6.0;
+            if (vars.ax < 0.0)
+                vars.ax = 0.0;
+        }
+        else if (vars.ax < 0.0)
+        {
+            vars.ax += 6.0;
+            if (vars.ax > 0.0)
+                vars.ax = 0.0;
+        }
+    }
+
+    if (vars.pressed_keys[38])
+    {
+        // up
+        if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
+        {
+//             console.log('climbing up');
+            vars.player_x = Math.floor(vars.player_x / 24) * 24 + 12;
+            move_player_small(0, -12);
+        }
+        else if (field_has_silhouette(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)) && applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24 - 1)), 'can_climb'))
+        {
+//             console.log('barely reaching and climbing up');
+            vars.player_x = Math.floor(vars.player_x / 24) * 24 + 12;
+            move_player_small(0, -(mod(vars.player_y, 24) + 13));
+        }
+    }
+
+    if (vars.pressed_keys[40])
+    {
+        // down
+        if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb') ||
+            applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_climb')
+        )
+        {
+            vars.player_x = Math.floor(vars.player_x / 24) * 24 + 12;
+            move_player_small(0, 12);
+        }
+    }
+
+    if (Math.abs(vars.ax) > 0.0001)
+    {
+        move_player_small(vars.ax, 0);
+    }
+    else
+    {
+        vars.ax = 0.0;
+        vars.player_walk_phase = 0;
+    }
+
+    if (vars.pressed_keys[16])
+    {
+        // jump
+        if ((mod(vars.player_y, 24) == 23) || applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
+        {
+            delete vars.pressed_keys[16];
+            if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_stand_on') ||
+                applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_stand_on') ||
+                applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_climb')
+            )
+            {
+                vars.ay = -75.0;
+                vars.jumping = true;
+//                 console.log('jump');
+            }
+        }
+    }
+    if (Math.abs(vars.ay) > 0.0001)
+    {
+        move_player_small(0, vars.ay);
+        if (vars.ay > 0)
+        {
+            vars.ay -= 12.0;
+            if (vars.ay <= 0.0)
+                vars.ay = 0.0;
+        }
+        else
+        {
+            vars.ay += 12.0;
+            if (vars.ay >= 0.0)
+                vars.ay = 0.0;
+        }
+    }
+    else
+    {
+        vars.ay = 0.0;
+        vars.jumping = false;
+    }
+
+    // adjust to block silhouette
+    var pix = Math.floor(vars.player_x / 24);
+    var piy = Math.floor(vars.player_y / 24);
+    if (!applies(_get_field(pix, piy), 'is_solid'))
+    {
+        if (field_has_silhouette(pix, piy + 1) && (!applies(_get_field(pix, piy), 'can_climb')))
+        {
+//             console.log('dropping down because silhouette');
+            vars.player_y = Math.floor(vars.player_y / 24 + 1) * 24;
+        }
+    }
+
+    if (applies(_get_field(pix, piy), 'slide_down_left') ||
+        applies(_get_field(pix, piy), 'stairs_up_right'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + 23 - mod(vars.player_x, 24);
+    else if (applies(_get_field(pix, piy), 'slide_down_left_2_1_right') ||
+        (applies(_get_field(pix, piy), 'stairs_up_right_2_1_right')))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + 11 - Math.floor(mod(vars.player_x, 24) / 2);
+    else if (applies(_get_field(pix, piy), 'slide_down_left_2_1_left') ||
+        applies(_get_field(pix, piy), 'stairs_up_right_2_1_left'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + 23 - Math.floor(mod(vars.player_x, 24) / 2);
+    else if (applies(_get_field(pix, piy), 'slide_down_right') ||
+        applies(_get_field(pix, piy), 'stairs_up_left'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + mod(vars.player_x, 24);
+    else if (applies(_get_field(pix, piy), 'slide_down_right_2_1_left') ||
+        applies(_get_field(pix, piy), 'stairs_up_left_2_1_left'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor(mod(vars.player_x, 24) / 2);
+    else if (applies(_get_field(pix, piy), 'slide_down_right_2_1_right') ||
+        applies(_get_field(pix, piy), 'stairs_up_left_2_1_right'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor(mod(vars.player_x, 24) / 2) + 12;
+    else if (applies(_get_field(pix, piy), 'slide_down_right_1_2_top'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor(mod(vars.player_x, 24) * 2);
+    else if (applies(_get_field(pix, piy), 'slide_down_right_1_2_bottom'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor((mod(vars.player_x, 24) - 12) * 2);
+    else if (applies(_get_field(pix, piy), 'slide_down_left_1_2_top'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor((23 - mod(vars.player_x, 24)) * 2);
+    else if (applies(_get_field(pix, piy), 'slide_down_left_1_2_bottom'))
+        vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor(((23 - mod(vars.player_x, 24)) - 12) * 2);
 
     // handle animations
     var remove_animations = [];
@@ -541,6 +851,7 @@ function stopTheGame()
 
 function keydown(code)
 {
+//     console.log(code);
     if (current_pane !== 'play')
         return;
     if (code == 76)
@@ -560,25 +871,25 @@ function keydown(code)
     {
         stopTheGame();
     }
-    if (code == 39)
-    {
-        move_player(1, 0);
-    }
-    if (code == 37)
-    {
-        move_player(-1, 0);
-    }
-    if (code == 38)
-    {
-        if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb'))
-            move_player(0, -1);
-    }
-    if (code == 40)
-    {
-        if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb') ||
-            applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb'))
-            move_player(0, 1);
-    }
+//     if (code == 39)
+//     {
+//         move_player(1, 0);
+//     }
+//     if (code == 37)
+//     {
+//         move_player(-1, 0);
+//     }
+//     if (code == 38)
+//     {
+//         if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb'))
+//             move_player(0, -1);
+//     }
+//     if (code == 40)
+//     {
+//         if (applies(_get_field(vars.player_x, vars.player_y), 'can_climb') ||
+//             applies(_get_field(vars.player_x, vars.player_y + 1), 'can_climb'))
+//             move_player(0, 1);
+//     }
 }
 
 function init() {
@@ -634,8 +945,15 @@ function init() {
         delete vars.pressed_keys[e.keyCode];
     }
 
+    function _clear_keys(e)
+    {
+        vars.pressed_keys = {};
+    }
+
     window.addEventListener("keydown", _keydown, false);
     window.addEventListener("keyup", _keyup, false);
+    window.addEventListener("blur", _clear_keys, false);
+    window.addEventListener("focus", _clear_keys, false);
     requestAnimationFrame(_loop);
     setTimeout(_game_logic_loop, 66);
 }
@@ -665,10 +983,10 @@ function find_reachable_blocks(x, y)
                 proceed = true;
 //             else if (applies(_get_field(x, y), 'crumbles'))
 //                 proceed = true;
-            else if (applies(_get_field(x, y + 1), 'stairs_up_left'))
+            else if (field_has_silhouette(x, y))
                 proceed = true;
-            else if (applies(_get_field(x, y + 1), 'stairs_up_right'))
-                proceed = true;
+//             else if (field_has_silhouette(x, y + 1))
+//                 proceed = true;
             if (proceed)
             {
                 _set_reachable(x, y, 1);
@@ -709,9 +1027,9 @@ function initLevel(which)
             if (applies(cell, 'actor_front') || applies(cell, 'actor_back') ||
                 applies(cell, 'actor_left') || applies(cell, 'actor_right'))
             {
-                vars.player_x = x;
-                vars.player_y = y;
-                console.log('setting player at', vars.player_x, vars.player_y);
+                vars.player_x = x * 24 + 12;
+                vars.player_y = y * 24 + 23;
+//                 console.log('setting player at', vars.player_x, vars.player_y);
                 vars.player_sprite = cell;
                 row[x] = -1;
                 found_player = true;
@@ -733,11 +1051,13 @@ function initLevel(which)
     vars.reachable_ymin = null;
     vars.reachable_ymax = null;
     vars.display_sprite = [];
+    vars.jumping = false;
+    vars.player_walk_phase = 0;
 
-    for (var y = 0; y < 16; y++)
+    for (var y = 0; y < 17; y++)
     {
         var display_sprite_row = [];
-        for (var x = 0; x < 28; x++)
+        for (var x = 0; x < 29; x++)
             display_sprite_row.push(-2);
         vars.display_sprite.push(display_sprite_row);
     }
@@ -748,7 +1068,6 @@ function initLevel(which)
             row.push(0);
         vars.reachable_blocks.push(row);
     }
-    find_reachable_blocks(vars.player_x, vars.player_y);
 
     // reset all keys
     for (var i = 0; i < vars.max_keys; i++)
@@ -756,6 +1075,8 @@ function initLevel(which)
         vars.got_key[i] = false;
         vars.door_open = {};
     }
+
+    find_reachable_blocks(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24));
 
     if (vars.play_sounds)
         vars.sounds['music'].play();
@@ -765,6 +1086,8 @@ function init_game(width, height, supersampling, data)
 {
     vars = {
         play_sounds: false,
+        ax: 0.0,
+        ay: 0.0,
         vx: 0,
         vy: 0,
         game_width: null,
@@ -772,6 +1095,7 @@ function init_game(width, height, supersampling, data)
         game_supersampling: null,
         canvas: null,
         imageContext: null,
+        jumping: false,
         fields: [],
         display_sprite: [],
         game_logic_loop_counter: 0,
@@ -783,10 +1107,15 @@ function init_game(width, height, supersampling, data)
         current_level_copy: {},
         levels: [],
         sprite_properties: [],
-        player_sprite_left: 0,
-        player_sprite_right: 0,
-        player_sprite_front: 0,
-        player_sprite_back: 0,
+        player_sprite_front: -1,
+        player_sprite_back: -1,
+        player_sprite_left: -1,
+        player_sprite_right: -1,
+        player_sprite_walk_left: -1,
+        player_sprite_walk_right: -1,
+        player_sprite_jump_left: -1,
+        player_sprite_jump_right: -1,
+        player_walk_phase: 0,
         max_keys: 4,
         sounds: {},
         sprites_repo: null,
@@ -848,18 +1177,40 @@ function init_game(width, height, supersampling, data)
         {
             var info = JSON.parse(zipEntry.asText());
             vars.sprite_properties = info;
+            // promote properties
+            jQuery.each(Object.keys(vars.sprite_properties), function(_, k) {
+                var p = vars.sprite_properties[k];
+                if (p.stairs_up_right || p.stairs_up_right_2_1_left || p.stairs_up_right_2_1_right ||
+                    p.stairs_up_left || p.stairs_up_left_2_1_left || p.stairs_up_left_2_1_right ||
+                    p.slide_down_left || p.slide_down_left_1_2_bottom || p.slide_down_left_1_2_top ||
+                    p.slide_down_left_2_1_left || p.slide_down_left_2_1_right ||
+                    p.slide_down_right || p.slide_down_right_1_2_bottom || p.slide_down_right_1_2_top ||
+                    p.slide_down_right_2_1_left || p.slide_down_right_2_1_right)
+                {
+                    p.can_stand_on = true;
+                    p.is_solid = true;
+                }
+            });
 //             loadLevels(info);
         }
     });
     jQuery.each(vars.sprite_properties, function(_, props) {
-        if ('actor_left' in props)
-            vars.player_sprite_left = _;
-        if ('actor_right' in props)
-            vars.player_sprite_right = _;
         if ('actor_front' in props)
             vars.player_sprite_front = _;
         if ('actor_back' in props)
             vars.player_sprite_back = _;
+        if ('actor_left' in props)
+            vars.player_sprite_left = _;
+        if ('actor_right' in props)
+            vars.player_sprite_right = _;
+        if ('actor_walk_left' in props)
+            vars.player_sprite_walk_left = _;
+        if ('actor_walk_right' in props)
+            vars.player_sprite_walk_right = _;
+        if ('actor_jump_left' in props)
+            vars.player_sprite_jump_left = _;
+        if ('actor_jump_right' in props)
+            vars.player_sprite_jump_right = _;
     });
     backdrop.fadeIn(function() {
         $('body').css('padding', '0');
