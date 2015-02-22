@@ -673,7 +673,7 @@ function game_logic_loop()
                 applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_climb')
             )
             {
-                vars.ay = -75.0;
+                vars.ay = -55.0;
                 vars.jumping = true;
 //                 console.log('jump');
             }
