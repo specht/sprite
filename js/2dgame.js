@@ -946,6 +946,7 @@ function init() {
     function _game_logic_loop()
     {
         var now = Date.now();
+        console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
         while (now - vars.latest_game_logic_update >= 33)
         {
             if (vars.stopGame)
