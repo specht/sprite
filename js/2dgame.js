@@ -949,7 +949,7 @@ function init() {
     function _game_logic_loop()
     {
         var now = Date.now();
-//         console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
+        console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
         while (now - vars.latest_game_logic_update >= 33)
         {
             if (vars.stopGame)
@@ -1233,12 +1233,15 @@ function init_game(width, height, supersampling, data)
         var control = null;
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '50px').css('bottom', '0');
         control.mousedown(function() {
+            console.log('left down');
             vars.pressed_keys[37] = true;
         });
         control.mouseup(function() {
+            console.log('left up');
             vars.pressed_keys[37] = false;
         });
         control.mouseleave(function() {
+            console.log('left up');
             vars.pressed_keys[37] = false;
         });
         $(container).append(control);
