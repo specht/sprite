@@ -216,8 +216,8 @@ function loop(time)
         else if (use_sprite == vars.player_sprite_right && vars.player_sprite_walk_right >= 0)
             use_sprite = vars.player_sprite_walk_right;
     }
-    return;
     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
+    return;
 //     draw_rect(vars.player_x + player_shift_x - dx - 1, vars.player_y + player_shift_y - dy - 1,
 //               vars.player_x + player_shift_x - dx + 1, vars.player_y + player_shift_y - dy + 1, '#fff');
 }
