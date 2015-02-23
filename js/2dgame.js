@@ -115,7 +115,7 @@ function def(trait, elements)
 function loop(time)
 {
     var now = Date.now();
-    console.log("render loop: " + (now - vars.latest_render_update));
+//     console.log("render loop: " + (now - vars.latest_render_update));
     vars.latest_render_update = now;
 //     clear('#000');
     var dx = vars.vx;
@@ -949,7 +949,7 @@ function init() {
     function _game_logic_loop()
     {
         var now = Date.now();
-        console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
+//         console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
         while (now - vars.latest_game_logic_update >= 33)
         {
             if (vars.stopGame)
