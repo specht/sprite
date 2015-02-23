@@ -1222,6 +1222,43 @@ function init_game(width, height, supersampling, data)
     $(container).append(backdrop);
     $(container).append(canvas);
     $(container).append(title);
+    if (!!('ontouchstart' in window))
+    {
+        var control = null;
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '200px').css('bottom', '0');
+        control.mousedown(function() {
+            vars.pressed_keys[37] = true;
+        });
+        control.mouseup(function() {
+            vars.pressed_keys[37] = false;
+        });
+        control.mouseleave(function() {
+            vars.pressed_keys[37] = false;
+        });
+        $(container).append(control);
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-right'></i>").css('right', '0').css('bottom', '0');
+        control.mousedown(function() {
+            vars.pressed_keys[39] = true;
+        });
+        control.mouseup(function() {
+            vars.pressed_keys[39] = false;
+        });
+        control.mouseleave(function() {
+            vars.pressed_keys[39] = false;
+        });
+        $(container).append(control);
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('left', '0').css('bottom', '0');
+        control.mousedown(function() {
+            vars.pressed_keys[16] = true;
+        });
+        control.mouseup(function() {
+            vars.pressed_keys[16] = false;
+        });
+        control.mouseleave(function() {
+            vars.pressed_keys[16] = false;
+        });
+        $(container).append(control);
+    }
     backdrop.css('display', 'none');
     canvas.css('display', 'none');
     $('body').append(container);
