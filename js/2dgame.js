@@ -114,6 +114,8 @@ function def(trait, elements)
 
 function loop(time)
 {
+    return;
+
     var now = Date.now();
     console.log("render loop: " + (now - vars.latest_render_update));
     vars.latest_render_update = now;
