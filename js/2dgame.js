@@ -114,6 +114,9 @@ function def(trait, elements)
 
 function loop(time)
 {
+    var now = Date.now();
+    console.log("render loop: " + (now - vars.latest_render_update));
+    vars.latest_render_update = now;
 //     clear('#000');
     var dx = vars.vx;
     var dy = vars.vy;
@@ -946,7 +949,7 @@ function init() {
     function _game_logic_loop()
     {
         var now = Date.now();
-        console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
+//         console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
         while (now - vars.latest_game_logic_update >= 33)
         {
             if (vars.stopGame)
@@ -1091,6 +1094,7 @@ function initLevel(which)
     vars.jump_start_y = 0;
     vars.player_walk_phase = 0;
     vars.latest_game_logic_update = Date.now();
+    vars.latest_render_update = Date.now();
 
     for (var y = 0; y < 17; y++)
     {
@@ -1193,6 +1197,7 @@ function init_game(width, height, supersampling, data)
         sounds: {},
         sprites_repo: null,
         latest_game_logic_update: Date.now(),
+        latest_render_update: Date.now(),
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
