@@ -115,7 +115,7 @@ function def(trait, elements)
 function loop(time)
 {
     var now = Date.now();
-//     console.log("render loop: " + (now - vars.latest_render_update));
+    console.log("render loop: " + (now - vars.latest_render_update));
     vars.latest_render_update = now;
 //     clear('#000');
     var dx = vars.vx;
