@@ -118,8 +118,7 @@ function loop(time)
     var now = Date.now();
     console.log("render loop: " + (now - vars.latest_render_update));
     vars.latest_render_update = now;
-    
-    return;
+
 //     clear('#000');
     var dx = vars.vx;
     var dy = vars.vy;
@@ -129,6 +128,8 @@ function loop(time)
     var player_shift_x = 0;
     var player_shift_y = 0;
 
+    return;
+    
     if (mod(vars.player_y, 24) < 23 && applies(_get_field(pix, piy - 1), 'is_solid'))
         player_shift_y = 18 - mod(vars.player_y, 24);
     if (mod(vars.player_x, 24) < 8 && applies(_get_field(pix - 1, piy), 'is_solid') && !field_has_silhouette(pix-1, piy))
