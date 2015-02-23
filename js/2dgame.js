@@ -140,8 +140,7 @@ function loop(time)
     for (var y = -1; y <= 1; y++)
         for (var x = -1; x <= 1; x++)
             mark_dirty(pix + x, piy + y);
-        
-    return;
+
 //     if (player_shift_x < 0)
 //         mark_dirty(vars.player_x - 1, vars.player_y);
 //     else if (player_shift_x > 0)
@@ -151,11 +150,6 @@ function loop(time)
 //     else if (player_shift_y > 0)
 //         mark_dirty(vars.player_x, vars.player_y + 1);
 
-//     var counts = {
-//         'a': 0,
-//         'b': 0,
-//         'c': 0,
-//     };
 //     for (var y = 0; y < 17; y++)
 //     {
 //         for (var x = 0; x < 29; x++)
@@ -172,7 +166,6 @@ function loop(time)
 //                                     vars.field_offset[poskey].osx, vars.field_offset[poskey].osy,
 //                                     vars.field_offset[poskey].w, vars.field_offset[poskey].h,
 //                                     vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
-//                 counts['a']++;
 //             }
 //             else
 //             {
@@ -182,7 +175,6 @@ function loop(time)
 //                     {
 //                         fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
 //                         draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
-//                         counts['b']++;
 //                     }
 //                     else
 //                     {
@@ -201,7 +193,6 @@ function loop(time)
 //                         fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
 //                         draw_sprite(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), v);
 // //                         draw_rect(x * 24 + 1, y * 24 + 1, x * 24 + 23, y * 24 + 23, '#080');
-//                         counts['c']++;
 //                     }
 //                 }
 //             }
@@ -225,6 +216,7 @@ function loop(time)
         else if (use_sprite == vars.player_sprite_right && vars.player_sprite_walk_right >= 0)
             use_sprite = vars.player_sprite_walk_right;
     }
+    return;
     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 //     draw_rect(vars.player_x + player_shift_x - dx - 1, vars.player_y + player_shift_y - dy - 1,
 //               vars.player_x + player_shift_x - dx + 1, vars.player_y + player_shift_y - dy + 1, '#fff');
