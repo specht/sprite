@@ -202,7 +202,7 @@ function loop(time)
         else if (use_sprite == vars.player_sprite_right && vars.player_sprite_jump_right >= 0)
             use_sprite = vars.player_sprite_jump_right;
     }
-    else if (vars.player_walk_phase > 1)
+    else if (vars.player_walk_phase > 3)
     {
         if (use_sprite == vars.player_sprite_left && vars.player_sprite_walk_left >= 0)
             use_sprite = vars.player_sprite_walk_left;
@@ -342,12 +342,13 @@ function _move_player_small(move_x, move_y)
                 !(('' + Math.floor((vars.player_x + move_x + pm[0]) / 24) + '/' + Math.floor((vars.player_y + move_y + pm[1]) / 24)) in vars.door_open))
             {
                 ok = false;
-                if ((vars.ay < -0.0001) && (Math.floor(vars.player_y / 24) != Math.floor((vars.player_y + move_y) / 24)))
+                if ((vars.ay < -0.0001) && (move_y < 0) && (Math.floor(vars.player_y / 24) != Math.floor((vars.player_y + move_y) / 24)))
                 {
+                    console.log(vars.jumping, vars.jump_start_x, vars.jump_start_y, Math.floor((vars.player_x + move_x + pm[0]) / 24), Math.floor((vars.player_y + move_y + pm[1]) / 24), move_x, move_y);
                     vars.ay = 0.0;
                     stopped_jump = true;
                     vars.jumping = false;
-//                     console.log('stopping jump');
+                    console.log('stopping jump');
                 }
             }
         });
@@ -495,11 +496,12 @@ function game_logic_loop()
 {
 //     animation_phase++;
 
-    vars.player_walk_phase = (vars.player_walk_phase + 1) % 4;
+    vars.player_walk_phase = (vars.player_walk_phase + 1) % 8;
 
     var pix = Math.floor(vars.player_x / 24);
     var piy = Math.floor(vars.player_y / 24);
 
+    var sliding = false;
     // slide down slides
     if (applies(_get_field(pix, piy), 'slide_down_left') ||
         applies(_get_field(pix, piy), 'slide_down_left_2_1_left') ||
@@ -508,8 +510,9 @@ function game_logic_loop()
         applies(_get_field(pix, piy), 'slide_down_left_1_2_top'))
     {
 //         console.log('sliding down left');
-        for (var i = 0; i < 13; i++)
-            move_player_small(-1, 0);
+        sliding = true;
+        if (vars.slide_ax > -7)
+            vars.slide_ax--;
     }
     else if (applies(_get_field(pix, piy), 'slide_down_right') ||
         applies(_get_field(pix, piy), 'slide_down_right_2_1_left') ||
@@ -518,9 +521,12 @@ function game_logic_loop()
         applies(_get_field(pix, piy), 'slide_down_right_1_2_top'))
     {
 //         console.log('sliding down right');
-        for (var i = 0; i < 13; i++)
-            move_player_small(1, 0);
+        sliding = true;
+        if (vars.slide_ax < 7)
+            vars.slide_ax++;
     }
+    else if (!vars.jumping)
+        vars.slide_ax = 0;
 
     if (!(applies(_get_field(pix, piy), 'can_climb')) &&
         !(applies(_get_field(pix, piy + 1), 'can_climb')) &&
@@ -529,7 +535,7 @@ function game_logic_loop()
         // falling down!
     {
 //         console.log('falling down');
-        move_player(0, 1);
+        move_player_small(0, 12);
     }
     else if (vars.ay < -0.0001)
     {
@@ -561,9 +567,9 @@ function game_logic_loop()
     else
     {
         if (vars.player_x - vars.vx > 20 * 24 && vars.vx < (vars.reachable_xmax - 28 + 2) * 24)
-            vars.vx += 12;
+            vars.vx += 6;
         if (vars.player_x - vars.vx < 8 * 24 && vars.vx > (vars.reachable_xmin - 2) * 24)
-            vars.vx -= 12;
+            vars.vx -= 6;
         if (vars.vx < 0)
             vars.vx = 0;
         if (vars.vx > (vars.current_level_copy.width - 28) * 24)
@@ -596,30 +602,28 @@ function game_logic_loop()
     if (vars.pressed_keys[37])
     {
         // left
-        vars.ax -= 6.0;
-        if (vars.ax < -12.0)
-            vars.ax = -12.0;
+        if (vars.keys_ax > -6.0)
+            vars.keys_ax -= 3.0;
     }
     else if (vars.pressed_keys[39])
     {
         // right
-        vars.ax += 6.0;
-        if (vars.ax > 12.0)
-            vars.ax = 12.0;
+        if (vars.keys_ax < 6.0)
+            vars.keys_ax += 3.0;
     }
-    else
+    else if (!vars.jumping)
     {
-        if (vars.ax > 0.0)
+        if (vars.keys_ax > 0.0)
         {
-            vars.ax -= 6.0;
-            if (vars.ax < 0.0)
-                vars.ax = 0.0;
+            vars.keys_ax -= 3.0;
+            if (vars.keys_ax < 0.0)
+                vars.keys_ax = 0.0;
         }
-        else if (vars.ax < 0.0)
+        else if (vars.keys_ax < 0.0)
         {
-            vars.ax += 6.0;
-            if (vars.ax > 0.0)
-                vars.ax = 0.0;
+            vars.keys_ax += 3.0;
+            if (vars.keys_ax > 0.0)
+                vars.keys_ax = 0.0;
         }
     }
 
@@ -630,13 +634,13 @@ function game_logic_loop()
         {
 //             console.log('climbing up');
             vars.player_x = Math.floor(vars.player_x / 24) * 24 + 12;
-            move_player_small(0, -12);
+            move_player_small(0, -6);
         }
         else if (field_has_silhouette(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)) && applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24 - 1)), 'can_climb'))
         {
 //             console.log('barely reaching and climbing up');
             vars.player_x = Math.floor(vars.player_x / 24) * 24 + 12;
-            move_player_small(0, -(mod(vars.player_y, 24) + 13));
+            move_player_small(0, -(mod(vars.player_y, 24) + 7));
         }
     }
 
@@ -648,17 +652,17 @@ function game_logic_loop()
         )
         {
             vars.player_x = Math.floor(vars.player_x / 24) * 24 + 12;
-            move_player_small(0, 12);
+            move_player_small(0, 6);
         }
     }
 
-    if (Math.abs(vars.ax) > 0.0001)
+    var ax = vars.slide_ax + vars.keys_ax;
+    if (Math.abs(ax) > 0.0001)
     {
-        move_player_small(vars.ax, 0);
+        move_player_small(ax, 0);
     }
     else
     {
-        vars.ax = 0.0;
         vars.player_walk_phase = 0;
     }
 
@@ -673,8 +677,10 @@ function game_logic_loop()
                 applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_climb')
             )
             {
-                vars.ay = -55.0;
+                vars.ay = -40.0;
                 vars.jumping = true;
+                vars.jump_start_x = Math.floor(vars.player_x / 24);
+                vars.jump_start_y = Math.floor(vars.player_y / 24);
 //                 console.log('jump');
             }
         }
@@ -684,13 +690,13 @@ function game_logic_loop()
         move_player_small(0, vars.ay);
         if (vars.ay > 0)
         {
-            vars.ay -= 12.0;
+            vars.ay -= 6.0;
             if (vars.ay <= 0.0)
                 vars.ay = 0.0;
         }
         else
         {
-            vars.ay += 12.0;
+            vars.ay += 6.0;
             if (vars.ay >= 0.0)
                 vars.ay = 0.0;
         }
@@ -759,8 +765,8 @@ function game_logic_loop()
         {
             if (!(key in vars.field_offset))
                 vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
-            vars.field_offset[key].osy += 2;
-            vars.field_offset[key].h -= 2;
+            vars.field_offset[key].osy += 1;
+            vars.field_offset[key].h -= 1;
             if (vars.field_offset[key].osy > 14)
             {
                 vars.door_open[key] = true;
@@ -782,13 +788,13 @@ function game_logic_loop()
         {
             if (!(key in vars.field_offset))
                 vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
-            vars.field_offset[key].dy -= 4;
+            vars.field_offset[key].dy -= 2;
 //             mark_dirty(x, y + 1);
             mark_dirty(x, y - 1);
             mark_dirty(x, y);
 //             mark_dirty(x, y - 1);
             if (vars.field_offset[key].dy < -20)
-                vars.field_offset[key].alpha -= 0.2;
+                vars.field_offset[key].alpha -= 0.1;
             if (vars.field_offset[key].dy < -40)
             {
                 if (typeof(info.done) === 'function')
@@ -808,7 +814,7 @@ function game_logic_loop()
             mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24) - 1);
             mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24));
             mark_dirty(x, y);
-            vars.field_offset[key].dy += 24;
+            vars.field_offset[key].dy += 12;
             if (applies(_get_field(x, y + Math.floor(vars.field_offset[key].dy / 24)), 'is_solid'))
             {
                 vars.sounds['hit_hurt'].currentTime = 0;
@@ -824,7 +830,7 @@ function game_logic_loop()
         {
             if (!(key in vars.field_offset))
                 vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 0, odx: 0, ody: 0};
-            vars.field_offset[key].h += 6;
+            vars.field_offset[key].h += 3;
             if (vars.field_offset[key].h >= 24)
             {
                 if (typeof(info.done) === 'function')
@@ -916,16 +922,21 @@ function init() {
 
     function _game_logic_loop()
     {
-        if (vars.stopGame)
-            return;
-        vars.game_logic_loop_counter++;
-        jQuery.each(vars.pressed_keys, function(keyCode, info) {
-            if (vars.game_logic_loop_counter > info.key_delay_passed)
-                keydown(keyCode);
-        });
-        if (typeof(game_logic_loop) !== 'undefined')
-            game_logic_loop();
-        setTimeout(_game_logic_loop, 66);
+        var now = Date.now();
+        while (now - vars.latest_game_logic_update >= 33)
+        {
+            if (vars.stopGame)
+                return;
+            vars.game_logic_loop_counter++;
+            jQuery.each(vars.pressed_keys, function(keyCode, info) {
+                if (vars.game_logic_loop_counter > info.key_delay_passed)
+                    keydown(keyCode);
+            });
+            if (typeof(game_logic_loop) !== 'undefined')
+                game_logic_loop();
+            vars.latest_game_logic_update += 33;
+        }
+        setTimeout(_game_logic_loop, 33);
     }
 
     function _keydown(e)
@@ -955,7 +966,7 @@ function init() {
     window.addEventListener("blur", _clear_keys, false);
     window.addEventListener("focus", _clear_keys, false);
     requestAnimationFrame(_loop);
-    setTimeout(_game_logic_loop, 66);
+    setTimeout(_game_logic_loop, 33);
 }
 
 function find_reachable_blocks(x, y)
@@ -1052,7 +1063,10 @@ function initLevel(which)
     vars.reachable_ymax = null;
     vars.display_sprite = [];
     vars.jumping = false;
+    vars.jump_start_x = 0;
+    vars.jump_start_y = 0;
     vars.player_walk_phase = 0;
+    vars.latest_game_logic_update = Date.now();
 
     for (var y = 0; y < 17; y++)
     {
@@ -1086,7 +1100,8 @@ function init_game(width, height, supersampling, data)
 {
     vars = {
         play_sounds: false,
-        ax: 0.0,
+        keys_ax: 0.0,
+        slide_ax: 0.0,
         ay: 0.0,
         vx: 0,
         vy: 0,
@@ -1119,6 +1134,7 @@ function init_game(width, height, supersampling, data)
         max_keys: 4,
         sounds: {},
         sprites_repo: null,
+        latest_game_logic_update: Date.now(),
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
