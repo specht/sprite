@@ -129,8 +129,6 @@ function loop(time)
         player_shift_x = 8 - mod(vars.player_x, 24);
     if (mod(vars.player_x, 24) > 15 && applies(_get_field(pix + 1, piy), 'is_solid') && !field_has_silhouette(pix + 1, piy))
         player_shift_x = - 8 + (23 - mod(vars.player_x, 24));
-    if (player_shift_x != 0)
-        console.log(player_shift_x);
 
     for (var y = -1; y <= 1; y++)
         for (var x = -1; x <= 1; x++)
