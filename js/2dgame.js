@@ -603,9 +603,9 @@ function game_logic_loop()
     else
     {
         if (vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 16 + 2) * 24)
-            vars.vy += 24;
+            vars.vy += 12;
         if (vars.player_y - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
-            vars.vy -= 24;
+            vars.vy -= 6;
         if (vars.vy < 0)
             vars.vy = 0;
         if (vars.vy > (vars.current_level_copy.height - 16) * 24)
@@ -870,11 +870,12 @@ function game_logic_loop()
 function stopTheGame()
 {
     vars.stopGame = true;
-    vars.sounds['music'].pause();
     $('body').removeAttr('style');
     $('#play_container').empty();
     $('#play_container').remove();
     switchPane('sprites');
+    var player = $('#yt')[0];
+    player.pauseVideo();
 }
 
 function keydown(code)
@@ -1113,15 +1114,49 @@ function initLevel(which)
     }
 
     find_reachable_blocks(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24));
-
-    if (vars.play_sounds)
-        vars.sounds['music'].play();
 }
 
 function init_game(width, height, supersampling, data)
 {
+    $('#yt_placeholder').empty();
+    // <embed id="playerid" width="500px" height="400px" allowfullscreen="true"
+    // allowscriptaccess="always" quality="high" bgcolor="#000000" name="playerid"
+    //style=""
+    //src="http://www.youtube.com/v/[ID]?enablejsapi=1&version=3&playerapiid=ytplayer"
+    //type="application/x-shockwave-flash">
+    window.onYouTubePlayerReady = function() {
+        var player = $('#yt')[0];
+        player.playVideo();
+    };
+    var yt_embed = $('<embed>');
+    yt_embed.attr('id', 'yt');
+    yt_embed.attr('width', '192px');
+    yt_embed.attr('height', '128px');
+    yt_embed.attr('allowfullscreen', 'false');
+    yt_embed.attr('autoplay', 'true');
+    yt_embed.attr('allowscriptaccess', 'always');
+    yt_embed.attr('name', 'yt');
+//     var video_id = 'RDi1IJTXYdI'; // Hysteria
+//     var video_id = 'fIgI8IGkJ-E'; // Chop Suey
+//     var video_id = 'umMmGgsxBWA'; // Nyan Cat
+//     var video_id = 'ZRISfN-cfmM'; // Light my fire
+//     var video_id = 'Uu8WP-Se90w'; // Take on me
+    var video_id = 'fpcLxmSmlLQ'; // Around the world
+//     var video_id = 'HIEogKEWGlc'; // The Zephyr Song
+//     var video_id = 'L1O0wymSZsc'; // Someday
+//     var video_id = 'jDJ9dmZzQoY'; // Everything counts
+//     var video_id = 'kxJXqEOyJUg'; // Rebel Rebel
+//     var video_id = 'AEi7KKPHLgU'; // I want you back
+//     var video_id = '';
+    yt_embed.attr('src', 'http://www.youtube.com/v/' + video_id + '?enablejsapi=1&version=3&playerapiid=ytplayer');
+    yt_embed.attr('type', 'application/x-shockwave-flash');
+    yt_embed.css('z-index', '2000');
+    yt_embed.css('width', '0');
+    yt_embed.css('height', '0');
+    $('#yt_placeholder').append(yt_embed);
+
     vars = {
-        play_sounds: false,
+        play_sounds: true,
         keys_ax: 0.0,
         slide_ax: 0.0,
         ay: 0.0,
@@ -1191,9 +1226,11 @@ function init_game(width, height, supersampling, data)
     canvas.css('display', 'none');
     $('body').append(container);
     vars.sounds['hit_hurt'] = new Audio('sounds/Hit_Hurt41.wav');
+    vars.sounds['hit_hurt'].volume = 0.5;
     vars.sounds['pick_up'] = new Audio('sounds/Pickup_Coin36.wav');
+    vars.sounds['pick_up'].volume = 0.5;
     vars.sounds['power_up'] = new Audio('sounds/Powerup28.wav');
-    vars.sounds['music'] = new Audio('sounds/music-low.mp3');
+    vars.sounds['power_up'].volume = 0.5;
     var zip = new JSZip(atob(data));
     $.each(zip.files, function (index, zipEntry) {
 //         console.log(zipEntry);
