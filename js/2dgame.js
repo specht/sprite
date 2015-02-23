@@ -1232,11 +1232,11 @@ function init_game(width, height, supersampling, data)
     {
         var control = null;
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '50px').css('bottom', '0');
-        control.touchstart(function() {
+        control.bind('touchstart', function() {
             console.log('left down');
             vars.pressed_keys[37] = true;
         });
-        control.touchend(function() {
+        control.bind('touchend', function() {
             console.log('left up');
             vars.pressed_keys[37] = false;
         });
