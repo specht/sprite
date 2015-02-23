@@ -136,11 +136,12 @@ function loop(time)
     if (mod(vars.player_x, 24) > 15 && applies(_get_field(pix + 1, piy), 'is_solid') && !field_has_silhouette(pix + 1, piy))
         player_shift_x = - 8 + (23 - mod(vars.player_x, 24));
 
-    return;
-    
+
     for (var y = -1; y <= 1; y++)
         for (var x = -1; x <= 1; x++)
             mark_dirty(pix + x, piy + y);
+        
+    return;
 //     if (player_shift_x < 0)
 //         mark_dirty(vars.player_x - 1, vars.player_y);
 //     else if (player_shift_x > 0)
