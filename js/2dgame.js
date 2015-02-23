@@ -333,7 +333,8 @@ function _move_player_small(move_x, move_y)
     {
         var p = [];
         p.push([0, 0]);
-//         p.push([0, -18]);
+        if (vars.jumping)
+            p.push([0, -20]);
 //         p.push([-8, 0]);
 //         p.push([8, 0]);
         var ok = true;
@@ -344,11 +345,11 @@ function _move_player_small(move_x, move_y)
                 ok = false;
                 if ((vars.ay < -0.0001) && (move_y < 0) && (Math.floor(vars.player_y / 24) != Math.floor((vars.player_y + move_y) / 24)))
                 {
-                    console.log(vars.jumping, vars.jump_start_x, vars.jump_start_y, Math.floor((vars.player_x + move_x + pm[0]) / 24), Math.floor((vars.player_y + move_y + pm[1]) / 24), move_x, move_y);
+//                     console.log(vars.jumping, vars.jump_start_x, vars.jump_start_y, Math.floor((vars.player_x + move_x + pm[0]) / 24), Math.floor((vars.player_y + move_y + pm[1]) / 24), move_x, move_y);
                     vars.ay = 0.0;
                     stopped_jump = true;
                     vars.jumping = false;
-                    console.log('stopping jump');
+//                     console.log('stopping jump');
                 }
             }
         });
@@ -360,9 +361,16 @@ function _move_player_small(move_x, move_y)
 //         applies(_get_field(vars.player_x + move_x, vars.player_y + move_y + 1), 'slide_down_left_1_2_bottom'))
 //         move_ok = true;
 
+    var pmix = Math.floor((vars.player_x + move_x) / 24);
+    var pmiy = Math.floor((vars.player_y + move_y) / 24);
     var currently_on_silhouette_field = field_has_silhouette(pix, piy);
-    var target_has_silhouette = field_has_silhouette(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24));
-    var above_target_has_silhouette = field_has_silhouette(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24 - 1));
+    var target_has_silhouette = field_has_silhouette(pmix, pmiy);
+    var above_target_has_silhouette = field_has_silhouette(pmix, pmiy - 1);
+    var above_target_is_steep_slope =
+        applies(_get_field(pmix, pmiy - 1), 'slide_down_left_1_2_bottom') ||
+        applies(_get_field(pmix, pmiy - 1), 'slide_down_left_1_2_top') ||
+        applies(_get_field(pmix, pmiy - 1), 'slide_down_right_1_2_bottom') ||
+        applies(_get_field(pmix, pmiy - 1), 'slide_down_right_1_2_top');
 //     console.log('move:', move_x, move_y, 'player:', Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24), pix, piy, 'flags:', currently_on_silhouette_field, target_has_silhouette, above_target_has_silhouette, 'move_ok:', move_ok, 'stopped_jump:', stopped_jump);
 
     if (!stopped_jump)
@@ -378,7 +386,7 @@ function _move_player_small(move_x, move_y)
 
 //         if (!move_ok)
 //         {
-            if (currently_on_silhouette_field && above_target_has_silhouette)
+            if (currently_on_silhouette_field && above_target_has_silhouette && !above_target_is_steep_slope)
             {
                 move_y -= 24;
                 move_ok = true;
@@ -392,7 +400,7 @@ function _move_player_small(move_x, move_y)
                 applies(_get_field(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24)), 'can_stand_on') &&
                 (!applies(_get_field(Math.floor((vars.player_x + move_x) / 24), Math.floor((vars.player_y + move_y) / 24 - 1)), 'can_stand_on')))
             {
-                move_y -= 24;
+                move_y -= above_target_is_steep_slope ? 48 : 24;
                 move_ok = true;
 //                 console.log('C');
             }
@@ -540,7 +548,9 @@ function game_logic_loop()
     else if (vars.ay < -0.0001)
     {
 //         console.log("falling down anyway because we're jumping up");
-        move_player(0, 1);
+        if (applies(_get_field(pix, piy), 'can_climb') ||
+            applies(_get_field(pix, piy + 1), 'can_climb'))
+            move_player_small(0, 12);
     }
     else if (applies(_get_field(pix, piy + 1), 'crumbles') &&
         ('' + pix + '/' + (piy + 1) in vars.field_offset))
@@ -552,8 +562,11 @@ function game_logic_loop()
     {
         if (!applies(_get_field(pix, piy), 'can_climb'))
         {
-//             console.log('dropping to bottom');
-            vars.player_y = Math.floor(vars.player_y / 24) * 24 + 23;
+            if (!vars.jumping)
+            {
+//                 console.log('dropping to bottom');
+                vars.player_y = Math.floor(vars.player_y / 24) * 24 + 23;
+            }
         }
     }
 
@@ -706,7 +719,6 @@ function game_logic_loop()
         vars.ay = 0.0;
         vars.jumping = false;
     }
-
     // adjust to block silhouette
     var pix = Math.floor(vars.player_x / 24);
     var piy = Math.floor(vars.player_y / 24);
@@ -714,8 +726,8 @@ function game_logic_loop()
     {
         if (field_has_silhouette(pix, piy + 1) && (!applies(_get_field(pix, piy), 'can_climb')))
         {
-//             console.log('dropping down because silhouette');
             vars.player_y = Math.floor(vars.player_y / 24 + 1) * 24;
+//             console.log('dropping down because silhouette');
         }
     }
 
@@ -745,6 +757,8 @@ function game_logic_loop()
         vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor((23 - mod(vars.player_x, 24)) * 2);
     else if (applies(_get_field(pix, piy), 'slide_down_left_1_2_bottom'))
         vars.player_y = Math.floor(vars.player_y / 24) * 24 + Math.floor(((23 - mod(vars.player_x, 24)) - 12) * 2);
+
+//     console.log(Math.floor(vars.player_y / 24), mod(vars.player_y, 24));
 
     // handle animations
     var remove_animations = [];
@@ -812,6 +826,7 @@ function game_logic_loop()
                 vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
 //             mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24) - 2);
             mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24) - 1);
+            mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24) + 1);
             mark_dirty(x, y + Math.floor(vars.field_offset[key].dy / 24));
             mark_dirty(x, y);
             vars.field_offset[key].dy += 12;
@@ -1250,7 +1265,7 @@ function load_sprites(path, id)
 function load_game(url)
 {
     $.get(url, function(data) {
-        console.log(data);
+//         console.log(data);
     });
 }
 
