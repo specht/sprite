@@ -1233,33 +1233,25 @@ function init_game(width, height, supersampling, data)
         var control = null;
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '50px').css('bottom', '0');
         control.bind('touchstart', function() {
-            console.log('left down');
             vars.pressed_keys[37] = true;
         });
         control.bind('touchend', function() {
-            console.log('left up');
             vars.pressed_keys[37] = false;
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-right'></i>").css('right', '0').css('bottom', '0');
-        control.mousedown(function() {
+        control.bind('touchstart', function() {
             vars.pressed_keys[39] = true;
         });
-        control.mouseup(function() {
-            vars.pressed_keys[39] = false;
-        });
-        control.mouseleave(function() {
+        control.bind('touchend', function() {
             vars.pressed_keys[39] = false;
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('left', '0').css('bottom', '0');
-        control.mousedown(function() {
+        control.bind('touchstart', function() {
             vars.pressed_keys[16] = true;
         });
-        control.mouseup(function() {
-            vars.pressed_keys[16] = false;
-        });
-        control.mouseleave(function() {
+        control.bind('touchend', function() {
             vars.pressed_keys[16] = false;
         });
         $(container).append(control);
