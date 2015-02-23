@@ -128,8 +128,7 @@ function loop(time)
     var player_shift_x = 0;
     var player_shift_y = 0;
 
-    return;
-    
+
     if (mod(vars.player_y, 24) < 23 && applies(_get_field(pix, piy - 1), 'is_solid'))
         player_shift_y = 18 - mod(vars.player_y, 24);
     if (mod(vars.player_x, 24) < 8 && applies(_get_field(pix - 1, piy), 'is_solid') && !field_has_silhouette(pix-1, piy))
@@ -137,6 +136,8 @@ function loop(time)
     if (mod(vars.player_x, 24) > 15 && applies(_get_field(pix + 1, piy), 'is_solid') && !field_has_silhouette(pix + 1, piy))
         player_shift_x = - 8 + (23 - mod(vars.player_x, 24));
 
+    return;
+    
     for (var y = -1; y <= 1; y++)
         for (var x = -1; x <= 1; x++)
             mark_dirty(pix + x, piy + y);
