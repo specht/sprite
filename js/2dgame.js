@@ -1201,7 +1201,7 @@ function init_game(width, height, supersampling, data)
         supersampling = 4;
     vars.game_width = width;
     vars.game_height = height;
-    vars.game_supersampling = supersampling;
+    vars.game_supersampling = 1;//supersampling;
     var container = $('<div>');
     container.attr('id', 'play_container');
     var canvas = $('<canvas>');
