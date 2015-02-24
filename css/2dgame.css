@@ -30,7 +30,7 @@ body {
 
 .control {
     position: absolute;
-    font-size: 70px;
+    font-size: 60px;
 /*     background-color: #f00; */
     color: #fff;
     z-index: 1000;

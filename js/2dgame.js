@@ -1346,7 +1346,7 @@ function init_game(width, height, supersampling, data)
     if (!!('ontouchstart' in window))
     {
         var control = null;
-        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '140px').css('bottom', '0');
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '120px').css('bottom', '0');
         control.bind('touchstart', function() {
             vars.pressed_keys[37] = true;
         });
@@ -1354,7 +1354,7 @@ function init_game(width, height, supersampling, data)
             vars.pressed_keys[37] = false;
         });
         $(container).append(control);
-        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-down'></i>").css('right', '70px').css('bottom', '0');
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-down'></i>").css('right', '60px').css('bottom', '0');
         control.bind('touchstart', function() {
             vars.pressed_keys[40] = true;
         });
@@ -1362,7 +1362,7 @@ function init_game(width, height, supersampling, data)
             vars.pressed_keys[40] = false;
         });
         $(container).append(control);
-        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('right', '70px').css('bottom', '70px');
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('right', '60px').css('bottom', '60px');
         control.bind('touchstart', function() {
             vars.pressed_keys[38] = true;
         });
