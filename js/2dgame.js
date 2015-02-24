@@ -157,12 +157,21 @@ function loop(time)
         player_shift_x = - 8 + (23 - mod(vars.player_x, 24));
 
     $('.sprite').css('background-position', '-' + vars.sprite_size + 'px -' + 0 + 'px');
+    var need_to_move_sprite_divs =
+        (vars.current_sprite_offset_x != mod(dx, 24)) ||
+        (vars.current_sprite_offset_y != mod(dy, 24));
+    vars.current_sprite_offset_x = mod(dx, 24);
+    vars.current_sprite_offset_y = mod(dy, 24);
     for (var y = 0; y < 17; y++)
     {
         for (var x = 0; x < 29; x++)
         {
             var tile = vars.sprite_div[y][x];
-            tile.css('left', Math.floor(x * vars.sprite_size - mod(dx, 24) * vars.sprite_size / 24) + 'px');
+            if (need_to_move_sprite_divs)
+            {
+                tile.css('left', Math.floor(x * vars.sprite_size - mod(dx, 24) * vars.sprite_size / 24) + 'px');
+                tile.css('top', Math.floor(y * vars.sprite_size - mod(dy, 24) * vars.sprite_size / 24) + 'px');
+            }
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
             if (vars.display_sprite[y][x] != v)
             {
@@ -1181,6 +1190,8 @@ function initLevel(which)
     vars.player_walk_phase = 0;
     vars.latest_game_logic_update = Date.now();
     vars.latest_render_update = Date.now();
+    vars.current_sprite_offset_x = -1;
+    vars.current_sprite_offset_y = -1;
 
     for (var y = 0; y < 17; y++)
     {
