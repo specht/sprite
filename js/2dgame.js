@@ -132,10 +132,8 @@ function def(trait, elements)
 {
 }
 
-function loop(time)
+function render()
 {
-    clear('#000');
-
     var now = Date.now();
 //     console.log("render loop: " + (now - vars.latest_render_update));
     vars.latest_render_update = now;
@@ -173,15 +171,30 @@ function loop(time)
                 tile.css('top', Math.floor(y * vars.sprite_size - mod(dy, 24) * vars.sprite_size / 24) + 'px');
             }
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
-            if (vars.display_sprite[y][x] != v)
+            var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
+            if (poskey in vars.field_offset)
             {
                 vars.display_sprite[y][x] = v;
-                if (v == -1)
-                    v = 63;
-                var sprite_x = v % 8;
-                var sprite_y = Math.floor(v / 8);
-                var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
-                tile.css('background-position', value);
+//                 fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
+//                 draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
+//                                     y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
+//                                     v, 'sprites_default', vars.field_offset[poskey].alpha,
+//                                     vars.field_offset[poskey].osx, vars.field_offset[poskey].osy,
+//                                     vars.field_offset[poskey].w, vars.field_offset[poskey].h,
+//                                     vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
+            }
+            else
+            {
+                if (vars.display_sprite[y][x] != v)
+                {
+                    vars.display_sprite[y][x] = v;
+                    if (v == -1)
+                        v = 63;
+                    var sprite_x = v % 8;
+                    var sprite_y = Math.floor(v / 8);
+                    var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+                    tile.css('background-position', value);
+                }
             }
         }
     }
@@ -1017,23 +1030,15 @@ function init() {
 //     init();
 //     defs();
 
-    vars.canvas = document.getElementById("canvas");
-    vars.imageContext = vars.canvas.getContext("2d");
-    vars.imageContext.mozImageSmoothingEnabled = false;
-    vars.imageContext.webkitImageSmoothingEnabled = false;
-    vars.imageContext.msImageSmoothingEnabled = false;
-    vars.imageContext.imageSmoothingEnabled = false;
+//     vars.canvas = document.getElementById("canvas");
+//     vars.imageContext = vars.canvas.getContext("2d");
+//     vars.imageContext.mozImageSmoothingEnabled = false;
+//     vars.imageContext.webkitImageSmoothingEnabled = false;
+//     vars.imageContext.msImageSmoothingEnabled = false;
+//     vars.imageContext.imageSmoothingEnabled = false;
 
     window.onresize = _fix_sizes;
     _fix_sizes();
-
-    function _loop(time)
-    {
-        if (vars.stopGame)
-            return;
-        loop(time / 1000.0);
-        requestAnimationFrame(_loop);
-    }
 
     function _game_logic_loop()
     {
@@ -1052,6 +1057,7 @@ function init() {
                 game_logic_loop();
             vars.latest_game_logic_update += 33;
         }
+        render();
         setTimeout(_game_logic_loop, 33);
     }
 
@@ -1081,7 +1087,7 @@ function init() {
     window.addEventListener("keyup", _keyup, false);
     window.addEventListener("blur", _clear_keys, false);
     window.addEventListener("focus", _clear_keys, false);
-    requestAnimationFrame(_loop);
+//     requestAnimationFrame(_loop);
     setTimeout(_game_logic_loop, 33);
 }
 
@@ -1214,7 +1220,6 @@ function initLevel(which)
 
 function init_game(width, height, supersampling, data)
 {
-    return;
     $('#yt_placeholder').empty();
     // <embed id="playerid" width="500px" height="400px" allowfullscreen="true"
     // allowscriptaccess="always" quality="high" bgcolor="#000000" name="playerid"
@@ -1300,14 +1305,14 @@ function init_game(width, height, supersampling, data)
     vars.game_supersampling = supersampling;
     var container = $('<div>');
     container.attr('id', 'play_container');
-    var canvas = $('<canvas>');
-    canvas.attr('id', 'canvas');
-    canvas.attr('width', 1);
-    canvas.attr('height', 1);
-    canvas.css('position', 'absolute');
-    canvas.css('z-index', '1000');
-    canvas.css('left', 0);
-    canvas.css('top', 0);
+//     var canvas = $('<canvas>');
+//     canvas.attr('id', 'canvas');
+//     canvas.attr('width', 1);
+//     canvas.attr('height', 1);
+//     canvas.css('position', 'absolute');
+//     canvas.css('z-index', '1000');
+//     canvas.css('left', 0);
+//     canvas.css('top', 0);
     var title = $('<div>');
     title.addClass('ontop');
 //     title.html("Pyramide");
@@ -1320,7 +1325,7 @@ function init_game(width, height, supersampling, data)
     backdrop.css('right', '0px');
     backdrop.css('z-index', 800);
     $(container).append(backdrop);
-    $(container).append(canvas);
+//     $(container).append(canvas);
     for (var y = 0; y < 17; y++)
     {
         var sprite_div_row = [];
@@ -1341,12 +1346,28 @@ function init_game(width, height, supersampling, data)
     if (!!('ontouchstart' in window))
     {
         var control = null;
-        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '50px').css('bottom', '0');
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '140px').css('bottom', '0');
         control.bind('touchstart', function() {
             vars.pressed_keys[37] = true;
         });
         control.bind('touchend', function() {
             vars.pressed_keys[37] = false;
+        });
+        $(container).append(control);
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-down'></i>").css('right', '70px').css('bottom', '0');
+        control.bind('touchstart', function() {
+            vars.pressed_keys[40] = true;
+        });
+        control.bind('touchend', function() {
+            vars.pressed_keys[40] = false;
+        });
+        $(container).append(control);
+        control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('right', '70px').css('bottom', '70px');
+        control.bind('touchstart', function() {
+            vars.pressed_keys[38] = true;
+        });
+        control.bind('touchend', function() {
+            vars.pressed_keys[38] = false;
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-right'></i>").css('right', '0').css('bottom', '0');
@@ -1367,7 +1388,7 @@ function init_game(width, height, supersampling, data)
         $(container).append(control);
     }
     backdrop.css('display', 'none');
-    canvas.css('display', 'none');
+//     canvas.css('display', 'none');
     $('body').append(container);
     vars.sounds['hit_hurt'] = new Audio('sounds/Hit_Hurt41.wav');
     vars.sounds['hit_hurt'].volume = 0.5;
@@ -1436,7 +1457,7 @@ function init_game(width, height, supersampling, data)
         $('body').css('padding', '0');
         $('body').css('margin', '0');
         $('body').css('overflow', 'hidden');
-        canvas.fadeIn();
+//         canvas.fadeIn();
         switchPane('play', true);
         init();
         initLevel(0);
