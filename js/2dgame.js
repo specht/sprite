@@ -161,10 +161,11 @@ function loop(time)
     {
         for (var x = 0; x < 29; x++)
         {
-            var v = _get_field(x, y);
+            var tile = vars.sprite_div[y][x];
+            tile.css('left', Math.floor(x * vars.sprite_size - mod(dx, 24) * vars.sprite_size / 24) + 'px');
+            var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
             if (vars.display_sprite[y][x] != v)
             {
-                var tile = vars.sprite_div[y][x];
                 vars.display_sprite[y][x] = v;
                 if (v == -1)
                 {
