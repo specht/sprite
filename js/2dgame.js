@@ -1214,6 +1214,7 @@ function initLevel(which)
 
 function init_game(width, height, supersampling, data)
 {
+    return;
     $('#yt_placeholder').empty();
     // <embed id="playerid" width="500px" height="400px" allowfullscreen="true"
     // allowscriptaccess="always" quality="high" bgcolor="#000000" name="playerid"
