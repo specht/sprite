@@ -177,17 +177,11 @@ function loop(time)
             {
                 vars.display_sprite[y][x] = v;
                 if (v == -1)
-                {
-                    tile.hide();
-                }
-                else
-                {
-                    var sprite_x = v % 8;
-                    var sprite_y = Math.floor(v / 8);
-                    var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
-                    tile.css('background-position', value);
-                    tile.show();
-                }
+                    v = 63;
+                var sprite_x = v % 8;
+                var sprite_y = Math.floor(v / 8);
+                var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+                tile.css('background-position', value);
             }
         }
     }
