@@ -80,25 +80,45 @@ function _fix_sizes()
     var width = window.innerWidth;
     var height = window.innerHeight;
     var canvas = $('#canvas');
-    if (width * vars.game_height < height * vars.game_width)
-    {
-        height = width * vars.game_height / vars.game_width;
-        canvas.css('left', 0);
-        canvas.css('top', (window.innerHeight - height) / 2);
-        $('.ontop').css('left', 0);
-        $('.ontop').css('top', (window.innerHeight - height) / 2);
-    }
-    else
-    {
-        width = height * vars.game_width / vars.game_height;
-        canvas.css('left', (window.innerWidth - width) / 2);
-        canvas.css('top', 0);
-        $('.ontop').css('left', (window.innerWidth - width) / 2);
-        $('.ontop').css('top', 0);
-    }
-    canvas.css('width', width);
-    canvas.css('height', height);
+//     if (width * vars.game_height < height * vars.game_width)
+//     {
+//         height = width * vars.game_height / vars.game_width;
+//         canvas.css('left', 0);
+//         canvas.css('top', (window.innerHeight - height) / 2);
+//         $('.ontop').css('left', 0);
+//         $('.ontop').css('top', (window.innerHeight - height) / 2);
+//     }
+//     else
+//     {
+//         width = height * vars.game_width / vars.game_height;
+//         canvas.css('left', (window.innerWidth - width) / 2);
+//         canvas.css('top', 0);
+//         $('.ontop').css('left', (window.innerWidth - width) / 2);
+//         $('.ontop').css('top', 0);
+//     }
+//     canvas.css('width', width);
+//     canvas.css('height', height);
     $('.ontop').css('font-size', '' + height / 40.0 + 'px');
+
+    vars.sprite_size = Math.floor(height / 16.0);
+    $('.sd').css('width', '' + vars.sprite_size + 'px');
+    $('.sd').css('height', '' + vars.sprite_size + 'px');
+    $('.sd').css('background-size', '' + (vars.sprite_size * 8) + 'px');
+    for (var y = 0; y < 17; y++)
+    {
+        for (var x = 0; x < 29; x++)
+        {
+            var tile = vars.sprite_div[y][x];
+            tile.css('left', (x * vars.sprite_size) + 'px');
+            tile.css('top', (y * vars.sprite_size) + 'px');
+        }
+    }
+    if (typeof(vars.display_sprite) !== 'undefined' && vars.display_sprite.length > 0)
+    {
+        for (var y = 0; y < 17; y++)
+            for (var x = 0; x < 29; x++)
+                vars.display_sprite[y][x] = -2;
+    }
 }
 
 function applies(which, key)
@@ -114,12 +134,81 @@ function def(trait, elements)
 
 function loop(time)
 {
+    clear('#000');
 
     var now = Date.now();
 //     console.log("render loop: " + (now - vars.latest_render_update));
     vars.latest_render_update = now;
 
-//     clear('#000');
+    var dx = vars.vx;
+    var dy = vars.vy;
+
+    var pix = Math.floor(vars.player_x / 24);
+    var piy = Math.floor(vars.player_y / 24);
+    var player_shift_x = 0;
+    var player_shift_y = 0;
+
+
+    if (mod(vars.player_y, 24) < 23 && applies(_get_field(pix, piy - 1), 'is_solid'))
+        player_shift_y = 18 - mod(vars.player_y, 24);
+    if (mod(vars.player_x, 24) < 8 && applies(_get_field(pix - 1, piy), 'is_solid') && !field_has_silhouette(pix-1, piy))
+        player_shift_x = 8 - mod(vars.player_x, 24);
+    if (mod(vars.player_x, 24) > 15 && applies(_get_field(pix + 1, piy), 'is_solid') && !field_has_silhouette(pix + 1, piy))
+        player_shift_x = - 8 + (23 - mod(vars.player_x, 24));
+
+    $('.sprite').css('background-position', '-' + vars.sprite_size + 'px -' + 0 + 'px');
+    for (var y = 0; y < 17; y++)
+    {
+        for (var x = 0; x < 29; x++)
+        {
+            var v = _get_field(x, y);
+            if (vars.display_sprite[y][x] != v)
+            {
+                var tile = vars.sprite_div[y][x];
+                vars.display_sprite[y][x] = v;
+                if (v == -1)
+                {
+                    tile.hide();
+                }
+                else
+                {
+                    var sprite_x = v % 8;
+                    var sprite_y = Math.floor(v / 8);
+                    var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+                    tile.css('background-position', value);
+                    tile.show();
+                }
+            }
+        }
+    }
+
+    var use_sprite = vars.player_sprite;
+    if (vars.jumping)
+    {
+        if (use_sprite == vars.player_sprite_left && vars.player_sprite_jump_left >= 0)
+            use_sprite = vars.player_sprite_jump_left;
+        else if (use_sprite == vars.player_sprite_right && vars.player_sprite_jump_right >= 0)
+            use_sprite = vars.player_sprite_jump_right;
+    }
+    else if (vars.player_walk_phase > 3)
+    {
+        if (use_sprite == vars.player_sprite_left && vars.player_sprite_walk_left >= 0)
+            use_sprite = vars.player_sprite_walk_left;
+        else if (use_sprite == vars.player_sprite_right && vars.player_sprite_walk_right >= 0)
+            use_sprite = vars.player_sprite_walk_right;
+    }
+    var tile = vars.player_sprite_div;
+    var v = use_sprite;
+    var sprite_x = v % 8;
+    var sprite_y = Math.floor(v / 8);
+    var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+    tile.css('background-position', value);
+    tile.css('left', '' + Math.floor((vars.player_x + player_shift_x - dx - 12) * vars.sprite_size / 24) + 'px');
+    tile.css('top', '' + Math.floor((vars.player_y + player_shift_y - dy - 23) * vars.sprite_size / 24) + 'px');
+//     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
+
+    return;
+
     var dx = vars.vx;
     var dy = vars.vy;
 
@@ -1127,7 +1216,7 @@ function init_game(width, height, supersampling, data)
     //type="application/x-shockwave-flash">
     window.onYouTubePlayerReady = function() {
         var player = $('#yt')[0];
-        player.playVideo();
+//         player.playVideo();
     };
     var yt_embed = $('<embed>');
     yt_embed.attr('id', 'yt');
@@ -1158,6 +1247,7 @@ function init_game(width, height, supersampling, data)
 
     vars = {
         play_sounds: true,
+        sprite_size: 1,
         keys_ax: 0.0,
         slide_ax: 0.0,
         ay: 0.0,
@@ -1171,6 +1261,7 @@ function init_game(width, height, supersampling, data)
         jumping: false,
         fields: [],
         display_sprite: [],
+        sprite_div: [],
         game_logic_loop_counter: 0,
         pressed_keys: {},
         player_x: 0,
@@ -1204,8 +1295,8 @@ function init_game(width, height, supersampling, data)
     container.attr('id', 'play_container');
     var canvas = $('<canvas>');
     canvas.attr('id', 'canvas');
-    canvas.attr('width', width * supersampling);
-    canvas.attr('height', height * supersampling);
+    canvas.attr('width', 1);
+    canvas.attr('height', 1);
     canvas.css('position', 'absolute');
     canvas.css('z-index', '1000');
     canvas.css('left', 0);
@@ -1220,9 +1311,25 @@ function init_game(width, height, supersampling, data)
     backdrop.css('bottom', '0px');
     backdrop.css('left', '0px');
     backdrop.css('right', '0px');
-    backdrop.css('z-index', 999);
+    backdrop.css('z-index', 800);
     $(container).append(backdrop);
     $(container).append(canvas);
+    for (var y = 0; y < 17; y++)
+    {
+        var sprite_div_row = [];
+        for (var x = 0; x < 29; x++)
+        {
+            var sprite = $('<div>').addClass('sd');
+            sprite_div_row.push(sprite);
+            $(container).append(sprite);
+        }
+        vars.sprite_div.push(sprite_div_row);
+    }
+    var sprite = $('<div>').addClass('sd');
+    $(container).append(sprite);
+    vars.player_sprite_div = sprite;
+    _fix_sizes();
+
     $(container).append(title);
     if (!!('ontouchstart' in window))
     {
@@ -1271,6 +1378,7 @@ function init_game(width, height, supersampling, data)
             var imageUrl = urlCreator.createObjectURL(blob);
             load_sprites(imageUrl);
             vars.sprites_repo = $('#sprites_default')[0];
+//             $('.sd').css('background-image', 'url(' + imageUrl + ')');
         }
         else if (zipEntry.name == 'levels.json')
         {

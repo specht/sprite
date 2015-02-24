@@ -8,7 +8,7 @@ body {
 }
 
 #canvas {
-    width: 100%;
+/*     width: 100%; */
     image-rendering: optimizeSpeed;
     image-rendering: -moz-crisp-edges;
     image-rendering: -webkit-optimize-contrast;
@@ -35,4 +35,12 @@ body {
     color: #fff;
     z-index: 1000;
     cursor: pointer;
+}
+
+.sd {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    z-index: 900;
+    background-image: url(../sprites-big.png);
 }
