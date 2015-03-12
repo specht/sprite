@@ -584,6 +584,12 @@ function _move_player_small(move_x, move_y)
                 vars.player_sprite = vars.player_sprite_front;
         }
 
+        // see if we've captured the flag
+        if (applies(_get_field(pix, piy), 'level_finished'))
+        {
+            start_next_level();
+        }
+
         // see if we found a trap
         for (var i = 0; i < vars.max_traps; i++)
         {
@@ -1037,6 +1043,20 @@ function stopTheGame()
     player.pauseVideo();
 }
 
+function start_next_level()
+{
+    // find next level
+    while (true)
+    {
+        vars.current_level = (vars.current_level + 1) % vars.levels.length;
+        if (vars.levels[vars.current_level].use)
+        {
+            initLevel(vars.current_level);
+            break;
+        }
+    }
+}
+
 function keydown(code)
 {
 //     console.log(code);
@@ -1044,16 +1064,7 @@ function keydown(code)
         return;
     if (code == 76)
     {
-        // find next level
-        while (true)
-        {
-            vars.current_level = (vars.current_level + 1) % vars.levels.length;
-            if (vars.levels[vars.current_level].use)
-            {
-                initLevel(vars.current_level);
-                break;
-            }
-        }
+        start_next_level();
     }
     if (code == 27)
     {

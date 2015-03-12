@@ -76,6 +76,7 @@ states.push(['trap_3', 'Falle 3']);
 states.push(['trap_3_actor', 'Spielfigur in Falle 3']);
 states.push(['trap_4', 'Falle 4']);
 states.push(['trap_4_actor', 'Spielfigur in Falle 4']);
+states.push(['level_finished', 'Ab ins n&auml;chste Level!', 'Level&uuml;bergang']);
 
 function set_field(x, y, v)
 {
