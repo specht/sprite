@@ -80,8 +80,18 @@ function _fix_sizes()
     var width = window.innerWidth;
     var height = window.innerHeight;
     var canvas = $('#canvas');
-//     if (width * vars.game_height < height * vars.game_width)
-//     {
+    if (width * vars.game_height < height * vars.game_width)
+        vars.sprite_size = Math.floor(width / 28.0);
+    else
+        vars.sprite_size = Math.floor(height / 16.0);
+    vars.offset_x = Math.floor((width - (vars.sprite_size * 28)) / 2);
+    vars.offset_y = Math.floor((height - (vars.sprite_size * 16)) / 2);
+    vars.sliders[0].css('right', '' + (width - vars.offset_x) + 'px');
+    vars.sliders[1].css('left', '' + (width - vars.offset_x) + 'px');
+    vars.sliders[2].css('bottom', '' + (height - vars.offset_y) + 'px');
+    vars.sliders[3].css('top', '' + (height - vars.offset_y) + 'px');
+    vars.sprite_container.css('left', vars.offset_x + 'px');
+    vars.sprite_container.css('top', vars.offset_y + 'px');
 //         height = width * vars.game_height / vars.game_width;
 //         canvas.css('left', 0);
 //         canvas.css('top', (window.innerHeight - height) / 2);
@@ -98,9 +108,8 @@ function _fix_sizes()
 //     }
 //     canvas.css('width', width);
 //     canvas.css('height', height);
-    $('.ontop').css('font-size', '' + height / 40.0 + 'px');
+//     $('.ontop').css('font-size', '' + height / 40.0 + 'px');
 
-    vars.sprite_size = Math.floor(height / 16.0);
     $('.sd').css('width', '' + vars.sprite_size + 'px');
     $('.sd').css('height', '' + vars.sprite_size + 'px');
     $('.sd').css('background-size', '' + (vars.sprite_size * 8) + 'px');
@@ -146,7 +155,6 @@ function render()
     var player_shift_x = 0;
     var player_shift_y = 0;
 
-
     if (mod(vars.player_y, 24) < 23 && applies(_get_field(pix, piy - 1), 'is_solid'))
         player_shift_y = 18 - mod(vars.player_y, 24);
     if (mod(vars.player_x, 24) < 8 && applies(_get_field(pix - 1, piy), 'is_solid') && !field_has_silhouette(pix-1, piy))
@@ -167,14 +175,24 @@ function render()
             var tile = vars.sprite_div[y][x];
             if (need_to_move_sprite_divs)
             {
-                tile.css('left', Math.floor(x * vars.sprite_size - mod(dx, 24) * vars.sprite_size / 24) + 'px');
-                tile.css('top', Math.floor(y * vars.sprite_size - mod(dy, 24) * vars.sprite_size / 24) + 'px');
+                tile.css('left', Math.floor((x * 24 - mod(dx, 24)) * vars.sprite_size / 24) + 'px');
+                tile.css('top', Math.floor((y * 24 - mod(dy, 24)) * vars.sprite_size / 24) + 'px');
             }
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
             var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
             if (poskey in vars.field_offset)
             {
                 vars.display_sprite[y][x] = v;
+                if (v == -1)
+                    v = 63;
+                var sprite_x = v % 8;
+                var sprite_y = Math.floor(v / 8);
+                tile.css('background-position', '-' + Math.floor(sprite_x * vars.sprite_size + vars.field_offset[poskey].osx * vars.sprite_size / 24) + 'px -' + Math.floor(sprite_y * vars.sprite_size + vars.field_offset[poskey].osy * vars.sprite_size / 24) + 'px');
+                tile.css('left', Math.floor((x * 24 - mod(dx, 24) + vars.field_offset[poskey].dx) * vars.sprite_size / 24) + 'px');
+                tile.css('top', Math.floor((y * 24 - mod(dy, 24) + vars.field_offset[poskey].dy) * vars.sprite_size / 24) + 'px');
+                tile.css('width', Math.floor(vars.field_offset[poskey].w * vars.sprite_size / 24) + 'px');
+                tile.css('height', Math.floor(vars.field_offset[poskey].h * vars.sprite_size / 24) + 'px');
+                tile.css('opacity', vars.field_offset[poskey].alpha);
 //                 fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
 //                 draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
 //                                     y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
@@ -183,8 +201,38 @@ function render()
 //                                     vars.field_offset[poskey].w, vars.field_offset[poskey].h,
 //                                     vars.field_offset[poskey].odx, vars.field_offset[poskey].ody);
             }
+            else if (applies(v, 'appears'))
+            {
+                if (vars.block_visible[poskey])
+                {
+                    tile.css('width', vars.sprite_size + 'px');
+                    tile.css('height', vars.sprite_size + 'px');
+                    tile.css('opacity', 1.0);
+                    if (vars.display_sprite[y][x] != v)
+                    {
+                        vars.display_sprite[y][x] = v;
+                        if (v == -1)
+                            v = 63;
+                        var sprite_x = v % 8;
+                        var sprite_y = Math.floor(v / 8);
+                        var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+                        tile.css('background-position', value);
+                    }
+                }
+                else
+                {
+                    if (vars.display_sprite[y][x] != v)
+                    {
+                        vars.display_sprite[y][x] = v;
+                        tile.css('opacity', 0.0);
+                    }
+                }
+            }
             else
             {
+                tile.css('width', vars.sprite_size + 'px');
+                tile.css('height', vars.sprite_size + 'px');
+                tile.css('opacity', 1.0);
                 if (vars.display_sprite[y][x] != v)
                 {
                     vars.display_sprite[y][x] = v;
@@ -220,8 +268,8 @@ function render()
     var sprite_y = Math.floor(v / 8);
     var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
     tile.css('background-position', value);
-    tile.css('left', '' + Math.floor((vars.player_x + player_shift_x - dx - 12) * vars.sprite_size / 24) + 'px');
-    tile.css('top', '' + Math.floor((vars.player_y + player_shift_y - dy - 23) * vars.sprite_size / 24) + 'px');
+    tile.css('left', '' + Math.floor((vars.player_x + player_shift_x - dx - 12) * vars.sprite_size / 24/* + vars.offset_x*/) + 'px');
+    tile.css('top', '' + Math.floor((vars.player_y + player_shift_y - dy - 23) * vars.sprite_size / 24/* + vars.offset_y*/) + 'px');
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
     return;
@@ -1038,7 +1086,6 @@ function init() {
 //     vars.imageContext.imageSmoothingEnabled = false;
 
     window.onresize = _fix_sizes;
-    _fix_sizes();
 
     function _game_logic_loop()
     {
@@ -1089,6 +1136,7 @@ function init() {
     window.addEventListener("focus", _clear_keys, false);
 //     requestAnimationFrame(_loop);
     setTimeout(_game_logic_loop, 33);
+    _fix_sizes();
 }
 
 function find_reachable_blocks(x, y)
@@ -1215,12 +1263,12 @@ function initLevel(which)
         vars.door_open = {};
     }
 
+    _fix_sizes();
     find_reachable_blocks(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24));
 }
 
 function init_game(width, height, supersampling, data)
 {
-    return;
     $('#yt_placeholder').empty();
     // <embed id="playerid" width="500px" height="400px" allowfullscreen="true"
     // allowscriptaccess="always" quality="high" bgcolor="#000000" name="playerid"
@@ -1259,7 +1307,7 @@ function init_game(width, height, supersampling, data)
     $('#yt_placeholder').append(yt_embed);
 
     vars = {
-        play_sounds: true,
+        play_sounds: false,
         sprite_size: 1,
         keys_ax: 0.0,
         slide_ax: 0.0,
@@ -1298,6 +1346,8 @@ function init_game(width, height, supersampling, data)
         sprites_repo: null,
         latest_game_logic_update: Date.now(),
         latest_render_update: Date.now(),
+        offset_x: 0,
+        offset_y: 0
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
@@ -1306,6 +1356,11 @@ function init_game(width, height, supersampling, data)
     vars.game_supersampling = supersampling;
     var container = $('<div>');
     container.attr('id', 'play_container');
+    container.css('position', 'absolute');
+    container.css('top', '0');
+    container.css('bottom', '0');
+    container.css('left', '0');
+    container.css('right', '0');
 //     var canvas = $('<canvas>');
 //     canvas.attr('id', 'canvas');
 //     canvas.attr('width', 1);
@@ -1320,12 +1375,18 @@ function init_game(width, height, supersampling, data)
     var backdrop = $('<div>');
     backdrop.css('position', 'absolute');
     backdrop.css('background-color', '#000');
-    backdrop.css('top', '0px');
-    backdrop.css('bottom', '0px');
-    backdrop.css('left', '0px');
-    backdrop.css('right', '0px');
-    backdrop.css('z-index', 800);
+    backdrop.css('top', '0');
+    backdrop.css('bottom', '0');
+    backdrop.css('left', '0');
+    backdrop.css('right', '0');
+//     backdrop.css('z-index', 800);
     $(container).append(backdrop);
+    var sprite_container = $('<div>');
+    vars.sprite_container = sprite_container;
+    sprite_container.css('position', 'relative');
+//     sprite_container.css('z-index', 800);
+    $(container).append(sprite_container);
+
 //     $(container).append(canvas);
     for (var y = 0; y < 17; y++)
     {
@@ -1334,13 +1395,29 @@ function init_game(width, height, supersampling, data)
         {
             var sprite = $('<div>').addClass('sd');
             sprite_div_row.push(sprite);
-            $(container).append(sprite);
+            sprite_container.append(sprite);
         }
         vars.sprite_div.push(sprite_div_row);
     }
     var sprite = $('<div>').addClass('sd');
-    $(container).append(sprite);
+    $(sprite_container).append(sprite);
     vars.player_sprite_div = sprite;
+
+    vars.sliders = [];
+    for (var i = 0; i < 4; i++)
+    {
+        var slider = $('<div>');
+        slider.css('position', 'absolute');
+        slider.css('background-color', '#000');
+        slider.css('top', '0');
+        slider.css('bottom', '0');
+        slider.css('left', '0');
+        slider.css('right', '0');
+        slider.css('z-index', 2000);
+        $(container).append(slider);
+        vars.sliders.push(slider);
+    }
+
     _fix_sizes();
 
     $(container).append(title);
