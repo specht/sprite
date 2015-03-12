@@ -67,6 +67,15 @@ states.push(['slide_down_left_1_2_top', 'Rutsche nach links unten (obere H&auml;
 states.push(['slide_down_left_1_2_bottom', 'Rutsche nach links unten (untere H&auml;lfte)']);
 states.push(['slide_down_right_1_2_top', 'Rutsche nach rechts unten (obere H&auml;lfte)']);
 states.push(['slide_down_right_1_2_bottom', 'Rutsche nach rechts unten (untere H&auml;lfte)']);
+states.push('');
+states.push(['trap_1', 'Falle 1', 'T&ouml;dliche Fallen']);
+states.push(['trap_1_actor', 'Spielfigur in Falle 1']);
+states.push(['trap_2', 'Falle 2']);
+states.push(['trap_2_actor', 'Spielfigur in Falle 2']);
+states.push(['trap_3', 'Falle 3']);
+states.push(['trap_3_actor', 'Spielfigur in Falle 3']);
+states.push(['trap_4', 'Falle 4']);
+states.push(['trap_4_actor', 'Spielfigur in Falle 4']);
 
 function set_field(x, y, v)
 {

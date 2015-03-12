@@ -183,8 +183,7 @@ function render()
             if (poskey in vars.field_offset)
             {
                 vars.display_sprite[y][x] = v;
-                if (v == -1)
-                    v = 63;
+                tile.css('display', (v == -1) ? 'none' : 'block');
                 var sprite_x = v % 8;
                 var sprite_y = Math.floor(v / 8);
                 tile.css('background-position', '-' + Math.floor(sprite_x * vars.sprite_size + vars.field_offset[poskey].osx * vars.sprite_size / 24) + 'px -' + Math.floor(sprite_y * vars.sprite_size + vars.field_offset[poskey].osy * vars.sprite_size / 24) + 'px');
@@ -211,8 +210,7 @@ function render()
                     if (vars.display_sprite[y][x] != v)
                     {
                         vars.display_sprite[y][x] = v;
-                        if (v == -1)
-                            v = 63;
+                        tile.css('display', (v == -1) ? 'none' : 'block');
                         var sprite_x = v % 8;
                         var sprite_y = Math.floor(v / 8);
                         var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
@@ -236,8 +234,7 @@ function render()
                 if (vars.display_sprite[y][x] != v)
                 {
                     vars.display_sprite[y][x] = v;
-                    if (v == -1)
-                        v = 63;
+                    tile.css('display', (v == -1) ? 'none' : 'block');
                     var sprite_x = v % 8;
                     var sprite_y = Math.floor(v / 8);
                     var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
@@ -262,6 +259,8 @@ function render()
         else if (use_sprite == vars.player_sprite_right && vars.player_sprite_walk_right >= 0)
             use_sprite = vars.player_sprite_walk_right;
     }
+    if (vars.found_trap !== null)
+        use_sprite = vars.trap_actor_sprite[vars.found_trap];
     var tile = vars.player_sprite_div;
     var v = use_sprite;
     var sprite_x = v % 8;
@@ -585,6 +584,13 @@ function _move_player_small(move_x, move_y)
                 vars.player_sprite = vars.player_sprite_front;
         }
 
+        // see if we found a trap
+        for (var i = 0; i < vars.max_traps; i++)
+        {
+            if (applies(_get_field(pix, piy), 'trap_' + (i + 1)))
+                vars.found_trap = i;
+        }
+
         // see if we found a key
         for (var i = 0; i < vars.max_keys; i++)
         {
@@ -772,13 +778,13 @@ function game_logic_loop()
     }
 
     // handle keys, move player
-    if (vars.pressed_keys[37])
+    if ((vars.found_trap === null) && vars.pressed_keys[37])
     {
         // left
         if (vars.keys_ax > -6.0)
             vars.keys_ax -= 3.0;
     }
-    else if (vars.pressed_keys[39])
+    else if ((vars.found_trap === null) && vars.pressed_keys[39])
     {
         // right
         if (vars.keys_ax < 6.0)
@@ -800,7 +806,7 @@ function game_logic_loop()
         }
     }
 
-    if (vars.pressed_keys[38])
+    if ((vars.found_trap === null) && vars.pressed_keys[38])
     {
         // up
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
@@ -817,7 +823,7 @@ function game_logic_loop()
         }
     }
 
-    if (vars.pressed_keys[40])
+    if ((vars.found_trap === null) && vars.pressed_keys[40])
     {
         // down
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb') ||
@@ -839,7 +845,7 @@ function game_logic_loop()
         vars.player_walk_phase = 0;
     }
 
-    if (vars.pressed_keys[16])
+    if ((vars.found_trap === null) && vars.pressed_keys[16])
     {
         // jump
         if ((mod(vars.player_y, 24) == 23) || applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
@@ -1240,6 +1246,7 @@ function initLevel(which)
     vars.latest_render_update = Date.now();
     vars.current_sprite_offset_x = -1;
     vars.current_sprite_offset_y = -1;
+    vars.found_trap = null;
 
     for (var y = 0; y < 17; y++)
     {
@@ -1342,6 +1349,8 @@ function init_game(width, height, supersampling, data)
         player_sprite_jump_right: -1,
         player_walk_phase: 0,
         max_keys: 4,
+        max_traps: 4,
+        trap_actor_sprite: [],
         sounds: {},
         sprites_repo: null,
         latest_game_logic_update: Date.now(),
@@ -1361,6 +1370,8 @@ function init_game(width, height, supersampling, data)
     container.css('bottom', '0');
     container.css('left', '0');
     container.css('right', '0');
+    container.css('background-color', '#000');
+    container.css('z-index', '1');
 //     var canvas = $('<canvas>');
 //     canvas.attr('id', 'canvas');
 //     canvas.attr('width', 1);
@@ -1384,7 +1395,7 @@ function init_game(width, height, supersampling, data)
     var sprite_container = $('<div>');
     vars.sprite_container = sprite_container;
     sprite_container.css('position', 'relative');
-//     sprite_container.css('z-index', 800);
+    sprite_container.css('background-color', '#000');
     $(container).append(sprite_container);
 
 //     $(container).append(canvas);
@@ -1484,7 +1495,7 @@ function init_game(width, height, supersampling, data)
             var imageUrl = urlCreator.createObjectURL(blob);
             load_sprites(imageUrl);
             vars.sprites_repo = $('#sprites_default')[0];
-//             $('.sd').css('background-image', 'url(' + imageUrl + ')');
+            $('.sd').css('background-image', 'url(' + imageUrl + ')');
         }
         else if (zipEntry.name == 'levels.json')
         {
@@ -1531,6 +1542,16 @@ function init_game(width, height, supersampling, data)
         if ('actor_jump_right' in props)
             vars.player_sprite_jump_right = _;
     });
+    for (var i = 0; i < vars.max_traps; i++)
+        vars.trap_actor_sprite.push(vars.player_sprite_front);
+    jQuery.each(vars.sprite_properties, function(_, props) {
+        for (var i = 0; i < vars.max_traps; i++)
+        {
+            if ('trap_' + (i + 1) + '_actor' in props)
+                vars.trap_actor_sprite[i] = _;
+        }
+    });
+
     backdrop.fadeIn(function() {
         $('body').css('padding', '0');
         $('body').css('margin', '0');

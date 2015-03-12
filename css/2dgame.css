@@ -42,5 +42,5 @@ body {
     width: 1px;
     height: 1px;
     z-index: 900;
-    background-image: url(../sprites-big.png);
+/*     background-image: url(../sprites-big.png); */
 }
