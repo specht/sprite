@@ -85,11 +85,11 @@ function _fix_sizes()
     else
         vars.sprite_size = Math.floor(height / 16.0);
     vars.offset_x = Math.floor((width - (vars.sprite_size * 28)) / 2);
-    vars.offset_y = Math.floor((height - (vars.sprite_size * 16)) / 2);
+    vars.offset_y = Math.floor((height - (vars.sprite_size * 16)) / 2) + vars.sprite_size;
     vars.sliders[0].css('right', '' + (width - vars.offset_x) + 'px');
     vars.sliders[1].css('left', '' + (width - vars.offset_x) + 'px');
     vars.sliders[2].css('bottom', '' + (height - vars.offset_y) + 'px');
-    vars.sliders[3].css('top', '' + (height - vars.offset_y) + 'px');
+    vars.sliders[3].css('top', '' + (height - vars.offset_y + vars.sprite_size) + 'px');
     vars.sprite_container.css('left', vars.offset_x + 'px');
     vars.sprite_container.css('top', vars.offset_y + 'px');
 //         height = width * vars.game_height / vars.game_width;
@@ -113,7 +113,13 @@ function _fix_sizes()
     $('.sd').css('width', '' + vars.sprite_size + 'px');
     $('.sd').css('height', '' + vars.sprite_size + 'px');
     $('.sd').css('background-size', '' + (vars.sprite_size * 8) + 'px');
-    for (var y = 0; y < 17; y++)
+    $('.pixelfont').css('font-size', '' + (vars.sprite_size * 0.6) + 'px');
+    $('.pixelfont').css('line-height', '' + vars.sprite_size + 'px');
+    $('#title_left').css('left', vars.offset_x + 'px');
+    $('#title_left').css('top', (vars.offset_y - vars.sprite_size) + 'px');
+    $('#title_right').css('right', vars.offset_x + 'px');
+    $('#title_right').css('top', (vars.offset_y - vars.sprite_size) + 'px');
+    for (var y = 0; y < 16; y++)
     {
         for (var x = 0; x < 29; x++)
         {
@@ -124,7 +130,7 @@ function _fix_sizes()
     }
     if (typeof(vars.display_sprite) !== 'undefined' && vars.display_sprite.length > 0)
     {
-        for (var y = 0; y < 17; y++)
+        for (var y = 0; y < 16; y++)
             for (var x = 0; x < 29; x++)
                 vars.display_sprite[y][x] = -2;
     }
@@ -168,7 +174,7 @@ function render()
         (vars.current_sprite_offset_y != mod(dy, 24));
     vars.current_sprite_offset_x = mod(dx, 24);
     vars.current_sprite_offset_y = mod(dy, 24);
-    for (var y = 0; y < 17; y++)
+    for (var y = 0; y < 16; y++)
     {
         for (var x = 0; x < 29; x++)
         {
@@ -271,6 +277,8 @@ function render()
     tile.css('top', '' + Math.floor((vars.player_y + player_shift_y - dy - 23) * vars.sprite_size / 24/* + vars.offset_y*/) + 'px');
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
+    $('#title_left').html("Level: " + (vars.current_level + 1) + "   Punkte: " + vars.level_points);
+
     return;
 
     var dx = vars.vx;
@@ -303,7 +311,7 @@ function render()
     else if (player_shift_y > 0)
         mark_dirty(vars.player_x, vars.player_y + 1);
 
-    for (var y = 0; y < 17; y++)
+    for (var y = 0; y < 16; y++)
     {
         for (var x = 0; x < 29; x++)
         {
@@ -615,6 +623,29 @@ function _move_player_small(move_x, move_y)
             }
         }
 
+        // see if we found points
+        for (var i = 0; i < 3; i++)
+        {
+            var p = 1;
+            if (i == 1)
+                p = 5;
+            else if (i == 2)
+                p = 10;
+            if (applies(_get_field(pix, piy), '' + p + 'p'))
+            {
+                var anim_key = '' + (pix) + '/' + piy;
+                if (!(anim_key in vars.animations))
+                {
+                    vars.level_points += p;
+                    if (vars.play_sounds)
+                        vars.sounds['pick_up'].play();
+                    vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
+                        _set_field(x, y, -1);
+                    }};
+                }
+            }
+        }
+
         // see if we can open a door
         for (var i = 0; i < vars.max_keys; i++)
         {
@@ -761,24 +792,24 @@ function game_logic_loop()
             vars.vx = (vars.current_level_copy.width - 28) * 24;
     }
 
-    if (vars.current_level_copy.height < 16)
+    if (vars.current_level_copy.height < 15)
     {
-        vars.vy = -Math.floor(((16 - vars.current_level_copy.height) / 2) * 24);
+        vars.vy = -Math.floor(((15 - vars.current_level_copy.height) / 2) * 24);
     }
     else
     {
-        if (vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 16 + 2) * 24)
+        if (vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 15 + 2) * 24)
             vars.vy += 12;
         if (vars.player_y - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
             vars.vy -= 6;
         if (vars.vy < 0)
             vars.vy = 0;
-        if (vars.vy > (vars.current_level_copy.height - 16) * 24)
-            vars.vy = (vars.current_level_copy.height - 16) * 24;
+        if (vars.vy > (vars.current_level_copy.height - 15) * 24)
+            vars.vy = (vars.current_level_copy.height - 15) * 24;
     }
     if (oldvx != vars.vx || oldvy != vars.vy)
     {
-        for (var y = 0; y < 17; y++)
+        for (var y = 0; y < 16; y++)
             for (var x = 0; x < 29; x++)
                 vars.display_sprite[y][x] = -2;
     }
@@ -1258,8 +1289,9 @@ function initLevel(which)
     vars.current_sprite_offset_x = -1;
     vars.current_sprite_offset_y = -1;
     vars.found_trap = null;
+    vars.level_points = 0;
 
-    for (var y = 0; y < 17; y++)
+    for (var y = 0; y < 16; y++)
     {
         var display_sprite_row = [];
         for (var x = 0; x < 29; x++)
@@ -1391,9 +1423,6 @@ function init_game(width, height, supersampling, data)
 //     canvas.css('z-index', '1000');
 //     canvas.css('left', 0);
 //     canvas.css('top', 0);
-    var title = $('<div>');
-    title.addClass('ontop');
-//     title.html("Pyramide");
     var backdrop = $('<div>');
     backdrop.css('position', 'absolute');
     backdrop.css('background-color', '#000');
@@ -1410,7 +1439,7 @@ function init_game(width, height, supersampling, data)
     $(container).append(sprite_container);
 
 //     $(container).append(canvas);
-    for (var y = 0; y < 17; y++)
+    for (var y = 0; y < 16; y++)
     {
         var sprite_div_row = [];
         for (var x = 0; x < 29; x++)
@@ -1440,9 +1469,25 @@ function init_game(width, height, supersampling, data)
         vars.sliders.push(slider);
     }
 
-    _fix_sizes();
-
+    var title = $('<div>');
+    title.attr('id', 'title_left');
+    title.addClass('ontop');
+    title.addClass('pixelfont');
+    title.css('z-index', '2001');
+    title.css('position', 'absolute');
+    title.html('');
     $(container).append(title);
+    title = $('<div>');
+    title.attr('id', 'title_right');
+    title.addClass('ontop');
+    title.addClass('pixelfont');
+    title.css('z-index', '2001');
+    title.css('position', 'absolute');
+    title.css('text-align', 'right');
+    title.html("");
+    $(container).append(title);
+
+    _fix_sizes();
     if (!!('ontouchstart' in window))
     {
         var control = null;

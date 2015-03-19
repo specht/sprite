@@ -1,3 +1,13 @@
+@font-face {
+   font-family: 'Fipps';
+   src: url('Fipps-Regular.otf') format('opentype');
+}
+
+@font-face {
+   font-family: 'Minecraftia';
+   src: url('Minecraftia-Regular.ttf') format('truetype');
+}
+
 body {
 /*     padding: 0; */
 /*     margin: 0; */
@@ -43,4 +53,9 @@ body {
     height: 1px;
     z-index: 900;
 /*     background-image: url(../sprites-big.png); */
+}
+
+.pixelfont {
+    font-family: 'Minecraftia';
+    font-size: 32px;
 }

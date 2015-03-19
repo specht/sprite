@@ -77,6 +77,9 @@ states.push(['trap_3_actor', 'Spielfigur in Falle 3']);
 states.push(['trap_4', 'Falle 4']);
 states.push(['trap_4_actor', 'Spielfigur in Falle 4']);
 states.push(['level_finished', 'Ab ins n&auml;chste Level!', 'Level&uuml;bergang']);
+states.push(['1p', '1 P', 'Punkte sammeln']);
+states.push(['5p', '5 P']);
+states.push(['10p', '10 P']);
 
 function set_field(x, y, v)
 {
@@ -571,6 +574,16 @@ function setPenWidth(w)
         $('.penwidth').removeClass('active');
         target.addClass('active');
     }
+}
+
+function autoSave()
+{
+    var data = get_zip_package();
+    jQuery.post('/autosave.rb', data,
+        function(data) {
+            console.log(data);
+        }
+    );
 }
 
 $().ready(function() {
@@ -1339,11 +1352,12 @@ function get_sprite_properties()
 function get_zip_package()
 {
     var zip = new JSZip();
-    zip.file("readme.txt", "Hackschule FTW!!!\n");
-    zip.file("sprites.png", btoa(get_sprites_as_png()), {base64: true});
-    zip.file("sprite_props.json", btoa(JSON.stringify(get_sprite_properties())), {base64: true});
-    zip.file("levels.json", btoa(JSON.stringify(get_level_descriptions())), {base64: true});
-    return '' + zip.generate();
+    var d = new Date("October 26, 1985 01:20:00");
+    zip.file("readme.txt", "Hackschule FTW!!!\n", {date: d});
+    zip.file("sprites.png", btoa(get_sprites_as_png()), {base64: true, date: d});
+    zip.file("sprite_props.json", btoa(JSON.stringify(get_sprite_properties())), {base64: true, date: d});
+    zip.file("levels.json", btoa(JSON.stringify(get_level_descriptions())), {base64: true, date: d});
+    return '' + zip.generate({compression: 'DEFLATE'});
 }
 
 function update_sprite(add_to_undo_stack)
