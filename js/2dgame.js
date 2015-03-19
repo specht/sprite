@@ -185,6 +185,9 @@ function render()
                 tile.css('top', Math.floor((y * 24 - mod(dy, 24)) * vars.sprite_size / 24) + 'px');
             }
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
+//             if (v == 57)
+//                 v += Math.floor(vars.animation_phase / 4) % 4;
+
             var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
             if (poskey in vars.field_offset)
             {
@@ -705,7 +708,7 @@ function _move_player_small(move_x, move_y)
 
 function game_logic_loop()
 {
-//     animation_phase++;
+    vars.animation_phase++;
 
     vars.player_walk_phase = (vars.player_walk_phase + 1) % 8;
 
@@ -1246,6 +1249,7 @@ function find_reachable_blocks(x, y)
 
 function initLevel(which)
 {
+    vars.animation_phase = 0;
     vars.current_level = which;
     vars.current_level_copy = jQuery.extend(true, {}, vars.levels[vars.current_level])
     var found_player = false;
@@ -1357,6 +1361,7 @@ function init_game(width, height, supersampling, data)
     $('#yt_placeholder').append(yt_embed);
 
     vars = {
+        animation_phase: 0,
         play_sounds: false,
         sprite_size: 1,
         keys_ax: 0.0,
