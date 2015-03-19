@@ -5,7 +5,7 @@ var penWidth = 1;
 var imageWidth = 24;
 var imageHeight = 24;
 var levelWidth = 28;
-var levelHeight = 16;
+var levelHeight = 15;
 var MAX_UNDO_STACK = 25;
 var MAX_LEVELS = 25;
 var MAX_SPRITES = 256;
@@ -188,6 +188,13 @@ function draw_level()
             var v = get_field(x + level_props[current_level].offset[0], y + level_props[current_level].offset[1]);
             if (v >= 0)
                 context.drawImage($('#sprite_' + v)[0], x * imageWidth, y * imageHeight, imageWidth, imageHeight);
+            else
+            {
+                context.beginPath();
+                context.fillStyle = '#888';
+                context.rect(x * imageWidth + 11, y * imageHeight + 11, 2, 2);
+                context.fill();
+            }
         }
     }
 }
@@ -723,7 +730,8 @@ $().ready(function() {
                     else if (zipEntry.name == 'sprite_props.json')
                     {
                         var info = JSON.parse(zipEntry.asText());
-                        sprite_properties = info;
+                        for (var i = 0; i < info.length; i++)
+                            sprite_properties[i] = info[i];
                     }
                     else if (zipEntry.name == 'levels.json')
                     {
@@ -1151,57 +1159,60 @@ $().ready(function() {
         var image = $(e.target);
         console.log('loadSprites', e);
         var totalWidth = 192;
-        var totalHeight = 240;
+        var totalHeight = Math.floor(MAX_SPRITES / 8) * 24;
         var spriteIndex = currentSpriteId;
-        if (image.width() == totalWidth && image.height() == totalHeight)
+        if (image.width() == totalWidth)
         {
-            var local_canvas = $('<canvas>').attr('width', totalWidth).attr('height', totalHeight)[0];
-            local_canvas.getContext('2d').drawImage(image[0], 0, 0, totalWidth, totalHeight);
-            var data = local_canvas.getContext('2d').getImageData(0, 0, totalWidth, totalHeight).data;
+            var local_canvas = $('<canvas>').attr('width', image.width()).attr('height', image.height())[0];
+            local_canvas.getContext('2d').drawImage(image[0], 0, 0, image.width(), image.height());
+            var data = local_canvas.getContext('2d').getImageData(0, 0, image.width(), image.height()).data;
             for (var i = 0; i < MAX_SPRITES; i++)
             {
                 var px = i % 8;
                 var py = Math.floor(i / 8);
-                var s = '';
-                var offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
-                for (var y = 0; y < imageHeight; y++)
+                if (py * imageHeight + imageHeight - 1 < image.height())
                 {
-                    for (var x = 0; x < imageWidth; x++)
-                        s += String.fromCharCode(data[offset++], data[offset++], data[offset++], data[offset++]);
-                    offset = offset - imageWidth * 4 + totalWidth * 4;
-                }
-                if (shiftPressed)
-                {
-                    // append to sprite set if not empty
-                    offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
-                    var imageIsEmpty = true;
+                    var s = '';
+                    var offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
                     for (var y = 0; y < imageHeight; y++)
                     {
-                        for (var x = 0; x < imageWidth * 4; x++)
+                        for (var x = 0; x < imageWidth; x++)
+                            s += String.fromCharCode(data[offset++], data[offset++], data[offset++], data[offset++]);
+                        offset = offset - imageWidth * 4 + totalWidth * 4;
+                    }
+                    if (shiftPressed)
+                    {
+                        // append to sprite set if not empty
+                        offset = ((py * imageHeight) * totalWidth + px * imageWidth) * 4;
+                        var imageIsEmpty = true;
+                        for (var y = 0; y < imageHeight; y++)
                         {
-                            if (data[offset++] != 0)
+                            for (var x = 0; x < imageWidth * 4; x++)
                             {
-                                imageIsEmpty = false;
-                                break;
+                                if (data[offset++] != 0)
+                                {
+                                    imageIsEmpty = false;
+                                    break;
+                                }
                             }
+                            if (!imageIsEmpty)
+                                break;
                         }
                         if (!imageIsEmpty)
-                            break;
-                    }
-                    if (!imageIsEmpty)
-                    {
-                        if (currentSpriteId < MAX_SPRITES)
                         {
-                            png_data = generatePng(imageWidth, imageHeight, s);
-                            $('#sprite_' + (spriteIndex++)).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+                            if (currentSpriteId < MAX_SPRITES)
+                            {
+                                png_data = generatePng(imageWidth, imageHeight, s);
+                                $('#sprite_' + (spriteIndex++)).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+                            }
                         }
                     }
-                }
-                else
-                {
-                    // set in any case
-                    png_data = generatePng(imageWidth, imageHeight, s);
-                    $('#sprite_' + i).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+                    else
+                    {
+                        // set in any case
+                        png_data = generatePng(imageWidth, imageHeight, s);
+                        $('#sprite_' + i).attr('src', 'data:image/png;base64,' + Base64.encode(png_data));
+                    }
                 }
             }
         }
@@ -1272,7 +1283,7 @@ function get_sprites_as_png()
     for (var vi = 0; vi < MAX_SPRITES * imageHeight * imageWidth * 4; vi++)
         s += String.fromCharCode(pixels[vi]);
 
-    png_data = generatePng(imageWidth * 8, imageHeight * 10, s);
+    png_data = generatePng(imageWidth * 8, Math.floor(MAX_SPRITES / 8) * imageWidth, s);
 //     console.log(png_data);
 //     return btoa(png_data);
 //     console.log(btoa(png_data));
