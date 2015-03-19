@@ -1294,6 +1294,11 @@ function initLevel(which)
     vars.current_sprite_offset_y = -1;
     vars.found_trap = null;
     vars.level_points = 0;
+    vars.keys_ax = 0.0;
+    vars.slide_ax = 0.0;
+    vars.ay = 0.0;
+    vars.vx = 0;
+    vars.vy = 0;
 
     for (var y = 0; y < 16; y++)
     {
