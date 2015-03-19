@@ -1317,6 +1317,8 @@ function initLevel(which)
         vars.door_open = {};
     }
 
+    vars.pressed_keys = {};
+
     _fix_sizes();
     find_reachable_blocks(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24));
 }
