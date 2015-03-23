@@ -185,8 +185,8 @@ function render()
                 tile.css('top', Math.floor((y * 24 - mod(dy, 24)) * vars.sprite_size / 24) + 'px');
             }
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
-            if (v == 57)
-                v += Math.floor(vars.animation_phase / 4) % 4;
+//             if (v == 57)
+//                 v += Math.floor(vars.animation_phase / 4) % 4;
 
             var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
             if (poskey in vars.field_offset)
