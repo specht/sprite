@@ -191,9 +191,9 @@ function draw_level()
             else
             {
                 context.beginPath();
-                context.fillStyle = '#888';
-                context.rect(x * imageWidth + 11, y * imageHeight + 11, 2, 2);
-                context.fill();
+                context.strokeStyle = '#666';
+                context.rect(x * imageWidth + 5 + 0.5, y * imageHeight + 5 + 0.5, 13, 13);
+                context.stroke();
             }
         }
     }
