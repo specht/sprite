@@ -174,10 +174,12 @@ function render()
         (vars.current_sprite_offset_y != mod(dy, 24));
     vars.current_sprite_offset_x = mod(dx, 24);
     vars.current_sprite_offset_y = mod(dy, 24);
+    var randomize_count = 1;
     for (var y = 0; y < 16; y++)
     {
         for (var x = 0; x < 29; x++)
         {
+            randomize_count += x + y;
             var tile = vars.sprite_div[y][x];
             if (need_to_move_sprite_divs)
             {
@@ -185,8 +187,18 @@ function render()
                 tile.css('top', Math.floor((y * 24 - mod(dy, 24)) * vars.sprite_size / 24) + 'px');
             }
             var v = _get_field(x + Math.floor(dx / 24), y + Math.floor(dy / 24));
-//             if (v == 57)
-//                 v += Math.floor(vars.animation_phase / 4) % 4;
+            jQuery.each(vars.sprite_animations, function(_, info) {
+                if (v == info.start)
+                {
+                    var delta = vars.animation_phase;
+                    if (info.shuffle)
+                        delta += x * 17 + y * 13 + randomize_count;
+                    var shift = Math.floor(delta / info.speed) % (info.count + info.wait);
+                    if (shift >= info.count)
+                        shift = 0;
+                    v += shift;
+                }
+            });
 
             var poskey = '' + (x + Math.floor(dx / 24)) + '/' + (y + Math.floor(dy / 24));
             if (poskey in vars.field_offset)
@@ -1091,11 +1103,20 @@ function start_next_level()
     }
 }
 
+function restart_level()
+{
+    initLevel(vars.current_level);
+}
+
 function keydown(code)
 {
 //     console.log(code);
     if (current_pane !== 'play')
         return;
+    if (code == 82)
+    {
+        restart_level();
+    }
     if (code == 76)
     {
         start_next_level();
@@ -1369,6 +1390,7 @@ function init_game(width, height, supersampling, data)
 
     vars = {
         animation_phase: 0,
+        sprite_animations: [],
         play_sounds: false,
         sprite_size: 1,
         keys_ax: 0.0,
@@ -1569,7 +1591,11 @@ function init_game(width, height, supersampling, data)
         {
             var info = JSON.parse(zipEntry.asText());
             vars.levels = info.slice();
-//             loadLevels(info);
+        }
+        else if (zipEntry.name == 'animations.json')
+        {
+            var info = JSON.parse(zipEntry.asText());
+            vars.sprite_animations = info.slice();
         }
         else if (zipEntry.name == 'sprite_props.json')
         {

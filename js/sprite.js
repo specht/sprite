@@ -21,6 +21,7 @@ var mouseDownColor = [];
 var level = {};
 var currentlyDrawingLevel = false;
 var level_use = [];
+var animations = [];
 // offset, background
 var level_props = {};
 var current_level = 0;
@@ -524,6 +525,7 @@ function setCurrentSprite(sprite_id)
         return;
     $('.sprite').removeClass('active');
     currentSpriteId = sprite_id;
+    $('#current_sprite_index_here').html('' + currentSpriteId);
     $('#sprite_' + currentSpriteId).addClass('active');
     restore_image($('#sprite_' + currentSpriteId));
     updateSpriteProperties();
@@ -569,6 +571,14 @@ function loadLevels(info)
                 level[i]['' + (xd + l.xmin) + ',' + (yd + l.ymin)] = cell;
             });
         });
+    });
+}
+
+function loadAnimations(info)
+{
+    console.log("Loading animations", info);
+    jQuery.each(info, function(_, a) {
+        push_animation(a);
     });
 }
 
@@ -635,7 +645,6 @@ $().ready(function() {
         $('#sprites').append(" ");
         element.draggable({
             containment: 'parent',
-//             cursor: 'move',
             stack: '#sprites',
             delay: 100,
             revert: true
@@ -718,6 +727,8 @@ $().ready(function() {
                 data = atob(data);
                 data = atob(data);
                 var zip = new JSZip(data);
+                // remove all animations
+                $('#animations_table_body').empty();
                 $.each(zip.files, function (index, zipEntry) {
 //                     console.log(zipEntry);
                     if (zipEntry.name == 'sprites.png')
@@ -737,6 +748,11 @@ $().ready(function() {
                     {
                         var info = JSON.parse(zipEntry.asText());
                         loadLevels(info);
+                    }
+                    else if (zipEntry.name == 'animations.json')
+                    {
+                        var info = JSON.parse(zipEntry.asText());
+                        loadAnimations(info);
                     }
                 });
             }
@@ -937,18 +953,35 @@ $().ready(function() {
         }
         if (e.which == 49)
         {
-            switchPane('sprites');
-            e.preventDefault();
+            if ($(document.activeElement).prop('tagName') != 'INPUT')
+            {
+                switchPane('sprites');
+                e.preventDefault();
+            }
         }
         if (e.which == 50)
         {
-            switchPane('options');
-            e.preventDefault();
+            if ($(document.activeElement).prop('tagName') != 'INPUT')
+            {
+                switchPane('options');
+                e.preventDefault();
+            }
         }
         if (e.which == 51)
         {
-            switchPane('levels');
-            e.preventDefault();
+            if ($(document.activeElement).prop('tagName') != 'INPUT')
+            {
+                switchPane('animation');
+                e.preventDefault();
+            }
+        }
+        if (e.which == 52)
+        {
+            if ($(document.activeElement).prop('tagName') != 'INPUT')
+            {
+                switchPane('levels');
+                e.preventDefault();
+            }
         }
         if (e.which == 80)
         {
@@ -1248,7 +1281,120 @@ $().ready(function() {
             });
         }
     });
+    $('#add_animation').click(function() {
+        push_animation({start: 0, count: 1, speed: 1, shuffle: false, wait: 0});
+    });
 });
+
+function push_animation(info)
+{
+    var anim_index = animations.length;
+    var anim_key = 'animation_' + anim_index;
+    animations.push(info);
+    var animation = $('<tr>');
+    var element = $('<input>');
+    element.attr('id', 'animation_' + anim_key + '_start');
+    element.val('' + info.start);
+    element.attr('type', 'number');
+    element.attr('min', '0');
+    element.attr('max', '' + (MAX_SPRITES - 1));
+    animation.append($('<td>').append(element));
+    element.change(function(e) {
+        var t = $(e.target);
+        var anim_index = t.parent().parent().index()
+        var v = new Number(t.val()).valueOf();
+        if (v < 0)
+            v = 0;
+        if (v > MAX_SPRITES - 1)
+            v = MAX_SPRITES - 1;
+        t.val('' + v);
+        animations[anim_index].start = v;
+    });
+
+    element = $('<input>');
+    element.attr('id', 'animation_' + anim_key + '_count');
+    element.val('' + info.count);
+    element.attr('type', 'number');
+    element.attr('min', '1');
+    element.attr('max', '' + (MAX_SPRITES - 1));
+    animation.append($('<td>').append(element));
+    element.change(function(e) {
+        var t = $(e.target);
+        var anim_index = t.parent().parent().index()
+        var v = new Number(t.val()).valueOf();
+        if (v < 1)
+            v = 1;
+        if (v > MAX_SPRITES - 1)
+            v = MAX_SPRITES - 1;
+        t.val('' + v);
+        animations[anim_index].count = v;
+    });
+
+    element = $('<select>');
+    element.attr('id', 'animation_' + anim_key + '_speed');
+    element.append($('<option>').attr('value', '1').html('30 fps'));
+    element.append($('<option>').attr('value', '2').html('15 fps'));
+    element.append($('<option>').attr('value', '3').html('10 fps'));
+    element.append($('<option>').attr('value', '4').html('7.5 fps'));
+    element.append($('<option>').attr('value', '5').html('6 fps'));
+    element.append($('<option>').attr('value', '6').html('5 fps'));
+    element.append($('<option>').attr('value', '10').html('3 fps'));
+    element.append($('<option>').attr('value', '15').html('2 fps'));
+    element.append($('<option>').attr('value', '30').html('1 fps'));
+    animation.append($('<td>').append(element));
+    element.val('' + info.speed);
+    element.change(function(e) {
+        var t = $(e.target);
+        var anim_index = t.parent().parent().index()
+        var v = new Number(t.val()).valueOf();
+        animations[anim_index].speed = v;
+    });
+
+    element = $('<input>');
+    element.attr('id', 'animation_' + anim_key + '_shuffle');
+    element.attr('type', 'checkbox');
+    animation.append($('<td>').append(element));
+    element.prop('checked', info.shuffle);
+    element.change(function(e) {
+        var t = $(e.target);
+        var anim_index = t.parent().parent().index()
+        var v = new Number(t.val()).valueOf();
+        animations[anim_index].shuffle = t.prop('checked');
+    });
+
+    element = $('<input>');
+    element.attr('id', 'animation_' + anim_key + '_wait');
+    if (typeof(info.wait) === 'undefined')
+        info.wait = 0;
+    element.val('' + info.wait);
+    element.attr('type', 'number');
+    element.attr('min', '0');
+    element.attr('max', '9999');
+    animation.append($('<td>').append(element));
+    element.change(function(e) {
+        var t = $(e.target);
+        var anim_index = t.parent().parent().index()
+        var v = new Number(t.val()).valueOf();
+        if (v < 0)
+            v = 0;
+        if (v > 9999)
+            v = 9999;
+        t.val('' + v);
+        animations[anim_index].wait = v;
+    });
+
+    element = $('<button>');
+    animation.append($('<td>').append(element));
+    element.html('L&ouml;schen');
+    element.click(function(e) {
+        var t = $(e.target);
+        var anim_index = t.parent().parent().index()
+        animations.splice(anim_index, 1);
+        t.parent().parent().remove();
+    });
+
+    $('#animations_table_body').append(animation);
+}
 
 function get_sprites_as_png()
 {
@@ -1368,6 +1514,7 @@ function get_zip_package()
     zip.file("sprites.png", btoa(get_sprites_as_png()), {base64: true, date: d});
     zip.file("sprite_props.json", btoa(JSON.stringify(get_sprite_properties())), {base64: true, date: d});
     zip.file("levels.json", btoa(JSON.stringify(get_level_descriptions())), {base64: true, date: d});
+    zip.file("animations.json", btoa(JSON.stringify(animations)), {base64: true, date: d});
     return '' + zip.generate({compression: 'DEFLATE'});
 }
 

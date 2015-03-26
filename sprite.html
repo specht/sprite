@@ -42,6 +42,8 @@
 <br />
 <span class='toolbutton tool' id='pane_options' style='background: url(images/wrench.png) center center no-repeat;' title='Einstellungen'></span>
 <br />
+<span class='toolbutton tool' id='pane_animation' style='background: url(images/applications-multimedia.png) center center no-repeat;' title='Animationen'></span>
+<br />
 <span class='toolbutton tool' id='pane_levels' style='background: url(images/level.png) center center no-repeat;' title='Level zeichnen'></span>
 <br />
 <span class='toolbutton tool' id='pane_play' style='background: url(images/play.png) center center no-repeat;' title='Spiel testen'></span>
@@ -117,6 +119,24 @@
 </div>
 
 <div class='pane' id='pane-options' style='display: inline-block;'>
+</div>
+
+<div class='pane' id='pane-animation' style='display: inline-block;'>
+<button id='add_animation'>Animation hinzuf&uuml;gen</button> <span style='font-size: 12px; color: #fff;'>(aktuelles Sprite: <span id='current_sprite_index_here'>0</span>)</span>
+<table>
+<thead>
+<tr>
+<th>Start</th>
+<th>Anzahl</th>
+<th>Geschwindigkeit</th>
+<th>Zuf&auml;llig</th>
+<th>Pause</th>
+<th>L&ouml;schen</th>
+</tr>
+</thead>
+<tbody id='animations_table_body'>
+</tbody>
+</table>
 </div>
 
 <div class='pane' id='pane-levels' style='display: inline-block;'>
