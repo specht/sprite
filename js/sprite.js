@@ -604,6 +604,10 @@ function autoSave()
 }
 
 $().ready(function() {
+    function confirmExit() {
+        return "Achtung! Bist du sicher, dass du die Seite verlassen willst? Wenn du noch nicht gespeichert hast, bleib auf dieser Seite.";
+    }
+    window.onbeforeunload = confirmExit;
     for (var i = 0; i < MAX_SPRITES; i++)
         sprite_properties[i] = {};
     for (var y = 0; y < imageHeight; y++)
@@ -2199,3 +2203,4 @@ function play()
 {
     init_game(28 * 24, 16 * 24, 2, get_zip_package());
 }
+
