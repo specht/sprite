@@ -909,10 +909,14 @@ function game_logic_loop()
             )
             {
                 vars.ay = -40.0;
+//                 console.log(vars.keys_ax);
+                if (vars.keys_ax < 0.0)
+                    vars.keys_ax -= 2.0;
+                else if (vars.keys_ax > 0.0)
+                    vars.keys_ax += 2.0;
                 vars.jumping = true;
                 vars.jump_start_x = Math.floor(vars.player_x / 24);
                 vars.jump_start_y = Math.floor(vars.player_y / 24);
-//                 console.log('jump');
             }
         }
     }
@@ -1381,12 +1385,13 @@ function init_game(width, height, supersampling, data)
 //     var video_id = 'kxJXqEOyJUg'; // Rebel Rebel
 //     var video_id = 'AEi7KKPHLgU'; // I want you back
 //     var video_id = '';
-    yt_embed.attr('src', 'http://www.youtube.com/v/' + video_id + '?enablejsapi=1&version=3&playerapiid=ytplayer');
-    yt_embed.attr('type', 'application/x-shockwave-flash');
-    yt_embed.css('z-index', '2000');
-    yt_embed.css('width', '0');
-    yt_embed.css('height', '0');
-    $('#yt_placeholder').append(yt_embed);
+//
+//     yt_embed.attr('src', 'http://www.youtube.com/v/' + video_id + '?enablejsapi=1&version=3&playerapiid=ytplayer');
+//     yt_embed.attr('type', 'application/x-shockwave-flash');
+//     yt_embed.css('z-index', '2000');
+//     yt_embed.css('width', '0');
+//     yt_embed.css('height', '0');
+//     $('#yt_placeholder').append(yt_embed);
 
     vars = {
         animation_phase: 0,
