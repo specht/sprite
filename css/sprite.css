@@ -221,23 +221,23 @@ body {
     top: -13px;
 }
 
-#pane-options div {
+#pane-options div ,#level-options div {
     vertical-align: top;
     margin-right: 5px;
 }
 
 
-#pane-options {
+#pane-options, #level-options {
     font-size: 80%;
     line-height: 80%;
 }
 
-#pane-options label {
+#pane-options label, #level-options label {
     position: relative;
     top: -3px;
 }
 
-#pane-options .heading {
+#pane-options .heading, #level-options .heading {
     display: block;
     font-weight: bold;
     margin-top: 5px;
@@ -246,6 +246,9 @@ body {
     border-bottom: 1px solid #aaa;
     padding-top: 8px;
     padding-bottom: 8px;
+    padding-left: 4px;
+    padding-right: 4px;
+    background-color: rgba(255,255,255, 0.1);
 }
 
 table {
@@ -255,4 +258,8 @@ table {
 
 table th {
     text-align: left;
+}
+
+input:focus {
+    background-color: #fce94f;
 }

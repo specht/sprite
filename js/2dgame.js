@@ -752,7 +752,10 @@ function game_logic_loop()
             vars.slide_ax++;
     }
     else if (!vars.jumping)
+    {
         vars.slide_ax = 0;
+        vars.jump_ax = 0.0;
+    }
 
     if (!(applies(_get_field(pix, piy), 'can_climb')) &&
         !(applies(_get_field(pix, piy + 1), 'can_climb')) &&
@@ -887,7 +890,7 @@ function game_logic_loop()
         }
     }
 
-    var ax = vars.slide_ax + vars.keys_ax;
+    var ax = vars.slide_ax + vars.keys_ax + vars.jump_ax;
     if (Math.abs(ax) > 0.0001)
     {
         move_player_small(ax, 0);
@@ -911,9 +914,11 @@ function game_logic_loop()
                 vars.ay = -40.0;
 //                 console.log(vars.keys_ax);
                 if (vars.keys_ax < 0.0)
-                    vars.keys_ax -= 2.0;
+                    vars.jump_ax = -2.0;
                 else if (vars.keys_ax > 0.0)
-                    vars.keys_ax += 2.0;
+                    vars.jump_ax = 2.0;
+                else
+                    vars.jump_ax = 0.0;
                 vars.jumping = true;
                 vars.jump_start_x = Math.floor(vars.player_x / 24);
                 vars.jump_start_y = Math.floor(vars.player_y / 24);
@@ -1321,6 +1326,7 @@ function initLevel(which)
     vars.level_points = 0;
     vars.keys_ax = 0.0;
     vars.slide_ax = 0.0;
+    vars.jump_ax = 0.0;
     vars.ay = 0.0;
     vars.vx = 0;
     vars.vy = 0;
@@ -1346,6 +1352,9 @@ function initLevel(which)
         vars.got_key[i] = false;
         vars.door_open = {};
     }
+
+//     console.log(vars.levels[vars.current_level]);
+    vars.backdrop.css('background-color', vars.levels[vars.current_level].background);
 
     vars.pressed_keys = {};
 
@@ -1469,8 +1478,10 @@ function init_game(width, height, supersampling, data)
     backdrop.css('bottom', '0');
     backdrop.css('left', '0');
     backdrop.css('right', '0');
+    backdrop.css('cursor', 'none');
 //     backdrop.css('z-index', 800);
     $(container).append(backdrop);
+    vars.backdrop = backdrop;
     var sprite_container = $('<div>');
     vars.sprite_container = sprite_container;
     sprite_container.css('position', 'relative');
@@ -1484,6 +1495,7 @@ function init_game(width, height, supersampling, data)
         for (var x = 0; x < 29; x++)
         {
             var sprite = $('<div>').addClass('sd');
+            sprite.css('cursor', 'none');
             sprite_div_row.push(sprite);
             sprite_container.append(sprite);
         }

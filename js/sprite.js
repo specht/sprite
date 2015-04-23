@@ -139,6 +139,7 @@ function set_current_level(which)
     $('#level_lineup span').removeClass('active-level');
     $('span#level_' + which).addClass('active-level');
     $('#use-level').prop('checked', level_use[current_level] === true);
+    $('#level-background-color').val(level_props[current_level].background);
     if (level_use[current_level] === true)
         $('span#level_' + which + ' div').removeClass('inactive');
     else
@@ -234,6 +235,16 @@ function setCurrentColor(color, update_variations)
     if (typeof(update_variations) === 'undefined')
         update_variations = true;
     currentColor = color;
+    var htmlColor = '#';
+    for (var i = 0; i < 3; i++)
+    {
+        var b = currentColor[i] & 0xff;
+        var s = b.toString(16);
+        while (s.length < 2)
+            s = '0' + s;
+        htmlColor += s;
+    }
+    $('#color-html').html('Farbe: ' + htmlColor);
     if (update_variations)
     {
         $('#color-variations').empty();
@@ -841,7 +852,11 @@ $().ready(function() {
 
     $(window).keydown(function(e) {
 //         console.log(e.which);
+//         console.log($(document.activeElement));
+//         console.log($(document.activeElement).prop('tagName'));
         if (current_pane == 'play')
+            return;
+        if ($(document.activeElement).prop('tagName') === 'INPUT')
             return;
         var mapping = {
             81: 'tool_draw',
@@ -1190,6 +1205,10 @@ $().ready(function() {
 
     $('#use-level').change(function(e) {
         level_use[current_level] = $(e.target).is(':checked');
+        set_current_level(current_level);
+    });
+    $('#level-background-color').change(function(e) {
+        level_props[current_level].background = $(e.target).val();
         set_current_level(current_level);
     });
     $('#load_image').load(function(e) {
