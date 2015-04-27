@@ -1206,6 +1206,39 @@ function keydown(code)
 //     }
 }
 
+function __keydown(e)
+{
+    _keydown(e.keyCode);
+}
+
+function __keyup(e)
+{
+    _keyup(e.keyCode);
+}
+
+function _keydown(keyCode)
+{
+    if (typeof(vars.pressed_keys[keyCode]) === 'undefined')
+    {
+        keydown(keyCode);
+        vars.pressed_keys[keyCode] = {
+            key_down: vars.game_logic_loop_counter,
+            key_delay_passed: vars.game_logic_loop_counter + 5
+        };
+    }
+}
+
+function _keyup(keyCode)
+{
+    delete vars.pressed_keys[keyCode];
+    delete vars.showing_card_pressed_keys[keyCode];
+}
+
+function _clear_keys(e)
+{
+    vars.pressed_keys = {};
+}
+
 function init() {
 //     init();
 //     defs();
@@ -1240,31 +1273,8 @@ function init() {
         setTimeout(_game_logic_loop, 33);
     }
 
-    function _keydown(e)
-    {
-        if (typeof(vars.pressed_keys[e.keyCode]) === 'undefined')
-        {
-            keydown(e.keyCode);
-            vars.pressed_keys[e.keyCode] = {
-                key_down: vars.game_logic_loop_counter,
-                key_delay_passed: vars.game_logic_loop_counter + 5
-            };
-        }
-    }
-
-    function _keyup(e)
-    {
-        delete vars.pressed_keys[e.keyCode];
-        delete vars.showing_card_pressed_keys[e.keyCode];
-    }
-
-    function _clear_keys(e)
-    {
-        vars.pressed_keys = {};
-    }
-
-    window.addEventListener("keydown", _keydown, false);
-    window.addEventListener("keyup", _keyup, false);
+    window.addEventListener("keydown", __keydown, false);
+    window.addEventListener("keyup", __keyup, false);
     window.addEventListener("blur", _clear_keys, false);
     window.addEventListener("focus", _clear_keys, false);
 //     requestAnimationFrame(_loop);
@@ -1634,42 +1644,42 @@ function init_game(width, height, supersampling, data)
         var control = null;
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-left'></i>").css('right', '120px').css('bottom', '0');
         control.bind('touchstart', function() {
-            vars.pressed_keys[37] = true;
+            _keydown(37);
         });
         control.bind('touchend', function() {
-            delete vars.pressed_keys[37];
+            _keyup(37);
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-down'></i>").css('right', '60px').css('bottom', '0');
         control.bind('touchstart', function() {
-            vars.pressed_keys[40] = true;
+            _keydown(40);
         });
         control.bind('touchend', function() {
-            delete vars.pressed_keys[40];
+            _keyup(40);
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('right', '60px').css('bottom', '60px');
         control.bind('touchstart', function() {
-            vars.pressed_keys[38] = true;
+            _keydown(38);
         });
         control.bind('touchend', function() {
-            delete vars.pressed_keys[38];
+            _keyup(38);
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-right'></i>").css('right', '0').css('bottom', '0');
         control.bind('touchstart', function() {
-            vars.pressed_keys[39] = true;
+            _keydown(39);
         });
         control.bind('touchend', function() {
-            delete vars.pressed_keys[39];
+            _keyup(39);
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('left', '0').css('bottom', '0');
         control.bind('touchstart', function() {
-            vars.pressed_keys[16] = true;
+            _keydown(16);
         });
         control.bind('touchend', function() {
-            delete vars.pressed_keys[16];
+            _keyup(16);
         });
         $(container).append(control);
     }
