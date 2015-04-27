@@ -114,6 +114,8 @@ function _fix_sizes()
     $('.sd').css('height', '' + vars.sprite_size + 'px');
     $('.sd').css('background-size', '' + (vars.sprite_size * 8) + 'px');
     $('.pixelfont').css('font-size', '' + (vars.sprite_size * 0.6) + 'px');
+    $('.game_title').css('font-size', '' + (vars.sprite_size * 1.8) + 'px');
+    $('.game_subtitle').css('font-size', '' + (vars.sprite_size * 0.6) + 'px');
     $('.pixelfont').css('line-height', '' + vars.sprite_size + 'px');
     $('#title_left').css('left', vars.offset_x + 'px');
     $('#title_left').css('top', (vars.offset_y - vars.sprite_size) + 'px');
@@ -293,6 +295,7 @@ function render()
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
     $('#title_left').html("Level: " + (vars.current_level + 1) + "   Punkte: " + vars.level_points);
+    $('#title_right').html("Leben: " + vars.lives_left);
 
     return;
 
@@ -617,7 +620,34 @@ function _move_player_small(move_x, move_y)
         for (var i = 0; i < vars.max_traps; i++)
         {
             if (applies(_get_field(pix, piy), 'trap_' + (i + 1)))
+            {
+                if (vars.found_trap == null)
+                {
+                    if (vars.lives_left <= 1)
+                    {
+                        show_card("GAME OVER", 'Sorry, das Spiel ist vorbei.<br /><br />Geh vielleicht ein bisschen raus!<br />Spielen oder so.', 500, 500, true, null, null);
+                    }
+                    else
+                    {
+                        var ouch = [];
+                        ouch.push('Huch! Du bist tot.');
+                        ouch.push('Aua! Das tat weh.');
+                        ouch.push('Autsch! Du bist tot.');
+                        ouch.push('Auweia! Das macht Schmerzen.');
+                        var message = ouch[Math.floor(Math.random()*ouch.length)];
+                        if (vars.lives_left == 2)
+                            message = "Jetzt wird es eng. Gib alles!";
+                        show_card(message, 'Dr&uuml;cke eine Taste...', 500, 500, true, function() {
+                            vars.sprite_container.fadeOut(500);
+                        }, function() {
+                            vars.lives_left -= 1;
+                            initLevel(vars.current_level);
+                            vars.sprite_container.fadeIn(500);
+                        });
+                    }
+                }
                 vars.found_trap = i;
+            }
         }
 
         // see if we found a key
@@ -720,6 +750,8 @@ function _move_player_small(move_x, move_y)
 
 function game_logic_loop()
 {
+    if (vars.showing_card != 0 && (!vars.showing_card_but_contine_animation))
+        return;
     vars.animation_phase++;
 
     vars.player_walk_phase = (vars.player_walk_phase + 1) % 8;
@@ -1119,9 +1151,28 @@ function restart_level()
 
 function keydown(code)
 {
-//     console.log(code);
     if (current_pane !== 'play')
         return;
+    if (vars.showing_card == 2)
+    {
+        if (Date.now() - vars.showing_card_time > 500)
+        {
+            if (code != 16 && code != 17 && code != 18 && code != 92 && code != 93)
+            {
+                if (Object.keys(vars.showing_card_pressed_keys).length == 0)
+                {
+                    vars.showing_card = 1;
+                    if (vars.showing_card_hide_function !== null)
+                        vars.showing_card_hide_function();
+                    $('#title_card').fadeOut(vars.showing_card_fadeout_duration, function() {
+                        vars.showing_card = 0;
+                        if (vars.showing_card_completion_function !== null)
+                            vars.showing_card_completion_function();
+                    });
+                }
+            }
+        }
+    }
     if (code == 82)
     {
         restart_level();
@@ -1204,6 +1255,7 @@ function init() {
     function _keyup(e)
     {
         delete vars.pressed_keys[e.keyCode];
+        delete vars.showing_card_pressed_keys[e.keyCode];
     }
 
     function _clear_keys(e)
@@ -1218,6 +1270,12 @@ function init() {
 //     requestAnimationFrame(_loop);
     setTimeout(_game_logic_loop, 33);
     _fix_sizes();
+    vars.showing_card = 0;
+    vars.showing_card_but_contine_animation = false;
+    vars.showing_card_completion_function = null;
+    vars.showing_card_hide_function = null;
+    vars.showing_card_pressed_keys = {};
+    vars.showing_card_fadeout_duration = 500;
 }
 
 function find_reachable_blocks(x, y)
@@ -1277,8 +1335,12 @@ function find_reachable_blocks(x, y)
 //     console.log("This took " + iterations + " iterations.");
 }
 
-function initLevel(which)
+function initLevel(which, wait)
 {
+    if (typeof(wait) === 'undefined')
+        wait = true;
+    if (wait)
+        vars.sprite_container.hide();
     vars.animation_phase = 0;
     vars.current_level = which;
     vars.current_level_copy = jQuery.extend(true, {}, vars.levels[vars.current_level])
@@ -1360,6 +1422,11 @@ function initLevel(which)
 
     _fix_sizes();
     find_reachable_blocks(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24));
+    if (wait)
+    {
+        vars.sprite_container.fadeIn(1000);
+        show_card("Level " + (which + 1), "Dr&uuml;ck eine Taste...", 500, 500, false, null, null);
+    }
 }
 
 function init_game(width, height, supersampling, data)
@@ -1447,7 +1514,8 @@ function init_game(width, height, supersampling, data)
         latest_game_logic_update: Date.now(),
         latest_render_update: Date.now(),
         offset_x: 0,
-        offset_y: 0
+        offset_y: 0,
+        lives_left: 5
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
@@ -1462,6 +1530,7 @@ function init_game(width, height, supersampling, data)
     container.css('left', '0');
     container.css('right', '0');
     container.css('background-color', '#000');
+    container.css('display', 'none');
     container.css('z-index', '1');
 //     var canvas = $('<canvas>');
 //     canvas.attr('id', 'canvas');
@@ -1486,6 +1555,7 @@ function init_game(width, height, supersampling, data)
     vars.sprite_container = sprite_container;
     sprite_container.css('position', 'relative');
     sprite_container.css('background-color', '#000');
+    sprite_container.hide();
     $(container).append(sprite_container);
 
 //     $(container).append(canvas);
@@ -1527,6 +1597,7 @@ function init_game(width, height, supersampling, data)
     title.css('z-index', '2001');
     title.css('position', 'absolute');
     title.html('');
+
     $(container).append(title);
     title = $('<div>');
     title.attr('id', 'title_right');
@@ -1538,6 +1609,25 @@ function init_game(width, height, supersampling, data)
     title.html("");
     $(container).append(title);
 
+    var title_card = $('<div>');
+    title_card.attr('id', 'title_card');
+    title_card.addClass('ontop');
+    title_card.css('z-index', '2002');
+    title_card.css('position', 'absolute');
+    $(container).append(title_card);
+
+    var title_card_text = $('<div>');
+    title_card_text.attr('id', 'title_card_text');
+    $(title_card).append(title_card_text);
+
+    var title = $('<div>');
+    title.addClass('game_title')
+    $(title_card_text).append(title);
+
+    var title = $('<div>');
+    title.addClass('game_subtitle')
+    $(title_card_text).append(title);
+
     _fix_sizes();
     if (!!('ontouchstart' in window))
     {
@@ -1547,7 +1637,7 @@ function init_game(width, height, supersampling, data)
             vars.pressed_keys[37] = true;
         });
         control.bind('touchend', function() {
-            vars.pressed_keys[37] = false;
+            delete vars.pressed_keys[37];
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-down'></i>").css('right', '60px').css('bottom', '0');
@@ -1555,7 +1645,7 @@ function init_game(width, height, supersampling, data)
             vars.pressed_keys[40] = true;
         });
         control.bind('touchend', function() {
-            vars.pressed_keys[40] = false;
+            delete vars.pressed_keys[40];
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('right', '60px').css('bottom', '60px');
@@ -1563,7 +1653,7 @@ function init_game(width, height, supersampling, data)
             vars.pressed_keys[38] = true;
         });
         control.bind('touchend', function() {
-            vars.pressed_keys[38] = false;
+            delete vars.pressed_keys[38];
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-right'></i>").css('right', '0').css('bottom', '0');
@@ -1571,7 +1661,7 @@ function init_game(width, height, supersampling, data)
             vars.pressed_keys[39] = true;
         });
         control.bind('touchend', function() {
-            vars.pressed_keys[39] = false;
+            delete vars.pressed_keys[39];
         });
         $(container).append(control);
         control = $('<div>').addClass('control').html("<i class='fa fa-arrow-circle-up'></i>").css('left', '0').css('bottom', '0');
@@ -1579,13 +1669,14 @@ function init_game(width, height, supersampling, data)
             vars.pressed_keys[16] = true;
         });
         control.bind('touchend', function() {
-            vars.pressed_keys[16] = false;
+            delete vars.pressed_keys[16];
         });
         $(container).append(control);
     }
     backdrop.css('display', 'none');
 //     canvas.css('display', 'none');
     $('body').append(container);
+
     vars.sounds['hit_hurt'] = new Audio('sounds/Hit_Hurt41.wav');
     vars.sounds['hit_hurt'].volume = 0.5;
     vars.sounds['pick_up'] = new Audio('sounds/Pickup_Coin36.wav');
@@ -1601,8 +1692,6 @@ function init_game(width, height, supersampling, data)
             var urlCreator = window.URL || window.webkitURL;
             var imageUrl = urlCreator.createObjectURL(blob);
             load_sprites(imageUrl);
-            vars.sprites_repo = $('#sprites_default')[0];
-            $('.sd').css('background-image', 'url(' + imageUrl + ')');
         }
         else if (zipEntry.name == 'levels.json')
         {
@@ -1663,23 +1752,127 @@ function init_game(width, height, supersampling, data)
         }
     });
 
-    backdrop.fadeIn(function() {
+//     backdrop.fadeIn(function() {
         $('body').css('padding', '0');
         $('body').css('margin', '0');
         $('body').css('overflow', 'hidden');
 //         canvas.fadeIn();
         switchPane('play', true);
         init();
-        initLevel(0);
+        initLevel(0, false);
+        $('#title_left').hide();
+        $('#title_right').hide();
+        show_card("DAS WERSCHWEIN", "Ein Spiel von Charlotte Specht<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
+            vars.sprite_container.fadeIn(1);
+            initLevel(0);
+            $('#title_left').fadeIn(500);
+            $('#title_right').fadeIn(500);
+        });
+        $('#play_container').show();
+//     });
+}
+
+function show_card(first, second, speed, fadeout_speed, continue_animation, message_hide, complete)
+{
+    if (vars.showing_card != 0)
+        return;
+
+    vars.showing_card_but_contine_animation = continue_animation;
+    vars.showing_card_hide_function = message_hide;
+    vars.showing_card_completion_function = complete;
+    vars.showing_card_pressed_keys = jQuery.extend(true, {}, vars.pressed_keys);
+    vars.showing_card_fadeout_duration = fadeout_speed;
+
+    $('.game_title').html(first);
+    $('.game_subtitle').html(second);
+    vars.showing_card = 1;
+    $('#title_card').hide().fadeIn(speed, function() {
+        vars.showing_card = 2;
+        vars.showing_card_time = Date.now();
     });
+
+}
+
+// Takes a data URI and returns the Data URI corresponding to the resized image at the wanted size.
+// http://stackoverflow.com/a/26884245
+function resizedataURL(datas, scale, hook)
+    {
+        // We create an image to receive the Data URI
+        var img = document.createElement('img');
+
+        // When the event "onload" is triggered we can resize the image.
+        img.onload = function()
+            {
+                // We create a canvas and get its context.
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+
+                // We set the dimensions at the wanted size.
+                canvas.width = Math.floor(img.width * scale);
+                canvas.height = Math.floor(img.height * scale);
+
+                // We resize the image with the canvas method drawImage();
+                ctx.mozImageSmoothingEnabled = false;
+                ctx.webkitImageSmoothingEnabled = false;
+                ctx.msImageSmoothingEnabled = false;
+                ctx.imageSmoothingEnabled = false;
+                ctx.drawImage(this, 0, 0, img.width * scale, img.height * scale);
+
+                var dataURI = canvas.toDataURL('image/png');
+                hook(dataURI);
+
+                /////////////////////////////////////////
+                // Use and treat your Data URI here !! //
+                /////////////////////////////////////////
+            };
+
+        // We put the Data URI in the image's src attribute
+        img.src = datas;
+    }
+// Use it like that : resizedataURL('yourDataURIHere', 50, 50);
+
+// http://stackoverflow.com/a/16245768
+function b64toBlob(b64Data, contentType, sliceSize) {
+    contentType = contentType || '';
+    sliceSize = sliceSize || 512;
+
+    var byteCharacters = atob(b64Data);
+    var byteArrays = [];
+
+    for (var offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        var slice = byteCharacters.slice(offset, offset + sliceSize);
+
+        var byteNumbers = new Array(slice.length);
+        for (var i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+
+        var byteArray = new Uint8Array(byteNumbers);
+
+        byteArrays.push(byteArray);
+    }
+
+    var blob = new Blob(byteArrays, {type: contentType});
+    return blob;
 }
 
 function load_sprites(path, id)
 {
     if (typeof(id) === 'undefined')
         id = 'sprites_default';
-    var img = $('<img>').attr('id', id).attr('src', path).css('display', 'none');
-    $('#play_container').append(img);
+    resizedataURL(path, 3, function(data) {
+//         var img = $('<img>').attr('id', id).attr('src', data).css('display', 'none');
+//         $('#play_container').append(img);
+//         vars.sprites_repo = $('#sprites_default')[0];
+        data = data.substr(data.indexOf('base64,') + 7);
+//         console.log(data);
+        var blob = b64toBlob(data, 'image/png');
+        var urlCreator = window.URL || window.webkitURL;
+        data = urlCreator.createObjectURL(blob);
+//         console.log(path.length, path);
+//         $('.sd').css('background-image', 'url(' + path + ')');
+        $('.sd').css('background-image', 'url(' + data + ')');
+    });
 }
 
 function load_game(url)

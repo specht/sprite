@@ -10,6 +10,18 @@
 }
 
 @font-face {
+    font-family:"Drescher Grotesk BT Bold";
+    src:
+        url("drescher-grotesk-bt-bold.ttf") format("truetype");
+}
+
+@font-face {
+    font-family:"Drescher Grotesk BT Small Sizes";
+    src:
+        url("drescher-grotesk-bt-smallsizes.ttf") format("truetype");
+}
+
+@font-face {
     font-family:"Onesize";
     src:
         url("ONESIZE_.eot?") format("eot"),
@@ -18,6 +30,24 @@
         url("ONESIZE_.svg#Onesize") format("svg");
     font-weight:normal;
     font-style:normal;
+}
+
+@font-face {
+    font-family: "MisterSinatraRegular";
+    src:
+        url("MisterSinatra-Regular.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "MisterSinatraSlim";
+    src:
+        url("MisterSinatra-Slim.ttf") format("truetype");
+}
+
+@font-face {
+    font-family: "Minecraftia";
+    src:
+        url("Minecraftia-Regular.ttf") format("truetype");
 }
 
 body {
@@ -69,7 +99,39 @@ body {
 }
 
 .pixelfont {
-    font-family: 'Onesize';
+/*     font-family: 'Onesize'; */
+    font-family: "Drescher Grotesk BT Small Sizes";
     font-size: 32px;
 /*     text-shadow: 0px 0px 0.1em rgba(255,255,255,0.8); */
+}
+
+#title_card {
+    display: table;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    background: radial-gradient(circle, rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.3));
+}
+
+#title_card_text {
+    display: table-cell;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.game_title {
+    font-family: 'Drescher Grotesk BT Bold';
+    font-size: 30px;
+    color: #fff;
+}
+
+.game_subtitle {
+    font-family: "Drescher Grotesk BT Small Sizes";
+    font-size: 20px;
+    color: #aaa;
+    margin-top: 0.3em;
 }

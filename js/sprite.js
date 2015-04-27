@@ -614,6 +614,52 @@ function autoSave()
     );
 }
 
+function load_from_server(tag)
+{
+    jQuery.post('/load.rb', tag,
+        function(data) {
+//             console.log('data:text/x-haskell;base64,' + btoa(data.data));
+            loadFromZip('data:text/x-haskell;base64,' + btoa(data.data));
+        }
+    );
+}
+
+function loadFromZip(data)
+{
+    data = data.substr(data.indexOf('base64,') + 7);
+    data = atob(data);
+    data = atob(data);
+    var zip = new JSZip(data);
+    // remove all animations
+    $('#animations_table_body').empty();
+    $.each(zip.files, function (index, zipEntry) {
+//                     console.log(zipEntry);
+        if (zipEntry.name == 'sprites.png')
+        {
+            var blob = new Blob([zipEntry.asUint8Array()], {'type': 'image/png'});
+            var urlCreator = window.URL || window.webkitURL;
+            var imageUrl = urlCreator.createObjectURL(blob);
+            loadSprites(imageUrl);
+        }
+        else if (zipEntry.name == 'sprite_props.json')
+        {
+            var info = JSON.parse(zipEntry.asText());
+            for (var i = 0; i < info.length; i++)
+                sprite_properties[i] = info[i];
+        }
+        else if (zipEntry.name == 'levels.json')
+        {
+            var info = JSON.parse(zipEntry.asText());
+            loadLevels(info);
+        }
+        else if (zipEntry.name == 'animations.json')
+        {
+            var info = JSON.parse(zipEntry.asText());
+            loadAnimations(info);
+        }
+    });
+}
+
 $().ready(function() {
     function confirmExit() {
         return "Achtung! Bist du sicher, dass du die Seite verlassen willst? Wenn du noch nicht gespeichert hast, bleib auf dieser Seite.";
@@ -738,38 +784,8 @@ $().ready(function() {
             {
 //                 data = data.replace("\n", '');
 //                 console.log('loading hs file...');
-                data = data.substr(data.indexOf('base64,') + 7);
-                data = atob(data);
-                data = atob(data);
-                var zip = new JSZip(data);
-                // remove all animations
-                $('#animations_table_body').empty();
-                $.each(zip.files, function (index, zipEntry) {
-//                     console.log(zipEntry);
-                    if (zipEntry.name == 'sprites.png')
-                    {
-                        var blob = new Blob([zipEntry.asUint8Array()], {'type': 'image/png'});
-                        var urlCreator = window.URL || window.webkitURL;
-                        var imageUrl = urlCreator.createObjectURL(blob);
-                        loadSprites(imageUrl);
-                    }
-                    else if (zipEntry.name == 'sprite_props.json')
-                    {
-                        var info = JSON.parse(zipEntry.asText());
-                        for (var i = 0; i < info.length; i++)
-                            sprite_properties[i] = info[i];
-                    }
-                    else if (zipEntry.name == 'levels.json')
-                    {
-                        var info = JSON.parse(zipEntry.asText());
-                        loadLevels(info);
-                    }
-                    else if (zipEntry.name == 'animations.json')
-                    {
-                        var info = JSON.parse(zipEntry.asText());
-                        loadAnimations(info);
-                    }
-                });
+                console.log(data);
+                loadFromZip(data);
             }
             switchPane('sprites');
             if (!shiftPressed)
@@ -820,9 +836,11 @@ $().ready(function() {
         rotate_sprite(true);
     });
 
-    document.onselectstart = function()
+    document.onselectstart = function(e)
     {
-        window.getSelection().removeAllRanges();
+        console.log($(e.target));
+        if (!$(e.target).is('.selectable'))
+            window.getSelection().removeAllRanges();
     };
 
     document.oncontextmenu = function(e)
@@ -1307,7 +1325,19 @@ $().ready(function() {
     $('#add_animation').click(function() {
         push_animation({start: 0, count: 1, speed: 1, shuffle: false, wait: 0});
     });
+    setTimeout(auto_save_loop, Math.floor((Math.random() * (5 * 60) + (5 * 60)) * 1000));
+    if (window.location.hash !== '')
+    {
+        var tag = window.location.hash.replace('#', '');
+        load_from_server(tag);
+    }
 });
+
+function auto_save_loop()
+{
+    autoSave();
+    setTimeout(auto_save_loop, Math.floor((Math.random() * (5 * 60) + (5 * 60)) * 1000));
+}
 
 function push_animation(info)
 {
