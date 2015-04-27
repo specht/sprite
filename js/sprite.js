@@ -607,7 +607,7 @@ function setPenWidth(w)
 function autoSave()
 {
     var data = get_zip_package();
-    jQuery.post('/autosave.rb', data,
+    jQuery.post('autosave.rb', data,
         function(data) {
             console.log(data);
         }
@@ -618,7 +618,7 @@ function load_from_server(tag, play_it_now)
 {
     if (typeof(play_it_now) === 'undefined')
         play_it_now = false;
-    jQuery.post('/load.rb', tag,
+    jQuery.post('load.rb', tag,
         function(data) {
 //             console.log('data:text/x-haskell;base64,' + btoa(data.data));
             loadFromZip('data:text/x-haskell;base64,' + btoa(data.data));
