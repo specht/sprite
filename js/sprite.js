@@ -614,12 +614,16 @@ function autoSave()
     );
 }
 
-function load_from_server(tag)
+function load_from_server(tag, play_it_now)
 {
+    if (typeof(play_it_now) === 'undefined')
+        play_it_now = false;
     jQuery.post('/load.rb', tag,
         function(data) {
 //             console.log('data:text/x-haskell;base64,' + btoa(data.data));
             loadFromZip('data:text/x-haskell;base64,' + btoa(data.data));
+            if (play_it_now)
+                play();
         }
     );
 }
@@ -1329,7 +1333,13 @@ $().ready(function() {
     if (window.location.hash !== '')
     {
         var tag = window.location.hash.replace('#', '');
-        load_from_server(tag);
+        var play_it_now = false;
+        if (tag.substr(0, 1) == 'p')
+        {
+            tag = tag.substr(1, tag.length - 1);
+            play_it_now = true;
+        }
+        load_from_server(tag, play_it_now);
     }
 });
 

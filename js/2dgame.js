@@ -1762,7 +1762,7 @@ function init_game(width, height, supersampling, data)
         initLevel(0, false);
         $('#title_left').hide();
         $('#title_right').hide();
-        show_card("DAS WERSCHWEIN", "Ein Spiel von Charlotte Specht<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
+        show_card("WIE SOLL DIESES SPIEL<br />NUR HEISSEN?", "<!--Ein Spiel von Charlotte Specht<br /><br />-->Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
             vars.sprite_container.fadeIn(1);
             initLevel(0);
             $('#title_left').fadeIn(500);
