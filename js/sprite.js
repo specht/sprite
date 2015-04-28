@@ -77,6 +77,7 @@ states.push(['trap_3', 'Falle 3']);
 states.push(['trap_3_actor', 'Spielfigur in Falle 3']);
 states.push(['trap_4', 'Falle 4']);
 states.push(['trap_4_actor', 'Spielfigur in Falle 4']);
+states.push(['invincible', 'Schutzschild', 'Unverwundbarkeit']);
 states.push(['level_finished', 'Ab ins n&auml;chste Level!', 'Level&uuml;bergang']);
 states.push(['1p', '1 P', 'Punkte sammeln']);
 states.push(['5p', '5 P']);
@@ -636,6 +637,7 @@ function loadFromZip(data)
     var zip = new JSZip(data);
     // remove all animations
     $('#animations_table_body').empty();
+    animations = [];
     $.each(zip.files, function (index, zipEntry) {
 //                     console.log(zipEntry);
         if (zipEntry.name == 'sprites.png')

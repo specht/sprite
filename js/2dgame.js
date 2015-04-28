@@ -292,6 +292,42 @@ function render()
     tile.css('background-position', value);
     tile.css('left', '' + Math.floor((vars.player_x + player_shift_x - dx - 12) * vars.sprite_size / 24/* + vars.offset_x*/) + 'px');
     tile.css('top', '' + Math.floor((vars.player_y + player_shift_y - dy - 23) * vars.sprite_size / 24/* + vars.offset_y*/) + 'px');
+
+    if (vars.invincible === true)
+    {
+        var tile = vars.player_sprite_overlay_div;
+        tile.css('left', '' + Math.floor((vars.player_x + player_shift_x - dx - 12) * vars.sprite_size / 24/* + vars.offset_x*/) + 'px');
+        tile.css('top', '' + Math.floor((vars.player_y + player_shift_y - dy - 23) * vars.sprite_size / 24/* + vars.offset_y*/) + 'px');
+        var v = vars.invincible_sprite;
+        jQuery.each(vars.sprite_animations, function(_, info) {
+            if (v == info.start)
+            {
+                var delta = vars.animation_phase;
+                var shift = Math.floor(delta / info.speed) % (info.count + info.wait);
+                if (shift >= info.count)
+                    shift = 0;
+                v += shift;
+            }
+        });
+        if (v != vars.invincible_sprite_showing)
+        {
+            var sprite_x = v % 8;
+            var sprite_y = Math.floor(v / 8);
+            var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+            var tile = vars.player_sprite_overlay_div;
+            tile.css('background-position', value);
+            vars.invincible_sprite_showing = v;
+        }
+        if (vars.invincible_flicker)
+        {
+            if (vars.animation_phase % 8 < 4)
+                vars.player_sprite_overlay_div.show();
+            else
+                vars.player_sprite_overlay_div.hide();
+        }
+    }
+
+
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
     $('#title_left').html("Level: " + (vars.current_level + 1) + "   Punkte: " + vars.level_points);
@@ -617,36 +653,39 @@ function _move_player_small(move_x, move_y)
         }
 
         // see if we found a trap
-        for (var i = 0; i < vars.max_traps; i++)
+        if (!vars.invincible)
         {
-            if (applies(_get_field(pix, piy), 'trap_' + (i + 1)))
+            for (var i = 0; i < vars.max_traps; i++)
             {
-                if (vars.found_trap == null)
+                if (applies(_get_field(pix, piy), 'trap_' + (i + 1)))
                 {
-                    if (vars.lives_left <= 1)
+                    if (vars.found_trap == null)
                     {
-                        show_card("GAME OVER", 'Sorry, das Spiel ist vorbei.<br /><br />Geh vielleicht ein bisschen raus!<br />Spielen oder so.', 500, 500, true, null, null);
+                        if (vars.lives_left <= 1)
+                        {
+                            show_card("GAME OVER", 'Sorry, das Spiel ist vorbei.<br /><br />Geh vielleicht ein bisschen raus!<br />Spielen oder so.', 500, 500, true, null, null);
+                        }
+                        else
+                        {
+                            var ouch = [];
+                            ouch.push('Huch! Du bist tot.');
+                            ouch.push('Aua! Das tat weh.');
+                            ouch.push('Autsch! Du bist tot.');
+                            ouch.push('Auweia! Das macht Schmerzen.');
+                            var message = ouch[Math.floor(Math.random()*ouch.length)];
+                            if (vars.lives_left == 2)
+                                message = "Jetzt wird es eng. Gib alles!";
+                            show_card(message, 'Dr&uuml;cke eine Taste...', 500, 500, true, function() {
+                                vars.sprite_container.fadeOut(500);
+                            }, function() {
+                                vars.lives_left -= 1;
+                                initLevel(vars.current_level);
+                                vars.sprite_container.fadeIn(500);
+                            });
+                        }
                     }
-                    else
-                    {
-                        var ouch = [];
-                        ouch.push('Huch! Du bist tot.');
-                        ouch.push('Aua! Das tat weh.');
-                        ouch.push('Autsch! Du bist tot.');
-                        ouch.push('Auweia! Das macht Schmerzen.');
-                        var message = ouch[Math.floor(Math.random()*ouch.length)];
-                        if (vars.lives_left == 2)
-                            message = "Jetzt wird es eng. Gib alles!";
-                        show_card(message, 'Dr&uuml;cke eine Taste...', 500, 500, true, function() {
-                            vars.sprite_container.fadeOut(500);
-                        }, function() {
-                            vars.lives_left -= 1;
-                            initLevel(vars.current_level);
-                            vars.sprite_container.fadeIn(500);
-                        });
-                    }
+                    vars.found_trap = i;
                 }
-                vars.found_trap = i;
             }
         }
 
@@ -690,6 +729,34 @@ function _move_player_small(move_x, move_y)
                 }
             }
         }
+
+        // see if we found an invincibility shield
+        if (applies(_get_field(pix, piy), 'invincible'))
+        {
+            var anim_key = '' + (pix) + '/' + piy;
+            if (!(anim_key in vars.animations))
+            {
+//                 vars.level_points += p;
+                if (vars.play_sounds)
+                    vars.sounds['pick_up'].play();
+                vars.invincible = true;
+                vars.invincible_sprite = _get_field(pix, piy);
+                vars.invincible_start_time = Date.now();
+                var v = vars.invincible_sprite;
+                var sprite_x = v % 8;
+                var sprite_y = Math.floor(v / 8);
+                var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+                var tile = vars.player_sprite_overlay_div;
+                tile.css('background-position', value);
+                vars.invincible_sprite_showing = -1;
+                vars.player_sprite_overlay_div.fadeIn();
+
+                vars.animations[anim_key] = {type: 'fadeout', done: function(x, y) {
+                    _set_field(x, y, -1);
+                }};
+            }
+        }
+
 
         // see if we can open a door
         for (var i = 0; i < vars.max_keys; i++)
@@ -1079,6 +1146,24 @@ function game_logic_loop()
                 remove_animations.push(key);
             }
         }
+        if (info.type == 'fadeout')
+        {
+            if (!(key in vars.field_offset))
+                vars.field_offset[key] = {dx: 0, dy: 0, alpha: 1.0, osx: 0, osy: 0, w: 24, h: 24, odx: 0, ody: 0};
+            mark_dirty(x, y);
+//             mark_dirty(x, y - 1);
+            vars.field_offset[key].alpha -= 0.1;
+            if (vars.field_offset[key].alpha < 0.00001)
+            {
+                if (typeof(info.done) === 'function')
+                {
+                    var xy = key.split('/');
+                    info.done(new Number(xy[0]).valueOf(), new Number(xy[1]).valueOf());
+                }
+                delete vars.field_offset[key];
+                remove_animations.push(key);
+            }
+        }
         if (info.type == 'crumble')
         {
             if (!(key in vars.field_offset))
@@ -1117,10 +1202,25 @@ function game_logic_loop()
     jQuery.each(remove_animations, function(_, which) {
         delete vars.animations[which];
     });
+    if (vars.invincible)
+    {
+        var elapsed = (Date.now() - vars.invincible_start_time) / 1000.0;
+        if (elapsed > 15.0)
+        {
+            vars.invincible = false;
+            vars.player_sprite_overlay_div.fadeOut();
+        }
+        else if (elapsed > 10.0)
+        {
+            vars.invincible_flicker = true;
+        }
+    }
 }
 
 function stopTheGame()
 {
+    if ((typeof(not_in_editor) !== 'undefined') && (not_in_editor === true))
+        return;
     vars.stopGame = true;
     $('body').removeAttr('style');
     $('#play_container').empty();
@@ -1352,6 +1452,12 @@ function initLevel(which, wait)
     if (wait)
         vars.sprite_container.hide();
     vars.animation_phase = 0;
+    vars.invincible = false;
+    vars.invincible_flicker = false;
+    vars.player_sprite_overlay_div.hide();
+    vars.invincible_start_time = 0;
+    vars.invincible_sprite = 0;
+    vars.invincible_sprite_showing = -1;
     vars.current_level = which;
     vars.current_level_copy = jQuery.extend(true, {}, vars.levels[vars.current_level])
     var found_player = false;
@@ -1584,6 +1690,9 @@ function init_game(width, height, supersampling, data)
     var sprite = $('<div>').addClass('sd');
     $(sprite_container).append(sprite);
     vars.player_sprite_div = sprite;
+    var sprite = $('<div>').addClass('sd');
+    $(sprite_container).append(sprite);
+    vars.player_sprite_overlay_div = sprite;
 
     vars.sliders = [];
     for (var i = 0; i < 4; i++)
@@ -1624,6 +1733,7 @@ function init_game(width, height, supersampling, data)
     title_card.addClass('ontop');
     title_card.css('z-index', '2002');
     title_card.css('position', 'absolute');
+    title_card.css('cursor', 'none');
     $(container).append(title_card);
 
     var title_card_text = $('<div>');
