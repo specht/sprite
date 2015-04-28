@@ -152,14 +152,20 @@ body {
     border: 1px solid #fff;
 }
 
+/*.popup:before {
+    content: '';
+    display: inline-block;
+    height: 100%;
+    vertical-align: middle;
+    margin-right: -0.25em;
+}*/
+
 .popup {
-    position: absolute;
-    left: 400px;
-    margin-left: auto;
-    margin-right: auto;
-    top: 200px;
-    min-height: 300px;
+    display: inline-block;
     background-color: rgba(0, 0, 0, 0.8);
+    padding: 2em;
+    vertical-align: middle;
+    margin-top: 5em;
 }
 
 .animation-start {
@@ -203,6 +209,8 @@ body {
     bottom: 0;
     background-color: rgba(0, 0, 0, 0.7);
     cursor: default;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .level-number {
@@ -262,4 +270,8 @@ table th {
 
 input:focus {
     background-color: #fce94f;
+}
+
+a, a:visited {
+    color: #729fcf;
 }

@@ -4,6 +4,10 @@ Plan für Computerspieleabend und Ende
 Level: background color (rectangles!) und benennen!
 unverwundbar, Sprite overlay (kann animiert sein, blinkt am Ende)
 Statuszeile: Level, Punkte, Leben, Schlüssel
+Spieloptionen:
+  - Titel
+  - Autor
+  - Leben: Start, Maximum
 Leben einsammeln und anzeigen
 Spiel Anfang und Ende, Highscore
 Levelname

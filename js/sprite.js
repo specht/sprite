@@ -77,7 +77,8 @@ states.push(['trap_3', 'Falle 3']);
 states.push(['trap_3_actor', 'Spielfigur in Falle 3']);
 states.push(['trap_4', 'Falle 4']);
 states.push(['trap_4_actor', 'Spielfigur in Falle 4']);
-states.push(['invincible', 'Schutzschild', 'Unverwundbarkeit']);
+states.push(['invincible', 'Schutzschild', 'Power ups']);
+states.push(['get_a_life', 'Extraleben']);
 states.push(['level_finished', 'Ab ins n&auml;chste Level!', 'Level&uuml;bergang']);
 states.push(['1p', '1 P', 'Punkte sammeln']);
 states.push(['5p', '5 P']);
@@ -816,6 +817,21 @@ $().ready(function() {
         append: false
     });
 
+    $('#tool_link').mousedown(function(event) {
+        var data = get_zip_package();
+        jQuery.post('autosave.rb', data,
+            function(data) {
+                var short_tag = data.tag.substr(0, 8);
+                $('#play_link').attr('href', window.location.origin + '/p#' + short_tag);
+                $('#play_link').text(window.location.origin + '/p#' + short_tag);
+                $('#edit_link').attr('href', window.location.origin + window.location.pathname + '#' + short_tag);
+                $('#edit_link').text(window.location.origin + window.location.pathname + '#' + short_tag);
+                $('#link_sprites').fadeIn();
+            }
+        );
+
+    });
+
     $('#tool_clear').mousedown(function(event) {
         transform_sprite(function(newImageData, imageData) {
             for (var y = 0; y < imageHeight; y++)
@@ -863,7 +879,7 @@ $().ready(function() {
 //     };
 
     $('.overlay').mousedown(function(e) {
-        $('#save_sprites').hide();
+        $('#link_sprites').hide();
     });
 
     $('.popup').mousedown(function(e) {

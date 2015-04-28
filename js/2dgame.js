@@ -757,6 +757,25 @@ function _move_player_small(move_x, move_y)
             }
         }
 
+        // see if we found an extra life
+        if (vars.lives_left < 5)
+        {
+            if (applies(_get_field(pix, piy), 'get_a_life'))
+            {
+                var anim_key = '' + (pix) + '/' + piy;
+                if (!(anim_key in vars.animations))
+                {
+    //                 vars.level_points += p;
+                    if (vars.play_sounds)
+                        vars.sounds['pick_up'].play();
+                    vars.lives_left += 1;
+                    vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
+                        _set_field(x, y, -1);
+                    }};
+                }
+            }
+        }
+
 
         // see if we can open a door
         for (var i = 0; i < vars.max_keys; i++)
