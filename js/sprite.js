@@ -823,7 +823,7 @@ $().ready(function() {
             function(data) {
                 var short_tag = data.tag.substr(0, 8);
                 var play_link = window.location.origin + '/p#' + short_tag;
-                if (window.location.origin.index('hackschule.de') > -1)
+                if (window.location.origin.indexOf('hackschule.de') > -1)
                     play_link = window.location.origin + '/sprite/p#' + short_tag;
                 $('#play_link').attr('href', play_link);
                 $('#play_link').text(play_link);
