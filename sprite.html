@@ -49,10 +49,6 @@
 <span class='toolbutton tool' id='pane_play' style='background: url(images/play.png) center center no-repeat;' title='Spiel testen'></span>
 </div>
 <div id='main-switcher' class='panel' style='margin-bottom: 4px;'>
-<span class='toolbutton tool' id='tool_load' style='background: url(images/document-open.png) center center no-repeat;' title='Sprites laden'></span>
-<br />
-<span class='toolbutton tool' id='tool_save' style='width: 32px; height: 32px;' title='Sprites speichern'></span>
-<br />
 <span class='toolbutton tool' id='tool_link' style='background: url(images/input-gaming.png) center center no-repeat;' title='Link erzeugen'></span>
 </div>
 </div>
@@ -157,20 +153,48 @@
 </div>
 </div>
 
-
-
 <div id='link_sprites' class='overlay' style='display: none;'>
-<div class='panel popup'>
-<h2>Spiel teilen</h2>
+<div class='panel popup' style='text-align: left; max-width: 70%; white-space: normal;'>
+<h2 style='margin-top: 0;'>Spiel speichern</h2>
+<p>
+Dein Spiel, so wie es jetzt ist, hat den folgenden Code:
+</p>
+<div style='display: inline-block; padding: 0.5em; font-size: 16pt; font-weight: bold; border: 1px solid #888; box-shadow: 0 0 5px rgba(255, 255, 255, 0.8); border-radius: 0.5em;' id='play_code_here'>12345678</div>
+<p>
+Mit diesem Code kannst du den jetzigen Stand deines Spiels jederzeit wieder herstellen.
+Wenn du diesen Code hast, kannst du dein Spiel auch wieder damit laden.
+</p>
+<p>
+<b>Tipp:</b> Schreib ihn dir am besten auf!
+Der Code &auml;ndert sich jedesmal, wenn du etwas an deinem Spiel &auml;nderst.
+</p>
+<p>
+Wenn du m&ouml;chtest, kannst du dein Spiel auch in einer Datei speichern. Klicke dazu auf den Button:
+<div class='button_with_tool_button'>
+<span class='toolbutton tool' id='tool_save' style='width: 32px; height: 32px;' title='Sprites speichern'></span>
+<span style='position: relative; top: -0.8em; left: 0.5em;'>Spiel speichern</span>
+</div>
+</p>
+<br />
+<hr />
+<h2>Spiel laden</h2>
+<p>
+Wenn du einen Code hast, kannst du dein Spiel einfach laden, indem du ihn hier eingibst:
+</p>
+<input id='load_play_code' type='text' maxlength='8' size='8' style='font-size: 12pt; padding: 0.5em; border: 1px solid #888; box-shadow: 0 0 5px rgba(255, 255, 255, 0.8); border-radius: 0.5em;' ></input>
+<button type='button' id='load_play_code_submit'>Laden</button>
+<p>
+Du kannst dein Spiel auch aus einer Datei laden. Klicke dazu auf den Button:.
+<div class='button_with_tool_button'>
+<span class='toolbutton tool' id='tool_load' style='background: url(images/document-open.png) center center no-repeat;' title='Sprites laden'></span>
+<span style='position: relative; top: -0.8em; left: 0.5em;'>Spiel laden</span>
+</div>
+</p>
+<!--<h2>Spiel teilen</h2>
 <p>
 Der folgende Link f&uuml;hrt direkt zu deinem Spiel:
 </p>
-<a id='play_link' target='_blank'></a>
-<p>
-Falls du aus Versehen deine Datei &uuml;berschreibst, kannst du den aktuellen Stand <br />
-jederzeit wieder herstellen, indem du diesen Link verwendest:
-</p>
-<a id='edit_link' target='_blank'></a>
+<a id='play_link' target='_blank'></a>-->
 </div>
 </div>
 

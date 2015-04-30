@@ -211,6 +211,7 @@ body {
     cursor: default;
     text-align: center;
     white-space: nowrap;
+    z-index: 3000;
 }
 
 .level-number {
@@ -274,4 +275,13 @@ input:focus {
 
 a, a:visited {
     color: #729fcf;
+}
+
+.button_with_tool_button {
+    padding-right: 0.5em;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.button_with_tool_button .toolbutton {
 }

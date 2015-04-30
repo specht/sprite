@@ -797,13 +797,14 @@ $().ready(function() {
             switchPane('sprites');
             if (!shiftPressed)
                 set_current_level(0);
+            $('#link_sprites').hide();
         }
     });
     Downloadify.create('tool_save',{
         filename: function() { return 'sprites.hs'; },
         dataType: 'string',
         data: function() { return get_zip_package(); },
-        onComplete: function(){  },
+        onComplete: function(){ $('#link_sprites').hide(); },
         onCancel: function(){ },
         onError: function(e){ },
         swf: 'js/downloadify.swf',
@@ -829,6 +830,8 @@ $().ready(function() {
                 $('#play_link').text(play_link);
                 $('#edit_link').attr('href', window.location.origin + window.location.pathname + '#' + short_tag);
                 $('#edit_link').text(window.location.origin + window.location.pathname + '#' + short_tag);
+                $('#play_code_here').text(short_tag);
+                $('#load_play_code').val('');
                 $('#link_sprites').fadeIn();
             }
         );
@@ -1362,6 +1365,15 @@ $().ready(function() {
         }
         load_from_server(tag, play_it_now);
     }
+    $('#load_play_code_submit').click(function() {
+        var tag = $('#load_play_code').val();
+        jQuery.post('load.rb', tag,
+            function(data) {
+                loadFromZip('data:text/x-haskell;base64,' + btoa(data.data));
+                $('#link_sprites').hide();
+            }
+        );
+    });
 });
 
 function auto_save_loop()
