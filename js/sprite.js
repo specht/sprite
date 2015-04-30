@@ -645,7 +645,7 @@ function load_from_server(tag, play_it_now)
 
 function initGameOptions()
 {
-    game_options['game_title'] = 'WIE SOLL DIESES SPIEL NUR HEISSEN?';
+    game_options['game_title'] = 'WIE SOLL DIESES SPIEL<br />NUR HEISSEN?';
     game_options['game_author'] = 'wem auch immer';
     jQuery.each(Object.keys(game_options), function(_, x) {
         $('#' + x).val(game_options[x]);
