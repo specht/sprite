@@ -28,6 +28,7 @@ var current_level = 0;
 var shiftPressed = false;
 var sprite_properties = [];
 var current_pane = null;
+var game_options = {};
 
 var states = [];
 states.push(['actor_front', 'Spielfigur von vorn', 'Spielfigur']);
@@ -595,6 +596,18 @@ function loadAnimations(info)
     });
 }
 
+function loadGameOptions(info)
+{
+    console.log("Loading game options", info);
+    jQuery.each(['game_title', 'game_author'], function(_, x) {
+        if (typeof(info[x]) !== 'undefined')
+        {
+            game_options[x] = info[x];
+            $('#' + x).val(info[x]);
+        }
+    });
+}
+
 function setPenWidth(w)
 {
     var target = $('#pen_width_' + w);
@@ -630,6 +643,15 @@ function load_from_server(tag, play_it_now)
     );
 }
 
+function initGameOptions()
+{
+    game_options['game_title'] = 'WIE SOLL DIESES SPIEL NUR HEISSEN?';
+    game_options['game_author'] = 'wem auch immer';
+    jQuery.each(Object.keys(game_options), function(_, x) {
+        $('#' + x).val(game_options[x]);
+    });
+}
+
 function loadFromZip(data)
 {
     data = data.substr(data.indexOf('base64,') + 7);
@@ -639,6 +661,7 @@ function loadFromZip(data)
     // remove all animations
     $('#animations_table_body').empty();
     animations = [];
+    initGameOptions();
     $.each(zip.files, function (index, zipEntry) {
 //                     console.log(zipEntry);
         if (zipEntry.name == 'sprites.png')
@@ -658,6 +681,11 @@ function loadFromZip(data)
         {
             var info = JSON.parse(zipEntry.asText());
             loadLevels(info);
+        }
+        else if (zipEntry.name == 'game.json')
+        {
+            var info = JSON.parse(zipEntry.asText());
+            loadGameOptions(info);
         }
         else if (zipEntry.name == 'animations.json')
         {
@@ -816,6 +844,11 @@ $().ready(function() {
         height: 32,
         transparent: true,
         append: false
+    });
+
+    initGameOptions();
+    $('.game_options_input').on('change keyup paste mouseup', function(e) {
+        game_options[$(e.target).attr('id')] = $(e.target).val();
     });
 
     $('#tool_link').mousedown(function(event) {
@@ -1045,6 +1078,14 @@ $().ready(function() {
             if ($(document.activeElement).prop('tagName') != 'INPUT')
             {
                 switchPane('levels');
+                e.preventDefault();
+            }
+        }
+        if (e.which == 53)
+        {
+            if ($(document.activeElement).prop('tagName') != 'INPUT')
+            {
+                switchPane('game');
                 e.preventDefault();
             }
         }
@@ -1611,6 +1652,7 @@ function get_zip_package()
     zip.file("sprite_props.json", btoa(JSON.stringify(get_sprite_properties())), {base64: true, date: d});
     zip.file("levels.json", btoa(JSON.stringify(get_level_descriptions())), {base64: true, date: d});
     zip.file("animations.json", btoa(JSON.stringify(animations)), {base64: true, date: d});
+    zip.file("game.json", btoa(JSON.stringify(game_options)), {base64: true, date: d});
     return '' + zip.generate({compression: 'DEFLATE'});
 }
 

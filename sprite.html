@@ -3,8 +3,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no,maximum-scale=1">
 <title>Sprite Editor</title>
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="css/sprite.css?LxNvWUyX5D01bqEgvnZldb" type="text/css"/>
-<link rel="stylesheet" href="css/2dgame.css?GNwN5VgQVozSAjfbES6vcd" type="text/css"/>
+<link rel="stylesheet" href="css/sprite.css?Frzgzj4229sRNJBtIHbmtc" type="text/css"/>
+<link rel="stylesheet" href="css/2dgame.css?Frzgzj4229sRNJBtIHbmtc" type="text/css"/>
 <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui.min.js"></script>
 <script type="text/javascript" src="js/cling-colors.js"></script>
@@ -14,8 +14,8 @@
 <script type="text/javascript" src="js/swfobject.js"></script>
 <script type="text/javascript" src="js/downloadify.min.js"></script>
 <script type="text/javascript" src="js/TinyColor-1.0.0/tinycolor.js"></script>
-<script type="text/javascript" src="js/sprite.js?IadztIy7Z4Po6RhSBxqPEc"></script>
-<script type="text/javascript" src="js/2dgame.js?7iSaVCbMEv7AJ49iNL9Vvc"></script>
+<script type="text/javascript" src="js/sprite.js?Frzgzj4229sRNJBtIHbmtc"></script>
+<script type="text/javascript" src="js/2dgame.js?Frzgzj4229sRNJBtIHbmtc"></script>
 
 </head>
 
@@ -45,6 +45,8 @@
 <span class='toolbutton tool' id='pane_animation' style='background: url(images/applications-multimedia.png) center center no-repeat;' title='Animationen'></span>
 <br />
 <span class='toolbutton tool' id='pane_levels' style='background: url(images/level.png) center center no-repeat;' title='Level zeichnen'></span>
+<br />
+<span class='toolbutton tool' id='pane_game' style='background: url(images/gear.png) center center no-repeat;' title='Spieleinstellungen'></span>
 <br />
 <span class='toolbutton tool' id='pane_play' style='background: url(images/play.png) center center no-repeat;' title='Spiel testen'></span>
 </div>
@@ -150,6 +152,13 @@
 <div class='heading'>Einstellungen</div><br />
 <input type='checkbox' id='use-level' /><label for='use-level'>Level benutzen</label><br />
 <label for='level-background-color'>Hintergrund:</label> <input type='text' id='level-background-color' size='6' /><br />
+</div>
+</div>
+
+<div class='pane' id='pane-game' style='display: inline-block;'>
+<div class='panel' style='display: inline-block;'>
+Name des Spiels: <input type='text' class='game_options_input' id='game_title' size='40' ></input> <br />
+Autor: <input type='text' class='game_options_input' id='game_author' size='40' ></input> <br />
 </div>
 </div>
 

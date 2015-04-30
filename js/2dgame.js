@@ -1650,7 +1650,8 @@ function init_game(width, height, supersampling, data)
         latest_render_update: Date.now(),
         offset_x: 0,
         offset_y: 0,
-        lives_left: 5
+        lives_left: 5,
+        game_options: {}
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
@@ -1842,6 +1843,11 @@ function init_game(width, height, supersampling, data)
             var info = JSON.parse(zipEntry.asText());
             vars.sprite_animations = info.slice();
         }
+        else if (zipEntry.name == 'game.json')
+        {
+            var info = JSON.parse(zipEntry.asText());
+            vars.game_info = info;
+        }
         else if (zipEntry.name == 'sprite_props.json')
         {
             var info = JSON.parse(zipEntry.asText());
@@ -1901,7 +1907,13 @@ function init_game(width, height, supersampling, data)
         initLevel(0, false);
         $('#title_left').hide();
         $('#title_right').hide();
-        show_card("WIE SOLL DIESES SPIEL<br />NUR HEISSEN?", "<!--Ein Spiel von Charlotte Specht<br /><br />-->Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
+        var title = "";
+        if (typeof(game_options['game_title']) !== 'undefined')
+            title = jQuery.trim(game_options['game_title']);
+        var author = "";
+        if (typeof(game_options['game_author']) !== 'undefined')
+            author = jQuery.trim(game_options['game_author']);
+        show_card(title, "Ein Spiel von " + author + "<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
             vars.sprite_container.fadeIn(1);
             initLevel(0);
             $('#title_left').fadeIn(500);
