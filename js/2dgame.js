@@ -1274,7 +1274,7 @@ function keydown(code)
         return;
     if (vars.showing_card == 2)
     {
-        if (Date.now() - vars.showing_card_time > 500)
+        if (Date.now() - vars.showing_card_time > 300)
         {
             if (code != 16 && code != 17 && code != 18 && code != 92 && code != 93)
             {

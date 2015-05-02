@@ -570,8 +570,9 @@ function loadLevels(info)
 {
     if (shiftPressed)
         return;
-    jQuery.each(info, function(i, l) {
-        set_current_level(i);
+    for (var i = 0; i < MAX_LEVELS; i++)
+        $('span#level_' + i + ' div').addClass('inactive');
+    jQuery.each(info, function(i, l) { set_current_level(i);
         level_use[i] = l.use;
         if (l.use)
             $('span#level_' + i + ' div').removeClass('inactive');
@@ -586,11 +587,13 @@ function loadLevels(info)
             });
         });
     });
+    set_current_level(0);
 }
 
 function loadAnimations(info)
 {
     console.log("Loading animations", info);
+    animations = [];
     jQuery.each(info, function(_, a) {
         push_animation(a);
     });
@@ -1410,6 +1413,13 @@ $().ready(function() {
         var tag = $('#load_play_code').val();
         jQuery.post('load.rb', tag,
             function(data) {
+
+                level = {};
+                level_use = [];
+                level_props = {};
+                for (var i = 0; i < MAX_SPRITES; i++)
+                    sprite_properties[i] = {};
+
                 loadFromZip('data:text/x-haskell;base64,' + btoa(data.data));
                 $('#link_sprites').hide();
             }
