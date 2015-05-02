@@ -506,6 +506,32 @@ function field_has_silhouette(px, py)
         applies(_get_field(px, py), 'stairs_up_right_2_1_right'));
 }
 
+function ur_ded()
+{
+    if (vars.lives_left <= 1)
+    {
+        show_card("GAME OVER", 'Sorry, das Spiel ist vorbei.<br /><br />Geh vielleicht ein bisschen raus!<br />Spielen oder so.', 500, 500, true, null, null);
+    }
+    else
+    {
+        var ouch = [];
+        ouch.push('Huch! Du bist tot.');
+        ouch.push('Aua! Das tat weh.');
+        ouch.push('Autsch! Du bist tot.');
+        ouch.push('Auweia! Das macht Schmerzen.');
+        var message = ouch[Math.floor(Math.random()*ouch.length)];
+        if (vars.lives_left == 2)
+            message = "Jetzt wird es eng. Gib alles!";
+        show_card(message, 'Dr&uuml;cke eine Taste...', 500, 500, true, function() {
+            vars.sprite_container.fadeOut(500);
+        }, function() {
+            vars.lives_left -= 1;
+            initLevel(vars.current_level);
+            vars.sprite_container.fadeIn(500);
+        });
+    }
+}
+
 function _move_player_small(move_x, move_y)
 {
     var pix = Math.floor(vars.player_x / 24);
@@ -661,31 +687,20 @@ function _move_player_small(move_x, move_y)
                 {
                     if (vars.found_trap == null)
                     {
-                        if (vars.lives_left <= 1)
-                        {
-                            show_card("GAME OVER", 'Sorry, das Spiel ist vorbei.<br /><br />Geh vielleicht ein bisschen raus!<br />Spielen oder so.', 500, 500, true, null, null);
-                        }
-                        else
-                        {
-                            var ouch = [];
-                            ouch.push('Huch! Du bist tot.');
-                            ouch.push('Aua! Das tat weh.');
-                            ouch.push('Autsch! Du bist tot.');
-                            ouch.push('Auweia! Das macht Schmerzen.');
-                            var message = ouch[Math.floor(Math.random()*ouch.length)];
-                            if (vars.lives_left == 2)
-                                message = "Jetzt wird es eng. Gib alles!";
-                            show_card(message, 'Dr&uuml;cke eine Taste...', 500, 500, true, function() {
-                                vars.sprite_container.fadeOut(500);
-                            }, function() {
-                                vars.lives_left -= 1;
-                                initLevel(vars.current_level);
-                                vars.sprite_container.fadeIn(500);
-                            });
-                        }
+                        ur_ded();
+                        vars.found_trap = i;
                     }
-                    vars.found_trap = i;
                 }
+            }
+        }
+
+        // see if we dropped out of the level
+        if (vars.player_y > (vars.current_level_copy.ymin + vars.current_level_copy.height) * 24)
+        {
+            if (!vars.dropped_out_of_level)
+            {
+                vars.dropped_out_of_level = true;
+                ur_ded();
             }
         }
 
@@ -943,6 +958,20 @@ function game_logic_loop()
         if (vars.vy > (vars.current_level_copy.height - 15) * 24)
             vars.vy = (vars.current_level_copy.height - 15) * 24;
     }
+
+    // pan player into view
+    if (vars.vx > vars.player_x - 12)
+        vars.vx = vars.player_x - 12
+    if (vars.vx + 28 * 24 < vars.player_x + 12)
+        vars.vx = vars.player_x + 12 - 28 * 24;
+    if (vars.vy > vars.player_y - 23)
+        vars.vy = vars.player_y - 23
+    if (vars.vy + 15 * 24 < vars.player_y)
+    {
+        if (!vars.dropped_out_of_level)
+            vars.vy = vars.player_y - 15 * 24;
+    }
+
     if (oldvx != vars.vx || oldvy != vars.vy)
     {
         for (var y = 0; y < 16; y++)
@@ -951,13 +980,13 @@ function game_logic_loop()
     }
 
     // handle keys, move player
-    if ((vars.found_trap === null) && vars.pressed_keys[37])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[37])
     {
         // left
         if (vars.keys_ax > -6.0)
             vars.keys_ax -= 3.0;
     }
-    else if ((vars.found_trap === null) && vars.pressed_keys[39])
+    else if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[39])
     {
         // right
         if (vars.keys_ax < 6.0)
@@ -979,7 +1008,7 @@ function game_logic_loop()
         }
     }
 
-    if ((vars.found_trap === null) && vars.pressed_keys[38])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[38])
     {
         // up
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
@@ -996,7 +1025,7 @@ function game_logic_loop()
         }
     }
 
-    if ((vars.found_trap === null) && vars.pressed_keys[40])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[40])
     {
         // down
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb') ||
@@ -1018,7 +1047,7 @@ function game_logic_loop()
         vars.player_walk_phase = 0;
     }
 
-    if ((vars.found_trap === null) && vars.pressed_keys[16])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[16])
     {
         // jump
         if ((mod(vars.player_y, 24) == 23) || applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
@@ -1252,9 +1281,12 @@ function stopTheGame()
 function start_next_level()
 {
     // find next level
+    var old_level = vars.current_level;
     while (true)
     {
         vars.current_level = (vars.current_level + 1) % vars.levels.length;
+        if (old_level == vars.current_level)
+            break;
         if (vars.levels[vars.current_level].use)
         {
             initLevel(vars.current_level);
@@ -1473,6 +1505,7 @@ function initLevel(which, wait)
     vars.animation_phase = 0;
     vars.invincible = false;
     vars.invincible_flicker = false;
+    vars.dropped_out_of_level = false;
     vars.player_sprite_overlay_div.hide();
     vars.invincible_start_time = 0;
     vars.invincible_sprite = 0;
@@ -1889,13 +1922,13 @@ function init_game(width, height, supersampling, data)
     });
     for (var i = 0; i < vars.max_traps; i++)
         vars.trap_actor_sprite.push(vars.player_sprite_front);
-    jQuery.each(vars.sprite_properties, function(_, props) {
-        for (var i = 0; i < vars.max_traps; i++)
-        {
-            if ('trap_' + (i + 1) + '_actor' in props)
-                vars.trap_actor_sprite[i] = _;
-        }
-    });
+        jQuery.each(vars.sprite_properties, function(_, props) {
+            for (var i = 0; i < vars.max_traps; i++)
+            {
+                if ('trap_' + (i + 1) + '_actor' in props)
+                    vars.trap_actor_sprite[i] = _;
+            }
+        });
 
 //     backdrop.fadeIn(function() {
         $('body').css('padding', '0');
@@ -1904,7 +1937,17 @@ function init_game(width, height, supersampling, data)
 //         canvas.fadeIn();
         switchPane('play', true);
         init();
-        initLevel(0, false);
+        vars.current_level = -1;
+        while (true)
+        {
+            vars.current_level = (vars.current_level + 1) % vars.levels.length;
+            if (vars.levels[vars.current_level].use)
+                break;
+            if (vars.current_level == vars.levels.length - 1)
+                break;
+        }
+
+        initLevel(vars.current_level, false);
         $('#title_left').hide();
         $('#title_right').hide();
         var title = "";
@@ -1915,7 +1958,7 @@ function init_game(width, height, supersampling, data)
             author = jQuery.trim(game_options['game_author']);
         show_card(title, "Ein Spiel von " + author + "<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
             vars.sprite_container.fadeIn(1);
-            initLevel(0);
+            initLevel(vars.current_level);
             $('#title_left').fadeIn(500);
             $('#title_right').fadeIn(500);
         });
