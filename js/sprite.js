@@ -1233,6 +1233,7 @@ $().ready(function() {
         currentlyDrawingLevel = false;
 //         console.log('currentlyDrawingLevel', currentlyDrawingLevel);
         finishDrawing(true);
+        level_small_move_offset = null;
     });
 
     generatorHash['line'] = linePattern;
@@ -1346,9 +1347,6 @@ $().ready(function() {
         var rx = Math.floor(e.offsetX / (imageWidth / level_small_scale));
         var ry = Math.floor(e.offsetY / (imageHeight / level_small_scale));
         level_small_move_offset = [rx, ry];
-    });
-    $('canvas#level_small').mouseup(function(e) {
-        level_small_move_offset = null;
     });
     $('canvas#level_small').mousemove(function(e) {
         if (level_small_move_offset !== null)
