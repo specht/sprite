@@ -1,5 +1,7 @@
 // fields: 28x16
 
+var update_rate = 33;
+
 function mod(m, n) {
     return ((m % n) + n) % n;
 }
@@ -755,6 +757,14 @@ function _move_player_small(move_x, move_y)
                 if (vars.play_sounds)
                     vars.sounds['pick_up'].play();
                 vars.invincible = true;
+                var player = $('#yt')[0];
+                if (typeof(player) !== 'undefined')
+                    player.pauseVideo();
+                if (vars.play_sounds)
+                {
+                    vars.sounds['invincible'].currentTime = 0;
+                    vars.sounds['invincible'].play();
+                }
                 vars.invincible_sprite = _get_field(pix, piy);
                 vars.invincible_start_time = Date.now();
                 var v = vars.invincible_sprite;
@@ -1256,9 +1266,12 @@ function game_logic_loop()
     if (vars.invincible)
     {
         var elapsed = (Date.now() - vars.invincible_start_time) / 1000.0;
-        if (elapsed > 15.0)
+        if (elapsed > 14.8)
         {
             vars.invincible = false;
+            var player = $('#yt')[0];
+            if (typeof(player) !== 'undefined')
+                player.playVideo();
             vars.player_sprite_overlay_div.fadeOut();
         }
         else if (elapsed > 10.0)
@@ -1277,8 +1290,10 @@ function stopTheGame()
     $('#play_container').empty();
     $('#play_container').remove();
     switchPane('sprites');
+    vars.sounds['invincible'].pause();
     var player = $('#yt')[0];
-    player.pauseVideo();
+    if (typeof(player) !== 'undefined')
+        player.pauseVideo();
 }
 
 function start_next_level()
@@ -1410,7 +1425,7 @@ function init() {
     {
         var now = Date.now();
 //         console.log("_game_logic_loop(): " + (now - vars.latest_game_logic_update));
-        while (now - vars.latest_game_logic_update >= 33)
+        while (now - vars.latest_game_logic_update >= update_rate)
         {
             if (vars.stopGame)
                 return;
@@ -1421,10 +1436,10 @@ function init() {
             });
             if (typeof(game_logic_loop) !== 'undefined')
                 game_logic_loop();
-            vars.latest_game_logic_update += 33;
+            vars.latest_game_logic_update += update_rate;
         }
         render();
-        setTimeout(_game_logic_loop, 33);
+        setTimeout(_game_logic_loop, update_rate);
     }
 
     window.addEventListener("keydown", __keydown, false);
@@ -1432,7 +1447,7 @@ function init() {
     window.addEventListener("blur", _clear_keys, false);
     window.addEventListener("focus", _clear_keys, false);
 //     requestAnimationFrame(_loop);
-    setTimeout(_game_logic_loop, 33);
+    setTimeout(_game_logic_loop, update_rate);
     _fix_sizes();
     vars.showing_card = 0;
     vars.showing_card_but_contine_animation = false;
@@ -1505,6 +1520,7 @@ function initLevel(which, wait)
         wait = true;
     if (wait)
         vars.sprite_container.hide();
+    vars.sounds['invincible'].pause();
     vars.animation_phase = 0;
     vars.invincible = false;
     vars.invincible_flicker = false;
@@ -1596,6 +1612,9 @@ function initLevel(which, wait)
     if (wait)
     {
         vars.sprite_container.fadeIn(1000);
+        var player = $('#yt')[0];
+        if (typeof(player) !== 'undefined')
+            player.playVideo();
         show_card("Level " + (which + 1), "Dr&uuml;ck eine Taste...", 500, 500, false, null, null);
     }
 }
@@ -1603,43 +1622,49 @@ function initLevel(which, wait)
 function init_game(width, height, supersampling, data)
 {
     $('#yt_placeholder').empty();
-    // <embed id="playerid" width="500px" height="400px" allowfullscreen="true"
-    // allowscriptaccess="always" quality="high" bgcolor="#000000" name="playerid"
-    //style=""
-    //src="http://www.youtube.com/v/[ID]?enablejsapi=1&version=3&playerapiid=ytplayer"
-    //type="application/x-shockwave-flash">
-    window.onYouTubePlayerReady = function() {
-        var player = $('#yt')[0];
-//         player.playVideo();
-    };
-    var yt_embed = $('<embed>');
-    yt_embed.attr('id', 'yt');
-    yt_embed.attr('width', '192px');
-    yt_embed.attr('height', '128px');
-    yt_embed.attr('allowfullscreen', 'false');
-    yt_embed.attr('autoplay', 'true');
-    yt_embed.attr('allowscriptaccess', 'always');
-    yt_embed.attr('name', 'yt');
+    var video_id = '';
 //     var video_id = 'RDi1IJTXYdI'; // Hysteria
 //     var video_id = 'fIgI8IGkJ-E'; // Chop Suey
 //     var video_id = 'umMmGgsxBWA'; // Nyan Cat
 //     var video_id = 'ZRISfN-cfmM'; // Light my fire
 //     var video_id = 'Uu8WP-Se90w'; // Take on me
-    var video_id = 'fpcLxmSmlLQ'; // Around the world
+//     var video_id = 'fpcLxmSmlLQ'; // Around the world
 //     var video_id = 'HIEogKEWGlc'; // The Zephyr Song
 //     var video_id = 'L1O0wymSZsc'; // Someday
 //     var video_id = 'jDJ9dmZzQoY'; // Everything counts
 //     var video_id = 'kxJXqEOyJUg'; // Rebel Rebel
 //     var video_id = 'AEi7KKPHLgU'; // I want you back
-//     var video_id = '';
+//     var video_id = 'Q-MrFLvpdXM'; // Stolen Dance
+//     var video_id = 'uFuIQwUUYks'; // Popcorn
+//     var video_id = '49l6JKMwZAA'; // Dance of the Sugar-Plum Fairy
+//     var video_id = 'kL498EZnkm8'; // Knights of Cydonia
 //
-//     yt_embed.attr('src', 'http://www.youtube.com/v/' + video_id + '?enablejsapi=1&version=3&playerapiid=ytplayer');
-//     yt_embed.attr('type', 'application/x-shockwave-flash');
-//     yt_embed.css('z-index', '2000');
-//     yt_embed.css('width', '0');
-//     yt_embed.css('height', '0');
-//     $('#yt_placeholder').append(yt_embed);
+    if (video_id.length > 0)
+    {
+        var yt_embed = $('<embed>');
+        yt_embed.attr('id', 'yt');
+        yt_embed.attr('width', '192px');
+        yt_embed.attr('height', '128px');
+        yt_embed.attr('allowfullscreen', 'false');
+        yt_embed.attr('autoplay', 'true');
+        yt_embed.attr('allowscriptaccess', 'always');
+        yt_embed.attr('name', 'yt');
+        window.onYouTubePlayerReady = function() {
+            do_init_game(width, height, supersampling, data);
+        };
+        yt_embed.attr('src', 'http://www.youtube.com/v/' + video_id + '?enablejsapi=1&version=3&playerapiid=ytplayer');
+        yt_embed.attr('type', 'application/x-shockwave-flash');
+        yt_embed.css('z-index', '2000');
+        yt_embed.css('width', '0');
+        yt_embed.css('height', '0');
+        $('#yt_placeholder').append(yt_embed);
+    }
+    else
+        do_init_game(width, height, supersampling, data);
+}
 
+function do_init_game(width, height, supersampling, data)
+{
     vars = {
         animation_phase: 0,
         sprite_animations: [],
@@ -1687,7 +1712,8 @@ function init_game(width, height, supersampling, data)
         offset_x: 0,
         offset_y: 0,
         lives_left: 5,
-        game_options: {}
+        game_options: {},
+        music_ready: false
     };
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
@@ -1704,6 +1730,7 @@ function init_game(width, height, supersampling, data)
     container.css('background-color', '#000');
     container.css('display', 'none');
     container.css('z-index', '1');
+    container.css('cursor', 'none');
 //     var canvas = $('<canvas>');
 //     canvas.attr('id', 'canvas');
 //     canvas.attr('width', 1);
@@ -1855,6 +1882,10 @@ function init_game(width, height, supersampling, data)
 
     vars.sounds['hit_hurt'] = new Audio('sounds/Hit_Hurt41.wav');
     vars.sounds['hit_hurt'].volume = 0.5;
+    vars.sounds['invincible'] = new Audio('sounds/invincible-15s.mp3');
+    vars.sounds['invincible'].volume = 0.8;
+//     vars.sounds['invincible'] = new Audio('sounds/invincible-jeopardy.mp3');
+//     vars.sounds['invincible'].volume = 0.8;
     vars.sounds['pick_up'] = new Audio('sounds/Pickup_Coin36.wav');
     vars.sounds['pick_up'].volume = 0.5;
     vars.sounds['power_up'] = new Audio('sounds/Powerup28.wav');
