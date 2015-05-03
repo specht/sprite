@@ -857,6 +857,9 @@ function game_logic_loop()
 
     vars.player_walk_phase = (vars.player_walk_phase + 1) % 8;
 
+    var player_original_x = vars.player_x;
+    var player_original_y = vars.player_y;
+
     var pix = Math.floor(vars.player_x / 24);
     var piy = Math.floor(vars.player_y / 24);
 
@@ -960,16 +963,16 @@ function game_logic_loop()
     }
 
     // pan player into view
-    if (vars.vx > vars.player_x - 12)
-        vars.vx = vars.player_x - 12
-    if (vars.vx + 28 * 24 < vars.player_x + 12)
-        vars.vx = vars.player_x + 12 - 28 * 24;
-    if (vars.vy > vars.player_y - 23)
-        vars.vy = vars.player_y - 23
-    if (vars.vy + 15 * 24 < vars.player_y)
+    if (vars.vx > player_original_x - 12)
+        vars.vx = player_original_x - 12;
+    if (vars.vx + 28 * 24 < player_original_x + 12)
+        vars.vx = player_original_x + 12 - 28 * 24;
+    if (vars.vy > player_original_y - 23)
+        vars.vy = player_original_y - 23;
+    if (vars.vy + 15 * 24 < player_original_y)
     {
         if (!vars.dropped_out_of_level)
-            vars.vy = vars.player_y - 15 * 24;
+            vars.vy = player_original_y - 15 * 24;
     }
 
     if (oldvx != vars.vx || oldvy != vars.vy)
