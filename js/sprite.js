@@ -80,6 +80,7 @@ states.push(['trap_3', 'Falle 3']);
 states.push(['trap_3_actor', 'Spielfigur in Falle 3']);
 states.push(['trap_4', 'Falle 4']);
 states.push(['trap_4_actor', 'Spielfigur in Falle 4']);
+states.push(['bad_guy_moving', 'Beweglicher Gegner', 'Fiese Gegner']);
 states.push(['invincible', 'Schutzschild', 'Power ups']);
 states.push(['get_a_life', 'Extraleben']);
 states.push(['level_finished', 'Ab ins n&auml;chste Level!', 'Level&uuml;bergang']);

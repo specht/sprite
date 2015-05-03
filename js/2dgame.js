@@ -295,6 +295,7 @@ function render()
     tile.css('left', '' + Math.floor((vars.player_x + player_shift_x - dx - 12) * vars.sprite_size / 24/* + vars.offset_x*/) + 'px');
     tile.css('top', '' + Math.floor((vars.player_y + player_shift_y - dy - 23) * vars.sprite_size / 24/* + vars.offset_y*/) + 'px');
 
+    // render invincibility sprite
     if (vars.invincible === true)
     {
         var tile = vars.player_sprite_overlay_div;
@@ -329,6 +330,32 @@ function render()
         }
     }
 
+    // render bad guys
+    jQuery.each(vars.bad_guys, function(_, baddie) {
+        var tile = baddie.sprite_div;
+        tile.css('left', '' + Math.floor((baddie.x - 12 - vars.vx) * vars.sprite_size / 24/* + vars.offset_x*/) + 'px');
+        tile.css('top', '' + Math.floor((baddie.y - 23 - vars.vy) * vars.sprite_size / 24/* + vars.offset_y*/) + 'px');
+        var v = baddie.sprite_id;
+        jQuery.each(vars.sprite_animations, function(_, info) {
+            if (v == info.start)
+            {
+                var delta = vars.animation_phase;
+                var shift = Math.floor(delta / info.speed) % (info.count + info.wait);
+                if (shift >= info.count)
+                    shift = 0;
+                v += shift;
+            }
+        });
+        if ((typeof(baddie.sprite_showing) === 'undefined') || (v != baddie.sprite_showing))
+        {
+            var sprite_x = v % 8;
+            var sprite_y = Math.floor(v / 8);
+            var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+            var tile = baddie.sprite_div;
+            tile.css('background-position', value);
+            baddie.sprite_showing = v;
+        }
+    });
 
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
@@ -859,6 +886,29 @@ function _move_player_small(move_x, move_y)
     return move_ok;
 }
 
+function bad_guy_turn_around(bix, biy)
+{
+    if (applies(_get_field(bix, biy), 'is_solid'))
+        return true;
+    if (!applies(_get_field(bix, biy + 1), 'can_stand_on'))
+        return true;
+    if (applies(_get_field(bix, biy + 1), 'appears') && !vars.block_visible['' + (bix) + '/' + (biy + 1)])
+        return true;
+    var found_something = false;
+    jQuery.each(['stairs_up_left', 'stairs_up_right', 'stairs_up_left_2_1_left', 'stairs_up_left_2_1_right',
+                 'stairs_up_right_2_1_left', 'stairs_up_right_2_1_right', 'slide_down_left', 'slide_down_right',
+                 'slide_down_left_2_1_left', 'slide_down_left_2_1_right', 'slide_down_right_2_1_left',
+                 'slide_down_right_2_1_right', 'slide_down_left_1_2_top', 'slide_down_left_1_2_bottom',
+                 'slide_down_right_1_2_top', 'slide_down_right_1_2_bottom'], function(_, x) {
+        if (applies(_get_field(bix, biy + 1), x))
+            found_something = true;
+    });
+    if (found_something)
+        return true;
+
+    return false;
+}
+
 function game_logic_loop()
 {
     if (vars.showing_card != 0 && (!vars.showing_card_but_contine_animation))
@@ -992,14 +1042,61 @@ function game_logic_loop()
                 vars.display_sprite[y][x] = -2;
     }
 
+    // move bad guys
+    jQuery.each(vars.bad_guys, function(_, baddie) {
+        // see if we hit a bad guy
+        if (!vars.invincible)
+        {
+            var dx = vars.player_x - baddie.x;
+            var dy = vars.player_y - baddie.y;
+            if (Math.abs(dx) <= 18 && Math.abs(dy) < 24)
+            {
+                if (vars.hit_bad_guy === false)
+                {
+                    ur_ded();
+                    vars.hit_bad_guy = true;
+                }
+            }
+        }
+        if (baddie.type == 'moving')
+        {
+            if (baddie.dx > 0)
+            {
+                baddie.x += baddie.dx;
+                var bix = Math.floor((baddie.x + 6) / 24);
+                var biy = Math.floor(baddie.y / 24);
+                if (bad_guy_turn_around(bix, biy))
+                {
+                    baddie.dx *= -1;
+                }
+            }
+            else if (baddie.dx < 0)
+            {
+                baddie.x += baddie.dx;
+                var bix = Math.floor((baddie.x - 6) / 24);
+                var biy = Math.floor(baddie.y / 24);
+                if (bad_guy_turn_around(bix, biy))
+                {
+                    baddie.dx *= -1;
+                }
+            }
+        }
+        var bix = Math.floor(baddie.x / 24);
+        var biy = Math.floor(baddie.y / 24);
+        if (!(applies(_get_field(bix, biy + 1), 'can_stand_on') && ((baddie.y % 24) == 23)))
+        {
+            baddie.y += 6;
+        }
+    });
+
     // handle keys, move player
-    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[37])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[37])
     {
         // left
         if (vars.keys_ax > -6.0)
             vars.keys_ax -= 3.0;
     }
-    else if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[39])
+    else if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[39])
     {
         // right
         if (vars.keys_ax < 6.0)
@@ -1021,7 +1118,7 @@ function game_logic_loop()
         }
     }
 
-    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[38])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[38])
     {
         // up
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
@@ -1038,7 +1135,7 @@ function game_logic_loop()
         }
     }
 
-    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[40])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[40])
     {
         // down
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb') ||
@@ -1060,7 +1157,7 @@ function game_logic_loop()
         vars.player_walk_phase = 0;
     }
 
-    if ((vars.found_trap === null && !vars.dropped_out_of_level) && vars.pressed_keys[16])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[16])
     {
         // jump
         if ((mod(vars.player_y, 24) == 23) || applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
@@ -1525,6 +1622,7 @@ function initLevel(which, wait)
     vars.invincible = false;
     vars.invincible_flicker = false;
     vars.dropped_out_of_level = false;
+    vars.hit_bad_guy = false;
     vars.player_sprite_overlay_div.hide();
     vars.invincible_start_time = 0;
     vars.invincible_sprite = 0;
@@ -1534,6 +1632,10 @@ function initLevel(which, wait)
     var found_player = false;
     vars.vx = 0;
     vars.vy = 0;
+    jQuery.each(vars.bad_guys, function(_, x) {
+        $(x.sprite_div).remove();
+    });
+    vars.bad_guys = [];
     jQuery.each(vars.current_level_copy.data, function(y, row) {
         jQuery.each(row, function(x, cell) {
             if (applies(cell, 'actor_front') || applies(cell, 'actor_back') ||
@@ -1546,11 +1648,30 @@ function initLevel(which, wait)
                 row[x] = -1;
                 found_player = true;
             }
-            if (found_player)
-                return false;
+            if (applies(cell, 'bad_guy_moving'))
+            {
+                var type = '';
+                if (applies(cell, 'bad_guy_moving'))
+                {
+                    type = 'moving';
+                }
+                var v = _get_field(x, y);
+                info = {type: type, x: x * 24 + 12, y: y * 24 + 23, sprite_id: v};
+                var sprite = $('<div>').addClass('sd');
+                vars.sprite_container.append(sprite);
+                info.sprite_div = sprite;
+
+                var sprite_x = v % 8;
+                var sprite_y = Math.floor(v / 8);
+                var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+                info.sprite_div.css('background-position', value);
+                info.sprite_div.css('background-image', $(vars.player_sprite_overlay_div).css('background-image'));
+                info.dx = (Math.random() < 0.5) ? -1 : 1;
+
+                vars.bad_guys.push(info);
+                _set_field(x, y, -1);
+            }
         });
-        if (found_player)
-            return false;
     });
     vars.got_key = [];
     vars.door_open = {};
@@ -1667,6 +1788,7 @@ function do_init_game(width, height, supersampling, data)
 {
     vars = {
         animation_phase: 0,
+        bad_guys: [],
         sprite_animations: [],
         play_sounds: false,
         sprite_size: 1,
