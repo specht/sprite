@@ -29,6 +29,8 @@ var shiftPressed = false;
 var sprite_properties = [];
 var current_pane = null;
 var game_options = {};
+var level_small_scale = 4;
+var level_small_move_offset = null;
 
 var states = [];
 states.push(['actor_front', 'Spielfigur von vorn', 'Spielfigur']);
@@ -192,7 +194,9 @@ function draw_level()
         {
             var v = get_field(x + level_props[current_level].offset[0], y + level_props[current_level].offset[1]);
             if (v >= 0)
+            {
                 context.drawImage($('#sprite_' + v)[0], x * imageWidth, y * imageHeight, imageWidth, imageHeight);
+            }
             else
             {
                 context.beginPath();
@@ -201,6 +205,81 @@ function draw_level()
                 context.stroke();
             }
         }
+    }
+    var xmin = null, xmax = null, ymin = null, ymax = null;
+    jQuery.each(Object.keys(level[current_level]), function(_, key) {
+        if (level[current_level][key] != -1)
+        {
+            var k = key.split(',');
+            var x = new Number(k[0]).valueOf();
+            var y = new Number(k[1]).valueOf();
+            if (xmin === null)
+                xmin = x;
+            if (xmax === null)
+                xmax = x;
+            if (ymin === null)
+                ymin = y;
+            if (ymax === null)
+                ymax = y;
+            if (x < xmin)
+                xmin = x;
+            if (x > xmax)
+                xmax = x;
+            if (y < ymin)
+                ymin = y;
+            if (y > ymax)
+                ymax = y;
+        }
+    });
+    if (xmin !== null)
+    {
+        var real_width = xmax - xmin + 1;
+        var real_height = ymax - ymin + 1;
+
+        var scale = level_small_scale;
+        $('canvas#level_small').attr('width', real_width * imageWidth / scale).attr('height', real_height * imageHeight / scale);
+        $('canvas#level_small').css('max-width', '' + (real_width * imageWidth / scale) + 'px');
+        $('canvas#level_small').css('max-height', '' + (real_height * imageHeight / scale) + 'px');
+        $('#level_small_container').show();
+        var small_level_canvas = $('canvas#level_small')[0];
+
+        var context_small = $('canvas#level_small')[0].getContext('2d');
+        context_small.beginPath();
+        context_small.fillStyle = level_props[current_level].background;
+        context_small.rect(0, 0, real_width * imageWidth / scale, real_height * imageHeight / scale);
+        context_small.fill();
+        for (var y = 0; y < real_height; y++)
+        {
+            var ry = y - level_props[current_level].offset[1] + ymin;
+            for (var x = 0; x < real_width; x++)
+            {
+                var rx = x - level_props[current_level].offset[0] + xmin;
+                var v = get_field(x + xmin, y + ymin);
+                if (v >= 0)
+                {
+                    if (rx >= 0 && rx < levelWidth && ry >= 0 && ry < levelHeight)
+                        context_small.globalAlpha = 1.0;
+                    else
+                        context_small.globalAlpha = 0.5;
+                    context_small.drawImage($('#sprite_' + v)[0], x * imageWidth / scale, y * imageHeight / scale, imageWidth / scale, imageHeight / scale);
+                }
+            }
+        }
+        context_small.beginPath();
+        context_small.strokeStyle = '#729fcf';
+        context_small.rect((level_props[current_level].offset[0] - xmin) * imageWidth / scale - 0.5,
+                           (level_props[current_level].offset[1] - ymin) * imageHeight / scale - 0.5,
+                           levelWidth * imageWidth / scale, levelHeight * imageHeight / scale);
+        context_small.stroke();
+        context_small.strokeStyle = '#204a87';
+        context_small.rect((level_props[current_level].offset[0] - xmin) * imageWidth / scale + 0.5,
+                           (level_props[current_level].offset[1] - ymin) * imageHeight / scale + 0.5,
+                           levelWidth * imageWidth / scale, levelHeight * imageHeight / scale);
+        context_small.stroke();
+    }
+    else
+    {
+        $('#level_small_container').hide();
     }
 }
 
@@ -1261,6 +1340,28 @@ $().ready(function() {
             set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
             draw_level();
             currentlyDrawingLevel = true;
+        }
+    });
+    $('canvas#level_small').mousedown(function(e) {
+        var rx = Math.floor(e.offsetX / (imageWidth / level_small_scale));
+        var ry = Math.floor(e.offsetY / (imageHeight / level_small_scale));
+        level_small_move_offset = [rx, ry];
+    });
+    $('canvas#level_small').mouseup(function(e) {
+        level_small_move_offset = null;
+    });
+    $('canvas#level_small').mousemove(function(e) {
+        if (level_small_move_offset !== null)
+        {
+            var rx = Math.floor(e.offsetX / (imageWidth / level_small_scale));
+            var ry = Math.floor(e.offsetY / (imageHeight / level_small_scale));
+            if (rx != level_small_move_offset[0] || ry != level_small_move_offset[1])
+            {
+                level_props[current_level].offset[0] += rx - level_small_move_offset[0];
+                level_props[current_level].offset[1] += ry - level_small_move_offset[1];
+                level_small_move_offset = [rx, ry];
+                draw_level();
+            }
         }
     });
 

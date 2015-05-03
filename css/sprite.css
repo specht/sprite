@@ -285,3 +285,7 @@ a, a:visited {
 
 .button_with_tool_button .toolbutton {
 }
+
+#level_small {
+    cursor: move;
+}
