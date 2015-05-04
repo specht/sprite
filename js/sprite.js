@@ -1762,7 +1762,17 @@ function get_zip_package()
     zip.file("sprite_props.json", btoa(JSON.stringify(get_sprite_properties())), {base64: true, date: d});
     zip.file("levels.json", btoa(JSON.stringify(get_level_descriptions())), {base64: true, date: d});
     zip.file("animations.json", btoa(JSON.stringify(animations)), {base64: true, date: d});
-    zip.file("game.json", btoa(JSON.stringify(game_options)), {base64: true, date: d});
+    // we have user-defined strings in here, so hack them into UTF-8!!!
+    var options = {};
+    jQuery.each(Object.keys(game_options), function(_, k) {
+        var v = game_options[k];
+        var v2 = v;
+        if (typeof(v) === 'string')
+            v2 = unescape(encodeURI(v));
+        options[k] = v2;
+    });
+    console.log(options);
+    zip.file("game.json", btoa(JSON.stringify(options)), {base64: true, date: d});
     return '' + zip.generate({compression: 'DEFLATE'});
 }
 
