@@ -88,6 +88,16 @@ states.push(['1p', '1 P', 'Punkte sammeln']);
 states.push(['5p', '5 P']);
 states.push(['10p', '10 P']);
 
+function offset_x(e)
+{
+    return e.offsetX === undefined ? e.originalEvent.layerX - $(e.target).offset().left : e.offsetX;
+}
+
+function offset_y(e)
+{
+    return e.offsetY === undefined ? e.originalEvent.layerY - $(e.target).offset().top : e.offsetY;
+}
+
 function set_field(x, y, v)
 {
     if (!(current_level in level))
@@ -1201,12 +1211,12 @@ $().ready(function() {
     });
 
     $('#big_pixels').mouseenter(function(e) {
-        updateCursor(e.offsetX, e.offsetY);
+        updateCursor(offset_x(e), offset_y(e));
     });
     $('#big_pixels').mousemove(function(e) {
-        handleDrawing(e.offsetX, e.offsetY);
+        handleDrawing(offset_x(e), offset_y(e));
         if (!drawingOperationPending)
-            updateCursor(e.offsetX, e.offsetY);
+            updateCursor(offset_x(e), offset_y(e));
         e.preventDefault();
     });
     $(window).mousemove(function(e) {
@@ -1228,7 +1238,7 @@ $().ready(function() {
     });
     $('#big_pixels').mousedown(function(e) {
         shiftPressed = (e.shiftKey === true);
-        initiateDrawing(e.offsetX, e.offsetY);
+        initiateDrawing(offset_x(e), offset_y(e));
     });
     $(window).mouseup(function(e) {
         currentlyDrawingLevel = false;
@@ -1317,8 +1327,8 @@ $().ready(function() {
 
     $('canvas#level').mousemove(function(e) {
         var context = $(e.target)[0].getContext('2d');
-        var rx = Math.floor(e.offsetX / imageWidth);
-        var ry = Math.floor(e.offsetY / imageHeight);
+        var rx = Math.floor(offset_x(e) / imageWidth);
+        var ry = Math.floor(offset_y(e) / imageHeight);
         if (currentlyDrawingLevel && rx >= 0 && rx < 28 && ry >= 0 && ry < 16)
         {
             set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
@@ -1335,8 +1345,8 @@ $().ready(function() {
         draw_level();
     });
     $('canvas#level').mousedown(function(e) {
-        var rx = Math.floor(e.offsetX / imageWidth);
-        var ry = Math.floor(e.offsetY / imageHeight);
+        var rx = Math.floor(offset_x(e) / imageWidth);
+        var ry = Math.floor(offset_y(e) / imageHeight);
         if (rx >= 0 && rx < 28 && ry >= 0 && ry < 16)
         {
             set_field(rx + level_props[current_level].offset[0], ry + level_props[current_level].offset[1], e.button == 0 ? currentSpriteId : -1);
@@ -1345,15 +1355,15 @@ $().ready(function() {
         }
     });
     $('canvas#level_small').mousedown(function(e) {
-        var rx = Math.floor(e.offsetX / (imageWidth / level_small_scale));
-        var ry = Math.floor(e.offsetY / (imageHeight / level_small_scale));
+        var rx = Math.floor(offset_x(e) / (imageWidth / level_small_scale));
+        var ry = Math.floor(offset_y(e) / (imageHeight / level_small_scale));
         level_small_move_offset = [rx, ry];
     });
     $('canvas#level_small').mousemove(function(e) {
         if (level_small_move_offset !== null)
         {
-            var rx = Math.floor(e.offsetX / (imageWidth / level_small_scale));
-            var ry = Math.floor(e.offsetY / (imageHeight / level_small_scale));
+            var rx = Math.floor(offset_x(e) / (imageWidth / level_small_scale));
+            var ry = Math.floor(offset_y(e) / (imageHeight / level_small_scale));
             if (rx != level_small_move_offset[0] || ry != level_small_move_offset[1])
             {
                 level_props[current_level].offset[0] += rx - level_small_move_offset[0];
