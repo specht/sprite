@@ -785,7 +785,7 @@ function _move_player_small(move_x, move_y)
                     vars.sounds['pick_up'].play();
                 vars.invincible = true;
                 var player = $('#yt')[0];
-                if (typeof(player) !== 'undefined')
+                if (typeof(player) !== 'undefined' && vars.play_sounds)
                     player.pauseVideo();
                 if (vars.play_sounds)
                 {
@@ -1367,7 +1367,7 @@ function game_logic_loop()
         {
             vars.invincible = false;
             var player = $('#yt')[0];
-            if (typeof(player) !== 'undefined')
+            if (typeof(player) !== 'undefined' && vars.play_sounds)
                 player.playVideo();
             vars.player_sprite_overlay_div.fadeOut();
         }
@@ -1389,7 +1389,7 @@ function stopTheGame()
     switchPane('sprites');
     vars.sounds['invincible'].pause();
     var player = $('#yt')[0];
-    if (typeof(player) !== 'undefined')
+    if (typeof(player) !== 'undefined' && vars.play_sounds)
         player.pauseVideo();
 }
 
@@ -1734,7 +1734,7 @@ function initLevel(which, wait)
     {
         vars.sprite_container.fadeIn(1000);
         var player = $('#yt')[0];
-        if (typeof(player) !== 'undefined')
+        if (typeof(player) !== 'undefined' && vars.play_sounds)
             player.playVideo();
         show_card("Level " + (which + 1), "Dr&uuml;ck eine Taste...", 500, 500, false, null, null);
     }
@@ -1759,6 +1759,8 @@ function init_game(width, height, supersampling, data)
 //     var video_id = 'uFuIQwUUYks'; // Popcorn
 //     var video_id = '49l6JKMwZAA'; // Dance of the Sugar-Plum Fairy
 //     var video_id = 'kL498EZnkm8'; // Knights of Cydonia
+//     var video_id = 'd8k7vWL7Lok'; // Sir Duke
+//     var video_id = 'STXbK0IjwW4'; // Uprising
 //
     if (video_id.length > 0)
     {
