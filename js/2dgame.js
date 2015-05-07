@@ -1049,7 +1049,7 @@ function game_logic_loop()
         {
             var dx = vars.player_x - baddie.x;
             var dy = vars.player_y - baddie.y;
-            if (Math.abs(dx) <= 18 && Math.abs(dy) < 24)
+            if (Math.abs(dx) <= 12 && Math.abs(dy) < 24)
             {
                 if (vars.hit_bad_guy === false)
                 {
@@ -1724,7 +1724,7 @@ function initLevel(which, wait)
     }
 
 //     console.log(vars.levels[vars.current_level]);
-    vars.backdrop.css('background-color', vars.levels[vars.current_level].background);
+    vars.backdrop.css('background-color', vars.current_level_copy.background);
 
     vars.pressed_keys = {};
 
@@ -1732,6 +1732,7 @@ function initLevel(which, wait)
     find_reachable_blocks(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24));
     if (wait)
     {
+        vars.backdrop.fadeIn(1000);
         vars.sprite_container.fadeIn(1000);
         var player = $('#yt')[0];
         if (typeof(player) !== 'undefined' && vars.play_sounds)
