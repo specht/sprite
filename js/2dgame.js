@@ -724,7 +724,7 @@ function _move_player_small(move_x, move_y)
         }
 
         // see if we dropped out of the level
-        if (vars.player_y > (vars.current_level_copy.ymin + vars.current_level_copy.height) * 24)
+        if (vars.player_y > vars.current_level_copy.height * 24)
         {
             if (!vars.dropped_out_of_level)
             {
