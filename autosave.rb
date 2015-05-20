@@ -11,8 +11,10 @@ begin
     FileUtils::mkdir("autosaves")
 rescue Errno::EEXIST
 end
-File::open("autosaves/#{tag}.hs", 'w') do |f|
-    f.write(message)
+unless File::exists?("autosaves/#{tag}.hs")
+    File::open("autosaves/#{tag}.hs", 'w') do |f|
+        f.write(message)
+    end
 end
 response = {'status' => 'stored', 'timestamp' => Time.now.to_i, 'body_length' => message.size, 'tag' => tag}
 

@@ -722,6 +722,56 @@ function autoSave()
     );
 }
 
+// Tee hee ... http://stackoverflow.com/a/4835406
+function escapeHtml(text) {
+  var map = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+
+  var s = text.replace(/[&<>"']/g, function(m) { return map[m]; });
+  if (s.length > 30)
+      s = s.substr(0, 30) + '...';
+  return s;
+}
+
+function get_saved_games() {
+    jQuery.get('list.rb',
+        function(data) {
+            var container = $('#saved_games tbody');
+            container.empty();
+            var row = $('<tr>');
+            row.append($('<th>').html('Code'));
+            row.append($('<th>').html('Autor'));
+            row.append($('<th>').html('Titel'));
+            row.append($('<th>').html('Datum'));
+            row.append($('<th>').html('Zeit'));
+            container.append(row);
+            jQuery.each(data.files, function(_, item) {
+                var row = $('<tr>');
+                row.css('vertical-align', 'top');
+                var link = $('<a>').html('<tt>' + item.tag.substr(0, 8) + '</tt>').attr('href', '#');
+                link.click(function() {
+                    load_from_server(item.tag);
+                    switchPane('sprites');
+                    $('#link_sprites').hide();
+                });
+                row.append($('<td>').append(link));
+                row.append($('<td>').html(escapeHtml(item.game_author) + '&nbsp;'));
+                row.append($('<td>').html(escapeHtml(item.game_title) + '&nbsp;'));
+                var date = new Date(Date.parse(item.mtime));
+                row.append($('<td>').html(date.toLocaleDateString('de', {day: 'numeric', month: 'short', year: 'numeric'}) + '&nbsp;'));
+                row.append($('<td>').html(date.toLocaleTimeString('de') + '&nbsp;'));
+                container.append(row);
+            });
+//             console.log(data);
+        }
+    );
+}
+
 function load_from_server(tag, play_it_now)
 {
     if (typeof(play_it_now) === 'undefined')
@@ -958,7 +1008,8 @@ $().ready(function() {
                 $('#edit_link').text(window.location.origin + window.location.pathname + '#' + short_tag);
                 $('#play_code_here').text(short_tag);
                 $('#load_play_code').val('');
-                $('#link_sprites').fadeIn();
+                $('#link_sprites').show();
+                get_saved_games();
             }
         );
 
@@ -1699,9 +1750,11 @@ function get_level_descriptions()
     for (var i = 0; i < MAX_LEVELS; i++)
     {
         if (!(i in level_props))
-            continue;
+        {
+            level_props[i] = {offset: [0, 0], background: '#000'}
+        }
         if (typeof(level[i]) === 'undefined')
-            continue;
+            level[i] = {};
         var l = {};
         l.use = level_use[i];
         l.background = level_props[i].background;
