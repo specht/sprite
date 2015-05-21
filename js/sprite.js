@@ -764,7 +764,7 @@ function get_saved_games() {
                 row.append($('<td>').html(escapeHtml(item.game_author) + '&nbsp;'));
                 row.append($('<td>').html(escapeHtml(item.game_title) + '&nbsp;'));
                 var date = new Date(Date.parse(item.mtime));
-                row.append($('<td>').html(date.toLocaleDateString('de', {day: 'numeric', month: 'short', year: 'numeric'}) + '&nbsp;'));
+                row.append($('<td>').html(date.toLocaleDateString('de', {weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'}) + '&nbsp;'));
                 row.append($('<td>').html(date.toLocaleTimeString('de') + '&nbsp;'));
                 container.append(row);
             });
