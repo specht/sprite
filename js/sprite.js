@@ -742,6 +742,7 @@ function get_saved_games() {
     jQuery.get('list.rb',
         function(data) {
             var container = $('#saved_games tbody');
+            $('#saved_games_container').scrollTop(0);
             container.empty();
             var row = $('<tr>');
             row.append($('<th>').html('Code'));
