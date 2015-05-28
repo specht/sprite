@@ -286,6 +286,8 @@ function render()
     }
     if (vars.found_trap !== null)
         use_sprite = vars.trap_actor_sprite[vars.found_trap];
+    if (vars.hit_bad_guy === true)
+        use_sprite = vars.hit_bad_guy_actor_sprite;
     var tile = vars.player_sprite_div;
     var v = use_sprite;
     var sprite_x = v % 8;
@@ -1830,6 +1832,7 @@ function do_init_game(width, height, supersampling, data)
         max_keys: 4,
         max_traps: 4,
         trap_actor_sprite: [],
+        hit_bad_guy_actor_sprite: 0,
         sounds: {},
         sprites_repo: null,
         latest_game_logic_update: Date.now(),
@@ -2078,6 +2081,11 @@ function do_init_game(width, height, supersampling, data)
             vars.player_sprite_jump_left = _;
         if ('actor_jump_right' in props)
             vars.player_sprite_jump_right = _;
+    });
+    vars.hit_bad_guy_actor_sprite = vars.player_sprite_front;
+    jQuery.each(vars.sprite_properties, function(_, props) {
+        if ('bad_guy_hit_actor' in props)
+            vars.hit_bad_guy_actor_sprite = _;
     });
     for (var i = 0; i < vars.max_traps; i++)
         vars.trap_actor_sprite.push(vars.player_sprite_front);

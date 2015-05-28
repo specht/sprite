@@ -9,7 +9,7 @@ body {
     -ms-user-select: none;
     user-select: none;
 /*     cursor: url(../cursor.png) 16 16, crosshair; */
-    font-family: sans;
+    font-family: sans, Arial;
     font-size: 14px;
 }
 
