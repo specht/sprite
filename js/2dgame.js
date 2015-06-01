@@ -815,7 +815,7 @@ function _move_player_small(move_x, move_y)
         }
 
         // see if we found an extra life
-        if (vars.lives_left < 5)
+        if (vars.lives_left < vars.max_lives)
         {
             if (applies(_get_field(pix, piy), 'get_a_life'))
             {
@@ -1851,6 +1851,7 @@ function do_init_game(width, height, supersampling, data)
         offset_x: 0,
         offset_y: 0,
         lives_left: 5,
+        max_lives: 5,
         game_options: {},
         music_ready: false
     };
@@ -2053,6 +2054,11 @@ function do_init_game(width, height, supersampling, data)
         {
             var info = JSON.parse(zipEntry.asText());
             vars.game_info = info;
+            if (!isNaN(parseInt(info.game_initial_lives)))
+            {
+                vars.lives_left = parseInt(info.game_initial_lives);
+                vars.max_lives = vars.lives_left;
+            }
         }
         else if (zipEntry.name == 'sprite_props.json')
         {

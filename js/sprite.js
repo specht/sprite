@@ -696,7 +696,7 @@ function loadAnimations(info)
 function loadGameOptions(info)
 {
     console.log("Loading game options", info);
-    jQuery.each(['game_title', 'game_author'], function(_, x) {
+    jQuery.each(['game_title', 'game_author', 'game_initial_lives'], function(_, x) {
         if (typeof(info[x]) !== 'undefined')
         {
             game_options[x] = info[x];
@@ -795,6 +795,7 @@ function initGameOptions()
 {
     game_options['game_title'] = 'WIE SOLL DIESES SPIEL<br />NUR HEISSEN?';
     game_options['game_author'] = 'wem auch immer';
+    game_options['game_initial_lives'] = '5';
     jQuery.each(Object.keys(game_options), function(_, x) {
         $('#' + x).val(game_options[x]);
     });
