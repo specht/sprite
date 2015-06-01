@@ -184,6 +184,11 @@ function switchPane(which, finishplaytransition)
         play();
         return;
     }
+    if (which === 'play_current_level' && (!finishplaytransition))
+    {
+        play_current_level();
+        return;
+    }
     $('.pane').hide();
     $('#pane-' + which).show();
     $('#pane-switcher .toolbutton').removeClass('active-pane');
@@ -1236,6 +1241,14 @@ $().ready(function() {
             if ($(document.activeElement).prop('tagName') != 'INPUT')
             {
                 switchPane('game');
+                e.preventDefault();
+            }
+        }
+        if (e.which == 79)
+        {
+            if ($(document.activeElement).prop('tagName') != 'INPUT')
+            {
+                switchPane('play_current_level');
                 e.preventDefault();
             }
         }
@@ -2528,3 +2541,7 @@ function play()
     init_game(28 * 24, 16 * 24, 2, get_zip_package());
 }
 
+function play_current_level()
+{
+    init_game(28 * 24, 16 * 24, 2, get_zip_package(), current_level);
+}

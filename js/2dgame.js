@@ -1754,7 +1754,7 @@ function initLevel(which, wait)
     }
 }
 
-function init_game(width, height, supersampling, data)
+function init_game(width, height, supersampling, data, start_level)
 {
     $('#yt_placeholder').empty();
     var video_id = '';
@@ -1787,7 +1787,7 @@ function init_game(width, height, supersampling, data)
         yt_embed.attr('allowscriptaccess', 'always');
         yt_embed.attr('name', 'yt');
         window.onYouTubePlayerReady = function() {
-            do_init_game(width, height, supersampling, data);
+            do_init_game(width, height, supersampling, data, start_level);
         };
         yt_embed.attr('src', 'http://www.youtube.com/v/' + video_id + '?enablejsapi=1&version=3&playerapiid=ytplayer');
         yt_embed.attr('type', 'application/x-shockwave-flash');
@@ -1797,11 +1797,13 @@ function init_game(width, height, supersampling, data)
         $('#yt_placeholder').append(yt_embed);
     }
     else
-        do_init_game(width, height, supersampling, data);
+        do_init_game(width, height, supersampling, data, start_level);
 }
 
-function do_init_game(width, height, supersampling, data)
+function do_init_game(width, height, supersampling, data, start_level)
 {
+    if (typeof(start_level) === 'undefined')
+        start_level = 0;
     vars = {
         animation_phase: 0,
         bad_guys: [],
@@ -1827,7 +1829,7 @@ function do_init_game(width, height, supersampling, data)
         player_x: 0,
         player_y: 0,
         player_sprite: 0,
-        current_level: 0,
+        current_level: start_level,
         current_level_copy: {},
         levels: [],
         sprite_properties: [],
@@ -2106,48 +2108,44 @@ function do_init_game(width, height, supersampling, data)
     });
     for (var i = 0; i < vars.max_traps; i++)
         vars.trap_actor_sprite.push(vars.player_sprite_front);
-        jQuery.each(vars.sprite_properties, function(_, props) {
-            for (var i = 0; i < vars.max_traps; i++)
-            {
-                if ('trap_' + (i + 1) + '_actor' in props)
-                    vars.trap_actor_sprite[i] = _;
-            }
-        });
+    jQuery.each(vars.sprite_properties, function(_, props) {
+        for (var i = 0; i < vars.max_traps; i++)
+        {
+            if ('trap_' + (i + 1) + '_actor' in props)
+                vars.trap_actor_sprite[i] = _;
+        }
+    });
 
 //     backdrop.fadeIn(function() {
-        $('body').css('padding', '0');
-        $('body').css('margin', '0');
-        $('body').css('overflow', 'hidden');
+    $('body').css('padding', '0');
+    $('body').css('margin', '0');
+    $('body').css('overflow', 'hidden');
 //         canvas.fadeIn();
-        switchPane('play', true);
-        init();
-        vars.current_level = -1;
-        while (true)
-        {
-            vars.current_level = (vars.current_level + 1) % vars.levels.length;
-            if (vars.levels[vars.current_level].use)
-                break;
-            if (vars.current_level == vars.levels.length - 1)
-                break;
-        }
+    switchPane('play', true);
+    init();
+    for (var i = 0; i< vars.levels.length; i++)
+    {
+        if (vars.levels[vars.current_level].use)
+            break;
+        vars.current_level = (vars.current_level + 1) % vars.levels.length;
+    }
 
-        initLevel(vars.current_level, false);
-        $('#title_left').hide();
-        $('#title_right').hide();
-        var title = "";
-        if (typeof(game_options['game_title']) !== 'undefined')
-            title = jQuery.trim(game_options['game_title']);
-        var author = "";
-        if (typeof(game_options['game_author']) !== 'undefined')
-            author = jQuery.trim(game_options['game_author']);
-        show_card(title, "Ein Spiel von " + author + "<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
-            vars.sprite_container.fadeIn(1);
-            initLevel(vars.current_level);
-            $('#title_left').fadeIn(500);
-            $('#title_right').fadeIn(500);
-        });
-        $('#play_container').show();
-//     });
+    initLevel(vars.current_level, false);
+    $('#title_left').hide();
+    $('#title_right').hide();
+    var title = "";
+    if (typeof(game_options['game_title']) !== 'undefined')
+        title = jQuery.trim(game_options['game_title']);
+    var author = "";
+    if (typeof(game_options['game_author']) !== 'undefined')
+        author = jQuery.trim(game_options['game_author']);
+    show_card(title, "Ein Spiel von " + author + "<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
+        vars.sprite_container.fadeIn(1);
+        initLevel(vars.current_level);
+        $('#title_left').fadeIn(500);
+        $('#title_right').fadeIn(500);
+    });
+    $('#play_container').show();
 }
 
 function show_card(first, second, speed, fadeout_speed, continue_animation, message_hide, complete)
