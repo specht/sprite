@@ -26,6 +26,7 @@ var animations = [];
 var level_props = {};
 var current_level = 0;
 var shiftPressed = false;
+var rightButtonPressed = false;
 var sprite_properties = [];
 var current_pane = null;
 var game_options = {};
@@ -1293,6 +1294,7 @@ $().ready(function() {
     });
     $('#big_pixels').mousedown(function(e) {
         shiftPressed = (e.shiftKey === true);
+        rightButtonPressed = (e.button == 2);
         initiateDrawing(offset_x(e), offset_y(e));
     });
     $(window).mouseup(function(e) {
@@ -2221,7 +2223,7 @@ function handleDrawing(x, y)
                 var dx = rx + delta[0];
                 var dy = ry + delta[1];
                 if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
-                    setPixel(dx, dy, currentColor);
+                    setPixel(dx, dy, rightButtonPressed ? [0,0,0,0] : currentColor);
             });
         }
         else
@@ -2231,7 +2233,7 @@ function handleDrawing(x, y)
                     var dx = p[0] + delta[0];
                     var dy = p[1] + delta[1];
                     if (dx >= 0 && dy >= 0 && dx < imageWidth && dy < imageHeight)
-                        setPixel(dx, dy, currentColor);
+                        setPixel(dx, dy, rightButtonPressed ? [0,0,0,0] : currentColor);
                 });
             });
         }
@@ -2498,7 +2500,7 @@ function finishDrawing(success)
                         for (var x = 0; x < imageWidth; x++)
                         {
                             if (selectionMask[y][x] == 1)
-                                setPixel(x, y, currentColor);
+                                setPixel(x, y, rightButtonPressed ? [0,0,0,0] : currentColor);
                         }
                     }
                 }
