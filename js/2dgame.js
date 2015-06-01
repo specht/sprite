@@ -336,7 +336,10 @@ function render()
     jQuery.each(vars.bad_guys, function(_, baddie) {
         var tile = baddie.sprite_div;
         tile.css('left', '' + Math.floor((baddie.x - 12 - vars.vx) * vars.sprite_size / 24/* + vars.offset_x*/) + 'px');
-        tile.css('top', '' + Math.floor((baddie.y - 23 - vars.vy) * vars.sprite_size / 24/* + vars.offset_y*/) + 'px');
+        var y = Math.floor((baddie.y - 23 - vars.vy) * vars.sprite_size / 24/* + vars.offset_y*/);
+        if (baddie.type == 'hovering')
+            y += Math.abs(Math.sin(vars.animation_phase / 10.0)) * 7.0 - 4;
+        tile.css('top', '' + y + 'px');
         var v = baddie.sprite_id;
         jQuery.each(vars.sprite_animations, function(_, info) {
             if (v == info.start)
@@ -1060,7 +1063,7 @@ function game_logic_loop()
                 }
             }
         }
-        if (baddie.type == 'moving')
+        if (baddie.type == 'moving' || baddie.type == 'hovering')
         {
             if (baddie.dx > 0)
             {
@@ -1650,12 +1653,20 @@ function initLevel(which, wait)
                 row[x] = -1;
                 found_player = true;
             }
-            if (applies(cell, 'bad_guy_moving'))
+            if (applies(cell, 'bad_guy_moving') || applies(cell, 'bad_guy_hovering') || applies(cell, 'bad_guy_jumping'))
             {
                 var type = '';
                 if (applies(cell, 'bad_guy_moving'))
                 {
                     type = 'moving';
+                }
+                else if (applies(cell, 'bad_guy_hovering'))
+                {
+                    type = 'hovering';
+                }
+                else if (applies(cell, 'bad_guy_jumping'))
+                {
+                    type = 'jumping';
                 }
                 var v = _get_field(x, y);
                 info = {type: type, x: x * 24 + 12, y: y * 24 + 23, sprite_id: v};
