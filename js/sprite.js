@@ -1272,7 +1272,7 @@ $().ready(function() {
             setPenWidth(3);
             e.preventDefault();
         }
-        if (e.which == 191)
+        if (e.which == 189)
         {
             setPenWidth(4);
             e.preventDefault();
