@@ -2055,7 +2055,7 @@ function do_init_game(width, height, supersampling, data, start_level)
         else if (zipEntry.name == 'game.json')
         {
             var info = JSON.parse(zipEntry.asText());
-            vars.game_info = info;
+            vars.game_options = info;
             if (!isNaN(parseInt(info.game_initial_lives)))
             {
                 vars.lives_left = parseInt(info.game_initial_lives);
@@ -2134,11 +2134,11 @@ function do_init_game(width, height, supersampling, data, start_level)
     $('#title_left').hide();
     $('#title_right').hide();
     var title = "";
-    if (typeof(game_options['game_title']) !== 'undefined')
-        title = jQuery.trim(game_options['game_title']);
+    if (typeof(vars.game_options['game_title']) !== 'undefined')
+        title = jQuery.trim(vars.game_options['game_title']);
     var author = "";
-    if (typeof(game_options['game_author']) !== 'undefined')
-        author = jQuery.trim(game_options['game_author']);
+    if (typeof(vars.game_options['game_author']) !== 'undefined')
+        author = jQuery.trim(vars.game_options['game_author']);
     show_card(title, "Ein Spiel von " + author + "<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
         vars.sprite_container.fadeIn(1);
         initLevel(vars.current_level);

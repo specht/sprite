@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no,maximum-scale=1">
 <title>Hackschule</title>
 <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="css/2dgame.css?439508345" type="text/css"/>
+<link rel="stylesheet" href="css/2dgame.css?4339508345" type="text/css"/>
 <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui.min.js"></script>
 <script type="text/javascript" src="js/cling-colors.js"></script>
@@ -11,7 +11,7 @@
 <script type="text/javascript" src="js/csscolorparser.js"></script>
 <script type="text/javascript" src="js/jszip.min.js"></script>
 <script type="text/javascript" src="js/TinyColor-1.0.0/tinycolor.js"></script>
-<script type="text/javascript" src="js/2dgame.js?hLsiXwDk5N4"></script>
+<script type="text/javascript" src="js/2dgame.js?hLsioiXwDk5N4"></script>
 
 </head>
 
