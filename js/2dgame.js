@@ -1758,7 +1758,7 @@ function init_game(width, height, supersampling, data, start_level)
 {
     $('#yt_placeholder').empty();
     var video_id = '';
-//     var video_id = 'RDi1IJTXYdI'; // Hysteria
+    var video_id = 'RDi1IJTXYdI'; // Hysteria
 //     var video_id = 'fIgI8IGkJ-E'; // Chop Suey
 //     var video_id = 'umMmGgsxBWA'; // Nyan Cat
 //     var video_id = 'ZRISfN-cfmM'; // Light my fire
@@ -1776,6 +1776,8 @@ function init_game(width, height, supersampling, data, start_level)
 //     var video_id = 'd8k7vWL7Lok'; // Sir Duke
 //     var video_id = 'STXbK0IjwW4'; // Uprising
 //
+    if (typeof(window.video_id) !== 'undefined')
+        video_id = window.video_id;
     if (video_id.length > 0)
     {
         var yt_embed = $('<embed>');
@@ -1857,6 +1859,8 @@ function do_init_game(width, height, supersampling, data, start_level)
         game_options: {},
         music_ready: false
     };
+    if (window.play_sounds === true)
+        play_sounds = true;
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
     vars.game_width = width;
