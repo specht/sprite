@@ -1810,7 +1810,7 @@ function do_init_game(width, height, supersampling, data, start_level)
         animation_phase: 0,
         bad_guys: [],
         sprite_animations: [],
-        play_sounds: false,
+        play_sounds: true,
         sprite_size: 1,
         keys_ax: 0.0,
         slide_ax: 0.0,
@@ -1860,7 +1860,7 @@ function do_init_game(width, height, supersampling, data, start_level)
         music_ready: false
     };
     if (window.play_sounds === true)
-        play_sounds = true;
+        vars.play_sounds = true;
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
     vars.game_width = width;
