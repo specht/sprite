@@ -1757,24 +1757,26 @@ function initLevel(which, wait)
 function init_game(width, height, supersampling, data, start_level)
 {
     $('#yt_placeholder').empty();
-    var video_id = '';
-    var video_id = 'RDi1IJTXYdI'; // Hysteria
-//     var video_id = 'fIgI8IGkJ-E'; // Chop Suey
-//     var video_id = 'umMmGgsxBWA'; // Nyan Cat
-//     var video_id = 'ZRISfN-cfmM'; // Light my fire
-//     var video_id = 'Uu8WP-Se90w'; // Take on me
-//     var video_id = 'fpcLxmSmlLQ'; // Around the world
-//     var video_id = 'HIEogKEWGlc'; // The Zephyr Song
-//     var video_id = 'L1O0wymSZsc'; // Someday
-//     var video_id = 'jDJ9dmZzQoY'; // Everything counts
-//     var video_id = 'kxJXqEOyJUg'; // Rebel Rebel
-//     var video_id = 'AEi7KKPHLgU'; // I want you back
-//     var video_id = 'Q-MrFLvpdXM'; // Stolen Dance
-//     var video_id = 'uFuIQwUUYks'; // Popcorn
-//     var video_id = '49l6JKMwZAA'; // Dance of the Sugar-Plum Fairy
-//     var video_id = 'kL498EZnkm8'; // Knights of Cydonia
-//     var video_id = 'd8k7vWL7Lok'; // Sir Duke
-//     var video_id = 'STXbK0IjwW4'; // Uprising
+    var video_ids = [
+        'RDi1IJTXYdI', // Hysteria
+        'fIgI8IGkJ-E', // Chop Suey
+        'umMmGgsxBWA', // Nyan Cat
+        'ZRISfN-cfmM', // Light my fire
+        'Uu8WP-Se90w', // Take on me
+        'fpcLxmSmlLQ', // Around the world
+        'HIEogKEWGlc', // The Zephyr Song
+        'L1O0wymSZsc', // Someday
+        'jDJ9dmZzQoY', // Everything counts
+        'kxJXqEOyJUg', // Rebel Rebel
+        'AEi7KKPHLgU', // I want you back
+        'Q-MrFLvpdXM', // Stolen Dance
+        'uFuIQwUUYks', // Popcorn
+        '49l6JKMwZAA', // Dance of the Sugar-Plum Fairy
+        'kL498EZnkm8', // Knights of Cydonia
+        'd8k7vWL7Lok', // Sir Duke
+        'STXbK0IjwW4', // Uprising
+    ];
+    var video_id = video_ids[Math.floor(Math.random() * video_ids.length)];
 //
     if (typeof(window.video_id) !== 'undefined')
         video_id = window.video_id;
@@ -1859,8 +1861,6 @@ function do_init_game(width, height, supersampling, data, start_level)
         game_options: {},
         music_ready: false
     };
-    if (window.play_sounds === true)
-        vars.play_sounds = true;
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
     vars.game_width = width;
