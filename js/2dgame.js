@@ -1855,6 +1855,10 @@ function initLevel(which, wait)
                     platform = true;
                     deadly = false;
                     span_start_x = x;
+                    if (platform_horizontal_line.length > 0 && platform_horizontal_line[platform_horizontal_line.length - 1] === true)
+                    {
+                        dx = vars.bad_guys[vars.bad_guys.length - 1].dx;
+                    }
                     platform_horizontal_line.push(true);
                 }
                 else
