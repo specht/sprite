@@ -72,6 +72,8 @@ states.push(['slide_down_left_1_2_top', 'Rutsche nach links unten (obere H&auml;
 states.push(['slide_down_left_1_2_bottom', 'Rutsche nach links unten (untere H&auml;lfte)']);
 states.push(['slide_down_right_1_2_top', 'Rutsche nach rechts unten (obere H&auml;lfte)']);
 states.push(['slide_down_right_1_2_bottom', 'Rutsche nach rechts unten (untere H&auml;lfte)']);
+states.push(['checkpoint', 'Checkpoint', 'Checkpoints']);
+states.push(['checkpoint_marked', 'Checkpoint (geschafft)']);
 states.push('');
 states.push(['trap_1', 'Falle 1', 'T&ouml;dliche Fallen']);
 states.push(['trap_1_actor', 'Spielfigur in Falle 1']);
@@ -704,7 +706,7 @@ function loadAnimations(info)
 function loadGameOptions(info)
 {
     console.log("Loading game options", info);
-    jQuery.each(['game_title', 'game_author', 'game_initial_lives'], function(_, x) {
+    jQuery.each(['game_title', 'game_author', 'game_initial_lives', 'game_max_lives'], function(_, x) {
         if (typeof(info[x]) !== 'undefined')
         {
             game_options[x] = info[x];
@@ -804,6 +806,7 @@ function initGameOptions()
     game_options['game_title'] = 'WIE SOLL DIESES SPIEL<br />NUR HEISSEN?';
     game_options['game_author'] = 'wem auch immer';
     game_options['game_initial_lives'] = '5';
+    game_options['game_max_lives'] = '10';
     jQuery.each(Object.keys(game_options), function(_, x) {
         $('#' + x).val(game_options[x]);
     });

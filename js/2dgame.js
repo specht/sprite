@@ -562,7 +562,20 @@ function ur_ded()
             vars.sprite_container.fadeOut(500);
         }, function() {
             vars.lives_left -= 1;
-            initLevel(vars.current_level);
+            vars.found_trap = null;
+            vars.dropped_out_of_level = false;
+            vars.hit_bad_guy = false;
+            if (vars.last_checkpoint_position == null)
+            {
+                vars.player_x = vars.initial_player_x;
+                vars.player_y = vars.initial_player_y;
+            }
+            else
+            {
+                vars.player_x = vars.last_checkpoint_position[0] * 24 + 12;
+                vars.player_y = vars.last_checkpoint_position[1] * 24 + 23;
+            }
+            //initLevel(vars.current_level);
             vars.sprite_container.fadeIn(500);
         });
     }
@@ -779,6 +792,16 @@ function _move_player_small(move_x, move_y)
                     }};
                 }
             }
+        }
+
+        // see if we found a checkpoint
+        if (applies(_get_field(pix, piy), 'checkpoint'))
+        {
+            _set_field(pix, piy, vars.checkpoint_marked_sprite);
+        }
+        if (applies(_get_field(pix, piy), 'checkpoint_marked'))
+        {
+            vars.last_checkpoint_position = [pix, piy];
         }
 
         // see if we found an invincibility shield
@@ -1777,6 +1800,7 @@ function initLevel(which, wait)
     vars.invincible_sprite_showing = -1;
     vars.current_level = which;
     vars.current_level_copy = jQuery.extend(true, {}, vars.levels[vars.current_level])
+    vars.last_checkpoint_position = null;
     var found_player = false;
     vars.vx = 0;
     vars.vy = 0;
@@ -1791,6 +1815,8 @@ function initLevel(which, wait)
             {
                 vars.player_x = x * 24 + 12;
                 vars.player_y = y * 24 + 23;
+                vars.initial_player_x = vars.player_x;
+                vars.initial_player_y = vars.player_y;
 //                 console.log('setting player at', vars.player_x, vars.player_y);
                 vars.player_sprite = cell;
                 row[x] = -1;
@@ -2017,6 +2043,7 @@ function do_init_game(width, height, supersampling, data, start_level)
         player_sprite_jump_left: -1,
         player_sprite_jump_right: -1,
         player_walk_phase: 0,
+        checkpoint_marked_sprite: -1,
         max_keys: 4,
         max_traps: 4,
         trap_actor_sprite: [],
@@ -2237,6 +2264,10 @@ function do_init_game(width, height, supersampling, data, start_level)
                 vars.lives_left = parseInt(info.game_initial_lives);
                 vars.max_lives = vars.lives_left;
             }
+            if (!isNaN(parseInt(info.game_max_lives)))
+            {
+                vars.max_lives = parseInt(info.game_max_lives);
+            }
         }
         else if (zipEntry.name == 'sprite_props.json')
         {
@@ -2276,6 +2307,8 @@ function do_init_game(width, height, supersampling, data, start_level)
             vars.player_sprite_jump_left = _;
         if ('actor_jump_right' in props)
             vars.player_sprite_jump_right = _;
+        if ('checkpoint_marked' in props)
+            vars.checkpoint_marked_sprite = _;
     });
     vars.hit_bad_guy_actor_sprite = vars.player_sprite_front;
     jQuery.each(vars.sprite_properties, function(_, props) {
