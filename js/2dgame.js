@@ -1809,6 +1809,8 @@ function initLevel(which, wait)
     });
     vars.bad_guys = [];
     jQuery.each(vars.current_level_copy.data, function(y, row) {
+        var platform_horizontal_line = [];
+        var platform_vertical_line = [];
         jQuery.each(row, function(x, cell) {
             if (applies(cell, 'actor_front') || applies(cell, 'actor_back') ||
                 applies(cell, 'actor_left') || applies(cell, 'actor_right'))
@@ -1829,6 +1831,7 @@ function initLevel(which, wait)
                 var type = '';
                 var platform = false;
                 var deadly = true;
+                var dx = (Math.random() < 0.5) ? -1 : 1;
                 if (applies(cell, 'bad_guy_moving'))
                 {
                     type = 'moving';
@@ -1846,13 +1849,19 @@ function initLevel(which, wait)
                 {
                     type = 'jumping';
                 }
-                else if (applies(cell, 'platform_horizontal'))
+                if (applies(cell, 'platform_horizontal'))
                 {
                     type = 'platform_horizontal';
                     platform = true;
                     deadly = false;
+                    span_start_x = x;
+                    platform_horizontal_line.push(true);
                 }
-                else if (applies(cell, 'platform_vertical'))
+                else
+                {
+                    platform_horizontal_line.push(false);
+                }
+                if (applies(cell, 'platform_vertical'))
                 {
                     type = 'platform_vertical';
                     platform = true;
@@ -1860,6 +1869,16 @@ function initLevel(which, wait)
                     if (typeof(vars.vertical_platforms_by_x[x]) === 'undefined')
                         vars.vertical_platforms_by_x[x] = [];
                     vars.vertical_platforms_by_x[x].push(vars.bad_guys.length);
+                    span_start_x = x;
+                    if (platform_vertical_line.length > 0 && platform_vertical_line[platform_vertical_line.length - 1] === true)
+                    {
+                        dx = vars.bad_guys[vars.bad_guys.length - 1].dx;
+                    }
+                    platform_vertical_line.push(true);
+                }
+                else
+                {
+                    platform_vertical_line.push(false);
                 }
                 var v = _get_field(x, y);
                 info = {type: type, x: x * 24 + 12, y: y * 24 + 23, sprite_id: v, platform: platform, deadly: deadly};
@@ -1872,7 +1891,7 @@ function initLevel(which, wait)
                 var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
                 info.sprite_div.css('background-position', value);
                 info.sprite_div.css('background-image', $(vars.player_sprite_overlay_div).css('background-image'));
-                info.dx = (Math.random() < 0.5) ? -1 : 1;
+                info.dx = dx;
 
                 vars.bad_guys.push(info);
                 _set_field(x, y, -1);
