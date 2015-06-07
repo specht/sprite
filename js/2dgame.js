@@ -914,6 +914,24 @@ function bad_guy_turn_around(bix, biy)
     return false;
 }
 
+function try_lock_to_bad_guy()
+{
+    if (vars.locked_to_bad_guy !== null)
+        return;
+    jQuery.each(vars.bad_guys, function(_, bad_guy) {
+        if (bad_guy.platform === true)
+        {
+            if (vars.player_x >= bad_guy.x - 12 && vars.player_x <= bad_guy.x + 12 &&
+                vars.player_y >= bad_guy.y - 24 && vars.player_y <= bad_guy.y)
+            {
+                vars.locked_to_bad_guy = _;
+                vars.player_x = bad_guy.x;
+                vars.player_y = bad_guy.y - 24;
+            }
+        }
+    });
+}
+
 function game_logic_loop()
 {
     if (vars.showing_card != 0 && (!vars.showing_card_but_contine_animation))
@@ -958,7 +976,8 @@ function game_logic_loop()
         vars.jump_ax = 0.0;
     }
 
-    if (!(applies(_get_field(pix, piy), 'can_climb')) &&
+    if ((vars.locked_to_bad_guy === null) &&
+        !(applies(_get_field(pix, piy), 'can_climb')) &&
         !(applies(_get_field(pix, piy + 1), 'can_climb')) &&
         !(applies(_get_field(pix, piy), 'can_stand_on') && field_has_silhouette(pix, piy)) &&
         !(applies(_get_field(pix, piy + 1), 'can_stand_on')))
@@ -966,6 +985,7 @@ function game_logic_loop()
     {
 //         console.log('falling down');
         move_player_small(0, 12);
+        try_lock_to_bad_guy();
     }
     else if (vars.ay < -0.0001)
     {
@@ -988,6 +1008,7 @@ function game_logic_loop()
             {
 //                 console.log('dropping to bottom');
                 vars.player_y = Math.floor(vars.player_y / 24) * 24 + 23;
+                try_lock_to_bad_guy();
             }
         }
     }
@@ -1050,16 +1071,21 @@ function game_logic_loop()
     // move bad guys
     jQuery.each(vars.bad_guys, function(_, baddie) {
         // see if we hit a bad guy
-        if (!vars.invincible)
+        if (_ !== vars.locked_to_bad_guy)
         {
-            var dx = vars.player_x - baddie.x;
-            var dy = vars.player_y - baddie.y;
-            if (Math.abs(dx) <= 12 && Math.abs(dy) < 24)
+            // we can't be hit by the bad guy we're standing on
+            if (!vars.invincible)
             {
-                if (vars.hit_bad_guy === false)
+                var dx = vars.player_x - baddie.x;
+                var dy = vars.player_y - baddie.y;
+                if (Math.abs(dx) <= 12 && Math.abs(dy) < 24)
                 {
-                    ur_ded();
-                    vars.hit_bad_guy = true;
+                    console.log(vars.player_x, vars.player_y, baddie.x, baddie.y);
+                    if (vars.hit_bad_guy === false)
+                    {
+                        ur_ded();
+                        vars.hit_bad_guy = true;
+                    }
                 }
             }
         }
@@ -1091,6 +1117,20 @@ function game_logic_loop()
         if (!(applies(_get_field(bix, biy + 1), 'can_stand_on') && ((baddie.y % 24) == 23)))
         {
             baddie.y += 6;
+        }
+        if (vars.locked_to_bad_guy !== null)
+        {
+            if (vars.player_y == vars.bad_guys[vars.locked_to_bad_guy].y - 24 &&
+                vars.player_x > vars.bad_guys[vars.locked_to_bad_guy].x - 6 &&
+                vars.player_x < vars.bad_guys[vars.locked_to_bad_guy].x + 6)
+            {
+                vars.player_x = vars.bad_guys[vars.locked_to_bad_guy].x;
+                vars.player_y = vars.bad_guys[vars.locked_to_bad_guy].y - 24;
+            }
+            else
+            {
+                vars.locked_to_bad_guy = null;
+            }
         }
     });
 
@@ -1170,7 +1210,8 @@ function game_logic_loop()
             delete vars.pressed_keys[16];
             if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_stand_on') ||
                 applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_stand_on') ||
-                applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_climb')
+                applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24) + 1), 'can_climb') ||
+                vars.locked_to_bad_guy !== null
             )
             {
                 vars.ay = -40.0;
@@ -1653,12 +1694,19 @@ function initLevel(which, wait)
                 row[x] = -1;
                 found_player = true;
             }
-            if (applies(cell, 'bad_guy_moving') || applies(cell, 'bad_guy_hovering') || applies(cell, 'bad_guy_jumping'))
+            if (applies(cell, 'bad_guy_moving') || applies(cell, 'bad_guy_hovering') ||
+                applies(cell, 'bad_guy_jumping') || applies(cell, 'bad_guy_moving_platform'))
             {
                 var type = '';
+                var platform = false;
                 if (applies(cell, 'bad_guy_moving'))
                 {
                     type = 'moving';
+                }
+                if (applies(cell, 'bad_guy_moving_platform'))
+                {
+                    type = 'moving';
+                    platform = true;
                 }
                 else if (applies(cell, 'bad_guy_hovering'))
                 {
@@ -1669,7 +1717,7 @@ function initLevel(which, wait)
                     type = 'jumping';
                 }
                 var v = _get_field(x, y);
-                info = {type: type, x: x * 24 + 12, y: y * 24 + 23, sprite_id: v};
+                info = {type: type, x: x * 24 + 12, y: y * 24 + 23, sprite_id: v, platform: platform};
                 var sprite = $('<div>').addClass('sd');
                 vars.sprite_container.append(sprite);
                 info.sprite_div = sprite;
@@ -1777,6 +1825,7 @@ function init_game(width, height, supersampling, data, start_level)
         'STXbK0IjwW4', // Uprising
     ];
     var video_id = video_ids[Math.floor(Math.random() * video_ids.length)];
+    video_id = '';
 //
     if (typeof(window.video_id) !== 'undefined')
         video_id = window.video_id;
@@ -1809,6 +1858,7 @@ function do_init_game(width, height, supersampling, data, start_level)
     if (typeof(start_level) === 'undefined')
         start_level = 0;
     vars = {
+        locked_to_bad_guy: null,
         animation_phase: 0,
         bad_guys: [],
         sprite_animations: [],
@@ -1861,6 +1911,7 @@ function do_init_game(width, height, supersampling, data, start_level)
         game_options: {},
         music_ready: false
     };
+    vars.play_sounds = false;
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
     vars.game_width = width;
