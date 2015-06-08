@@ -13,42 +13,45 @@ files = []
 Dir["autosaves/*.hs"].sort do |a, b|
     File::mtime(b) <=> File::mtime(a)
 end.each do |path|
-    tag = File::basename(path).sub('.hs', '')
-    game_title = '(unbekannt)'
-    game_author = '(unbekannt)'
-    entry = {}
-    if File::exists?("cache/#{tag}.json")
-        File::open("cache/#{tag}.json", 'r') do |f|
-            entry = JSON.parse(f.read())
-        end
-    else
-        data = Base64.decode64(File::read(path))
-        Zip::Archive.open_buffer(data) do |archive|
-            archive.each do |entry|
-                if entry.name == 'game.json'
-                    begin
-                        game_json = entry.read.force_encoding('UTF-8')
-                        game = JSON.parse(game_json)
-                        game_title = game['game_title']
-                        game_author = game['game_author']
-                        game_title.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
-                        game_author.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
-                    rescue ArgumentError
+    begin
+        tag = File::basename(path).sub('.hs', '')
+        game_title = '(unbekannt)'
+        game_author = '(unbekannt)'
+        entry = {}
+        if File::exists?("cache/#{tag}.json")
+            File::open("cache/#{tag}.json", 'r') do |f|
+                entry = JSON.parse(f.read())
+            end
+        else
+            data = Base64.decode64(File::read(path))
+            Zip::Archive.open_buffer(data) do |archive|
+                archive.each do |entry|
+                    if entry.name == 'game.json'
+                        begin
+                            game_json = entry.read.force_encoding('UTF-8')
+                            game = JSON.parse(game_json)
+                            game_title = game['game_title']
+                            game_author = game['game_author']
+                            game_title.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+                            game_author.encode!('UTF-8', 'binary', invalid: :replace, undef: :replace, replace: '')
+                        rescue ArgumentError
+                        end
                     end
                 end
             end
+            entry = {
+                :game_title => game_title,
+                :game_author => game_author
+            }
+            File::open("cache/#{tag}.json", 'w') do |f|
+                f.write entry.to_json
+            end
         end
-        entry = {
-            :game_title => game_title,
-            :game_author => game_author
-        }
-        File::open("cache/#{tag}.json", 'w') do |f|
-            f.write entry.to_json
-        end
+        entry[:tag] = tag
+        entry[:mtime] = File::mtime(path)
+        files << entry
+    rescue StandardError => e
     end
-    entry[:tag] = tag
-    entry[:mtime] = File::mtime(path)
-    files << entry
 end
 
 response = {:files => files}
