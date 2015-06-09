@@ -1993,7 +1993,7 @@ function init_game(width, height, supersampling, data, start_level)
         'STXbK0IjwW4', // Uprising
     ];
     var video_id = video_ids[Math.floor(Math.random() * video_ids.length)];
-    video_id = '';
+    // video_id = '';
 //
     if (typeof(window.video_id) !== 'undefined')
         video_id = window.video_id;
