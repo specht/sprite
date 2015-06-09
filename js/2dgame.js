@@ -1662,6 +1662,7 @@ function _keydown(keyCode)
             key_down: vars.game_logic_loop_counter,
             key_delay_passed: vars.game_logic_loop_counter + 5
         };
+        vars.key_events.push([1, keyCode, vars.game_logic_loop_counter]);
     }
 }
 
@@ -1669,6 +1670,7 @@ function _keyup(keyCode)
 {
     delete vars.pressed_keys[keyCode];
     delete vars.showing_card_pressed_keys[keyCode];
+    vars.key_events.push([0, keyCode, vars.game_logic_loop_counter]);
 }
 
 function _clear_keys(e)
@@ -1790,6 +1792,7 @@ function initLevel(which, wait)
         vars.sprite_container.hide();
     vars.sounds['invincible'].pause();
     vars.animation_phase = 0;
+    vars.game_logic_loop_counter = 0;
     vars.invincible = false;
     vars.invincible_flicker = false;
     vars.dropped_out_of_level = false;
@@ -1801,6 +1804,7 @@ function initLevel(which, wait)
     vars.current_level = which;
     vars.current_level_copy = jQuery.extend(true, {}, vars.levels[vars.current_level])
     vars.last_checkpoint_position = null;
+    vars.key_events = [];
     var found_player = false;
     vars.vx = 0;
     vars.vy = 0;
