@@ -2082,7 +2082,7 @@ function do_init_game(width, height, supersampling, data, start_level)
         game_options: {},
         music_ready: false
     };
-    vars.play_sounds = false;
+    //vars.play_sounds = false;
     if (typeof(supersampling) == 'undefined')
         supersampling = 4;
     vars.game_width = width;
