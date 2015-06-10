@@ -1808,6 +1808,10 @@ function initLevel(which, wait)
         $(x.sprite_div).remove();
     });
     vars.bad_guys = [];
+    vars.vertical_platforms_by_x = [];
+    vars.locked_to_bad_guy = null;
+    vars.standing_on_vertical_platform = false;
+
     jQuery.each(vars.current_level_copy.data, function(y, row) {
         var platform_horizontal_line = [];
         var platform_vertical_line = [];
