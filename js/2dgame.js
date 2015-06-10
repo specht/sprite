@@ -1825,6 +1825,22 @@ function initLevel(which, wait)
                 vars.initial_player_y = vars.player_y;
 //                 console.log('setting player at', vars.player_x, vars.player_y);
                 vars.player_sprite = cell;
+                if (vars.player_sprite_front == -1)
+                    vars.player_sprite_front = cell;
+                if (vars.player_sprite_back == -1)
+                    vars.player_sprite_back = cell;
+                if (vars.player_sprite_left == -1)
+                    vars.player_sprite_left = cell;
+                if (vars.player_sprite_right == -1)
+                    vars.player_sprite_right = cell;
+                if (vars.player_sprite_walk_left == -1)
+                    vars.player_sprite_walk_left = cell;
+                if (vars.player_sprite_walk_right == -1)
+                    vars.player_sprite_walk_right = cell;
+                if (vars.player_sprite_jump_left == -1)
+                    vars.player_sprite_jump_left = cell;
+                if (vars.player_sprite_jump_right == -1)
+                    vars.player_sprite_jump_right = cell;
                 row[x] = -1;
                 found_player = true;
             }
