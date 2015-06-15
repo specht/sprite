@@ -1997,20 +1997,20 @@ function init_game(width, height, supersampling, data, start_level)
         'RDi1IJTXYdI', // Hysteria
         'fIgI8IGkJ-E', // Chop Suey
         'umMmGgsxBWA', // Nyan Cat
-        'ZRISfN-cfmM', // Light my fire
+//         'ZRISfN-cfmM', // Light my fire
         'Uu8WP-Se90w', // Take on me
         'fpcLxmSmlLQ', // Around the world
         'HIEogKEWGlc', // The Zephyr Song
-        'L1O0wymSZsc', // Someday
+//         'L1O0wymSZsc', // Someday
         'jDJ9dmZzQoY', // Everything counts
-        'kxJXqEOyJUg', // Rebel Rebel
+//         'kxJXqEOyJUg', // Rebel Rebel
         'AEi7KKPHLgU', // I want you back
         'Q-MrFLvpdXM', // Stolen Dance
         'uFuIQwUUYks', // Popcorn
-        '49l6JKMwZAA', // Dance of the Sugar-Plum Fairy
+//         '49l6JKMwZAA', // Dance of the Sugar-Plum Fairy
         'kL498EZnkm8', // Knights of Cydonia
-        'd8k7vWL7Lok', // Sir Duke
-        'STXbK0IjwW4', // Uprising
+//         'd8k7vWL7Lok', // Sir Duke
+//         'STXbK0IjwW4', // Uprising
     ];
     var video_id = video_ids[Math.floor(Math.random() * video_ids.length)];
     // video_id = '';
