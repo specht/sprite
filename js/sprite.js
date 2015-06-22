@@ -1469,6 +1469,47 @@ $().ready(function() {
             level_number.addClass('inactive');
 
         $('#level_lineup').append(level_indicator);
+
+        level_indicator.draggable({
+            containment: 'parent',
+            stack: '#level_lineup',
+            delay: 100,
+            revert: true
+        });
+        level_indicator.droppable({ drop: function(event, ui) {
+            var draggable = ui.draggable;
+            var droppable = $(event.target);
+            var aid = new Number(draggable.attr('id').replace('level_', '')).valueOf();
+            var bid = new Number(droppable.attr('id').replace('level_', '')).valueOf();
+            console.log('swap levels', aid, bid);
+            var temp = level_props[aid];
+            level_props[aid] = level_props[bid];
+            if (typeof(level_props[aid]) === 'undefined')
+                delete level_props[aid];
+            level_props[bid] = temp;
+            if (typeof(level_props[bid]) === 'undefined')
+                delete level_props[bid];
+            temp = level_use[aid];
+            level_use[aid] = level_use[bid];
+            if (typeof(level_use[aid]) === 'undefined')
+                delete level_use[aid];
+            level_use[bid] = temp;
+            if (typeof(level_use[bid]) === 'undefined')
+                delete level_use[bid];
+            temp = level[aid];
+            level[aid] = level[bid];
+            if (typeof(level[aid]) === 'undefined')
+                delete level[aid];
+            level[bid] = temp;
+            if (typeof(level[bid]) === 'undefined')
+                delete level[bid];
+//             swap_sprites_in_all_levels(aid, bid);
+//             set_current_level(bid);
+//             setCurrentSprite(droppable.data('level_id'));
+            set_current_level(aid);
+            set_current_level(bid);
+        }});
+
     }
 
     set_current_level(0);
