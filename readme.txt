@@ -1,5 +1,6 @@
 Springen
 -------------------------------------
+WICHTIG: runterfallende Platten wieder hinsetzen, wenn man stirbt
 Plan für Computerspieleabend und Ende
 Level: background color (rectangles!) und benennen!
 unverwundbar, Sprite overlay (kann animiert sein, blinkt am Ende)

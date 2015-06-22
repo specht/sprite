@@ -174,7 +174,8 @@ function render()
     if (mod(vars.player_x, 24) > 15 && applies(_get_field(pix + 1, piy), 'is_solid') && !field_has_silhouette(pix + 1, piy))
         player_shift_x = - 8 + (23 - mod(vars.player_x, 24));
 
-    $('.sprite').css('background-position', '-' + vars.sprite_size + 'px -' + 0 + 'px');
+    // TODO: Uncommented this because it didn't seem to have any effect... um.
+//     $('.sprite').css('background-position', '-' + vars.sprite_size + 'px -' + 0 + 'px');
     var need_to_move_sprite_divs =
         (vars.current_sprite_offset_x != mod(dx, 24)) ||
         (vars.current_sprite_offset_y != mod(dy, 24));
@@ -187,7 +188,7 @@ function render()
         {
             randomize_count += x + y;
             var tile = vars.sprite_div[y][x];
-            if (need_to_move_sprite_divs)
+            if (need_to_move_sprite_divs || vars.need_to_move_sprite_divs_in_previous_iteration)
             {
                 tile.css('left', Math.floor((x * 24 - mod(dx, 24)) * vars.sprite_size / 24) + 'px');
                 tile.css('top', Math.floor((y * 24 - mod(dy, 24)) * vars.sprite_size / 24) + 'px');
@@ -219,6 +220,7 @@ function render()
                 tile.css('width', Math.floor(vars.field_offset[poskey].w * vars.sprite_size / 24) + 'px');
                 tile.css('height', Math.floor(vars.field_offset[poskey].h * vars.sprite_size / 24) + 'px');
                 tile.css('opacity', vars.field_offset[poskey].alpha);
+                console.log(vars.field_offset[poskey]);
 //                 fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
 //                 draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
 //                                     y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
@@ -270,6 +272,7 @@ function render()
             }
         }
     }
+    vars.need_to_move_sprite_divs_in_previous_iteration = need_to_move_sprite_divs;
 
     var use_sprite = vars.player_sprite;
     if (vars.jumping)
@@ -565,6 +568,30 @@ function ur_ded()
             vars.found_trap = null;
             vars.dropped_out_of_level = false;
             vars.hit_bad_guy = false;
+            // restore all crumbling blocks to their uncrumbled state
+            for (var y = 0; y < vars.current_level_copy.height; y++)
+            {
+                for (var x = 0; x < vars.current_level_copy.width; x++)
+                {
+                    if (applies(vars.levels[vars.current_level].data[y][x], 'crumbles'))
+                    {
+                        vars.current_level_copy.data[y][x] = vars.levels[vars.current_level].data[y][x];
+                        var poskey = '' + x + '/' + y;
+                        if (poskey in vars.field_offset)
+                            delete vars.field_offset[poskey];
+                        if (poskey in vars.animations && vars.animations[poskey].type === 'crumble')
+                            delete vars.animations[poskey];
+                    }
+                }
+            }
+            // bust cache that describes which sprite is shown at which position
+            if (typeof(vars.display_sprite) !== 'undefined' && vars.display_sprite.length > 0)
+            {
+                for (var y = 0; y < 16; y++)
+                    for (var x = 0; x < 29; x++)
+                        vars.display_sprite[y][x] = -2;
+            }
+            vars.need_to_move_sprite_divs_in_previous_iteration = true;
             if (vars.last_checkpoint_position == null)
             {
                 vars.player_x = vars.initial_player_x;
@@ -1789,6 +1816,7 @@ function initLevel(which, wait)
     if (wait)
         vars.sprite_container.hide();
     vars.sounds['invincible'].pause();
+    vars.need_to_move_sprite_divs_in_previous_iteration = true;
     vars.animation_phase = 0;
     vars.invincible = false;
     vars.invincible_flicker = false;
@@ -2046,6 +2074,7 @@ function do_init_game(width, height, supersampling, data, start_level)
     if (typeof(start_level) === 'undefined')
         start_level = 0;
     vars = {
+        need_to_move_sprite_divs_in_previous_iteration: true,
         vertical_platforms_by_x: [],
         locked_to_bad_guy: null,
         standing_on_vertical_platform: false,
