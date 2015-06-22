@@ -1893,7 +1893,7 @@ function initLevel(which, wait)
                 var deadly = true;
                 var dx = (Math.random() < 0.5) ? -1 : 1;
                 var platform_leader = 0;
-                var connected_platforms = null;
+                var connected_platforms = [];
                 if (applies(cell, 'bad_guy_moving'))
                 {
                     type = 'moving';
