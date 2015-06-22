@@ -385,7 +385,7 @@ function render()
     $('#lives_indicator').html('' + vars.lives_left + ' x ');
     for (var i = 0; i < vars.max_keys; i++)
     {
-        $('#key_indicator_' + i).css('opacity', ((vars.got_key[i] === true) ? 1.0 : 0.4));
+        $('#key_indicator_' + i).css('opacity', ((vars.got_key[i] === true) ? 1.0 : 0.5));
     }
 
     return;
@@ -1213,48 +1213,28 @@ function game_logic_loop()
         }
         if (baddie.type === 'platform_horizontal')
         {
-            if (baddie.dx > 0)
+            baddie.x += baddie.dx;
+            var bix = Math.floor(((baddie.dx > 0) ? (baddie.x + 12) : (baddie.x - 12)) / 24);
+            var biy = Math.floor(baddie.y / 24);
+            baddie.x -= baddie.dx;
+            if (platform_turnaround(bix, biy))
             {
-                baddie.x += baddie.dx;
-                var bix = Math.floor((baddie.x + 12) / 24);
-                var biy = Math.floor(baddie.y / 24);
-                if (platform_turnaround(bix, biy))
-                {
-                    baddie.dx *= -1;
-                }
-            }
-            else if (baddie.dx < 0)
-            {
-                baddie.x += baddie.dx;
-                var bix = Math.floor((baddie.x - 12) / 24);
-                var biy = Math.floor(baddie.y / 24);
-                if (platform_turnaround(bix, biy))
-                {
-                    baddie.dx *= -1;
-                }
+                jQuery.each(vars.bad_guys[baddie.platform_leader].connected_platforms, function(_, platform) {
+                    vars.bad_guys[platform].dx *= -1;
+                });
             }
         }
         else if (baddie.type === 'platform_vertical')
         {
-            if (baddie.dx > 0)
+            baddie.y += baddie.dx;
+            var bix = Math.floor(baddie.x / 24);
+            var biy = Math.floor(((baddie.dx > 0) ? (baddie.y) : (baddie.y - 48)) / 24);
+            baddie.y -= baddie.dx;
+            if (platform_turnaround(bix, biy))
             {
-                baddie.y += baddie.dx;
-                var bix = Math.floor(baddie.x / 24);
-                var biy = Math.floor((baddie.y) / 24);
-                if (platform_turnaround(bix, biy))
-                {
-                    baddie.dx *= -1;
-                }
-            }
-            else if (baddie.dx < 0)
-            {
-                baddie.y += baddie.dx;
-                var bix = Math.floor(baddie.x / 24);
-                var biy = Math.floor((baddie.y - 48) / 24);
-                if (platform_turnaround(bix, biy))
-                {
-                    baddie.dx *= -1;
-                }
+                jQuery.each(vars.bad_guys[baddie.platform_leader].connected_platforms, function(_, platform) {
+                    vars.bad_guys[platform].dx *= -1;
+                });
             }
         }
         else
@@ -1288,6 +1268,17 @@ function game_logic_loop()
             {
                 baddie.y += 6;
             }
+        }
+    });
+    // actually move platforms
+    jQuery.each(vars.bad_guys, function(_, baddie) {
+        if (baddie.type === 'platform_horizontal')
+        {
+            baddie.x += baddie.dx;
+        }
+        else if (baddie.type === 'platform_vertical')
+        {
+            baddie.y += baddie.dx;
         }
     });
     if (vars.locked_to_bad_guy !== null)
@@ -1901,6 +1892,8 @@ function initLevel(which, wait)
                 var platform = false;
                 var deadly = true;
                 var dx = (Math.random() < 0.5) ? -1 : 1;
+                var platform_leader = 0;
+                var connected_platforms = null;
                 if (applies(cell, 'bad_guy_moving'))
                 {
                     type = 'moving';
@@ -1926,7 +1919,14 @@ function initLevel(which, wait)
                     span_start_x = x;
                     if (platform_horizontal_line.length > 0 && platform_horizontal_line[platform_horizontal_line.length - 1] === true)
                     {
-                        dx = vars.bad_guys[vars.bad_guys.length - 1].dx;
+                        platform_leader = vars.bad_guys.length - 1;
+                        dx = vars.bad_guys[platform_leader].dx;
+                        vars.bad_guys[platform_leader].connected_platforms.push(vars.bad_guys.length);
+                    }
+                    else
+                    {
+                        platform_leader = vars.bad_guys.length;
+                        connected_platforms = [platform_leader];
                     }
                     platform_horizontal_line.push(true);
                 }
@@ -1945,7 +1945,14 @@ function initLevel(which, wait)
                     span_start_x = x;
                     if (platform_vertical_line.length > 0 && platform_vertical_line[platform_vertical_line.length - 1] === true)
                     {
-                        dx = vars.bad_guys[vars.bad_guys.length - 1].dx;
+                        platform_leader = vars.bad_guys.length - 1;
+                        dx = vars.bad_guys[platform_leader].dx;
+                        vars.bad_guys[platform_leader].connected_platforms.push(vars.bad_guys.length);
+                    }
+                    else
+                    {
+                        platform_leader = vars.bad_guys.length;
+                        connected_platforms = [platform_leader];
                     }
                     platform_vertical_line.push(true);
                 }
@@ -1954,7 +1961,9 @@ function initLevel(which, wait)
                     platform_vertical_line.push(false);
                 }
                 var v = _get_field(x, y);
-                info = {type: type, x: x * 24 + 12, y: y * 24 + 23, sprite_id: v, platform: platform, deadly: deadly};
+                info = {type: type, x: x * 24 + 12, y: y * 24 + 23, sprite_id: v, platform: platform, deadly: deadly,
+                    platform_leader: platform_leader, connected_platforms: connected_platforms
+                };
                 var sprite = $('<div>').addClass('sd');
                 vars.sprite_container.append(sprite);
                 info.sprite_div = sprite;
