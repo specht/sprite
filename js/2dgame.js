@@ -369,7 +369,7 @@ function render()
 
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
-    $('#title_left').html("Level: " + (vars.current_level + 1) + "   Punkte: " + vars.level_points);
+    $('#title_left').html("Level: " + (vars.display_level_number_for_level[vars.current_level]) + "   Punkte: " + vars.level_points);
     $('#title_right').html("Leben: " + vars.lives_left);
 
     return;
@@ -2014,7 +2014,7 @@ function initLevel(which, wait)
         var player = $('#yt')[0];
         if (typeof(player) !== 'undefined' && vars.play_sounds)
             player.playVideo();
-        show_card("Level " + (which + 1), "Dr&uuml;ck eine Taste...", 500, 500, false, null, null);
+        show_card("Level " + vars.display_level_number_for_level[which], "Dr&uuml;ck eine Taste...", 500, 500, false, null, null);
     }
 }
 
@@ -2129,7 +2129,8 @@ function do_init_game(width, height, supersampling, data, start_level)
         lives_left: 5,
         max_lives: 5,
         game_options: {},
-        music_ready: false
+        music_ready: false,
+        display_level_number_for_level: {}
     };
     vars.play_sounds = false;
     if (typeof(supersampling) == 'undefined')
@@ -2404,7 +2405,16 @@ function do_init_game(width, height, supersampling, data, start_level)
 //         canvas.fadeIn();
     switchPane('play', true);
     init();
-    for (var i = 0; i< vars.levels.length; i++)
+    var c = 1;
+    for (var i = 0; i < vars.levels.length; i++)
+    {
+        if (vars.levels[i].use)
+        {
+            vars.display_level_number_for_level[i] = c;
+            c += 1;
+        }
+    }
+    for (var i = 0; i < vars.levels.length; i++)
     {
         if (vars.levels[vars.current_level].use)
             break;
