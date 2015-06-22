@@ -848,7 +848,7 @@ function _move_player_small(move_x, move_y)
         }
 
         // see if we found an invincibility shield
-        if (applies(_get_field(pix, piy), 'invincible'))
+        if (applies(_get_field(pix, piy), 'invincible') || applies(_get_field(pix, piy), 'baddie_be_gone'))
         {
             var anim_key = '' + (pix) + '/' + piy;
             if (!(anim_key in vars.animations))
@@ -1196,7 +1196,6 @@ function game_logic_loop()
         // see if we hit a bad guy
         if (_ !== vars.locked_to_bad_guy)
         {
-            // we can't be hit by the bad guy we're standing on
             if ((!vars.invincible) && baddie.deadly)
             {
                 var dx = vars.player_x - baddie.x;
@@ -1208,6 +1207,17 @@ function game_logic_loop()
                         ur_ded();
                         vars.hit_bad_guy = true;
                     }
+                }
+            }
+            else if (applies(vars.invincible_sprite, 'baddie_be_gone') && baddie.deadly)
+            {
+                var dx = vars.player_x - baddie.x;
+                var dy = vars.player_y - baddie.y;
+                if (Math.abs(dx) <= 12 && Math.abs(dy) < 24)
+                {
+                    baddie.type = 'dead';
+                    baddie.deadly = false;
+                    baddie.sprite_div.fadeOut(1000);
                 }
             }
         }
@@ -1919,7 +1929,7 @@ function initLevel(which, wait)
                     span_start_x = x;
                     if (platform_horizontal_line.length > 0 && platform_horizontal_line[platform_horizontal_line.length - 1] === true)
                     {
-                        platform_leader = vars.bad_guys.length - 1;
+                        platform_leader = vars.bad_guys[vars.bad_guys[vars.bad_guys.length - 1].platform_leader].platform_leader;
                         dx = vars.bad_guys[platform_leader].dx;
                         vars.bad_guys[platform_leader].connected_platforms.push(vars.bad_guys.length);
                     }
@@ -1945,7 +1955,7 @@ function initLevel(which, wait)
                     span_start_x = x;
                     if (platform_vertical_line.length > 0 && platform_vertical_line[platform_vertical_line.length - 1] === true)
                     {
-                        platform_leader = vars.bad_guys.length - 1;
+                        platform_leader = vars.bad_guys[vars.bad_guys[vars.bad_guys.length - 1].platform_leader].platform_leader;
                         dx = vars.bad_guys[platform_leader].dx;
                         vars.bad_guys[platform_leader].connected_platforms.push(vars.bad_guys.length);
                     }

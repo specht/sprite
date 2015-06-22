@@ -88,6 +88,7 @@ states.push(['bad_guy_hovering', 'Schwebender Gegner']);
 states.push(['bad_guy_moving_platform', 'Plattform-Gegner']);
 //states.push(['bad_guy_jumping', 'Springender Gegner']);
 states.push(['bad_guy_hit_actor', 'Spielfigur tot']);
+states.push(['baddie_be_gone', 'Gegner, verschwinde!']);
 states.push(['platform_horizontal', 'Plattform links/rechts', 'Plattformen']);
 states.push(['platform_vertical', 'Plattform hoch/runter']);
 states.push(['invincible', 'Schutzschild', 'Power ups & Level']);
