@@ -1503,9 +1503,6 @@ $().ready(function() {
             level[bid] = temp;
             if (typeof(level[bid]) === 'undefined')
                 delete level[bid];
-//             swap_sprites_in_all_levels(aid, bid);
-//             set_current_level(bid);
-//             setCurrentSprite(droppable.data('level_id'));
             set_current_level(aid);
             set_current_level(bid);
         }});
