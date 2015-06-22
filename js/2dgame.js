@@ -8,6 +8,13 @@ function mod(m, n) {
 
 var vars = {};
 
+String.prototype.lpad = function(padString, length) {
+    var str = this;
+    while (str.length < length)
+        str = padString + str;
+    return str;
+}
+
 function mark_dirty(x, y)
 {
     var ydirty = y - Math.floor(vars.vy / 24);
@@ -220,7 +227,6 @@ function render()
                 tile.css('width', Math.floor(vars.field_offset[poskey].w * vars.sprite_size / 24) + 'px');
                 tile.css('height', Math.floor(vars.field_offset[poskey].h * vars.sprite_size / 24) + 'px');
                 tile.css('opacity', vars.field_offset[poskey].alpha);
-                console.log(vars.field_offset[poskey]);
 //                 fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
 //                 draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
 //                                     y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
@@ -369,8 +375,18 @@ function render()
 
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
-    $('#title_left').html("Level: " + (vars.display_level_number_for_level[vars.current_level]) + "   Punkte: " + vars.level_points);
-    $('#title_right').html("Leben: " + vars.lives_left);
+    var passed_seconds = Math.floor((update_rate * vars.level_time_elapsed) / 1000.0);
+    var passed_minutes = Math.floor(passed_seconds / 60.0);
+    passed_seconds -= passed_minutes * 60;
+    passed_minutes = ('' + passed_minutes);
+    passed_seconds = ('' + passed_seconds).lpad('0', 2);
+
+    $('#title_left').html("Level: " + (vars.display_level_number_for_level[vars.current_level]) + "   Punkte: " + vars.level_points + "   Zeit: " + passed_minutes + ':' + passed_seconds);
+    $('#lives_indicator').html('' + vars.lives_left + ' x ');
+    for (var i = 0; i < vars.max_keys; i++)
+    {
+        $('#key_indicator_' + i).css('opacity', ((vars.got_key[i] === true) ? 1.0 : 0.4));
+    }
 
     return;
 
@@ -1015,6 +1031,10 @@ function game_logic_loop()
     if (vars.showing_card != 0 && (!vars.showing_card_but_contine_animation))
         return;
     vars.animation_phase++;
+    if (vars.showing_card === 0 || !vars.showing_card_but_contine_animation)
+    {
+        vars.level_time_elapsed += 1;
+    }
 
     vars.player_walk_phase = (vars.player_walk_phase + 1) % 8;
 
@@ -1818,6 +1838,7 @@ function initLevel(which, wait)
     vars.sounds['invincible'].pause();
     vars.need_to_move_sprite_divs_in_previous_iteration = true;
     vars.animation_phase = 0;
+    vars.level_time_elapsed = 0;
     vars.invincible = false;
     vars.invincible_flicker = false;
     vars.dropped_out_of_level = false;
@@ -1992,6 +2013,25 @@ function initLevel(which, wait)
             row.push(0);
         vars.reachable_blocks.push(row);
     }
+    var found_key = {};
+    for (var y = 0; y < vars.current_level_copy.height; y++)
+    {
+        for (var x = 0; x < vars.current_level_copy.width; x++)
+        {
+            for (var i = 0; i < vars.max_keys; i++)
+            {
+                if (applies(vars.current_level_copy.data[y][x], 'key_' + (i + 1)))
+                {
+                    found_key[i] = true;
+                }
+            }
+        }
+    }
+    console.log(found_key);
+    for (var i = 0; i < vars.max_keys; i++)
+    {
+        $('#key_indicator_' + i).css('display', (found_key[i] === true) ? 'inline-block' : 'none');
+    }
 
     // reset all keys
     for (var i = 0; i < vars.max_keys; i++)
@@ -2130,7 +2170,8 @@ function do_init_game(width, height, supersampling, data, start_level)
         max_lives: 5,
         game_options: {},
         music_ready: false,
-        display_level_number_for_level: {}
+        display_level_number_for_level: {},
+        key_sprite: {}
     };
     vars.play_sounds = false;
     if (typeof(supersampling) == 'undefined')
@@ -2382,6 +2423,11 @@ function do_init_game(width, height, supersampling, data, start_level)
             vars.player_sprite_jump_right = _;
         if ('checkpoint_marked' in props)
             vars.checkpoint_marked_sprite = _;
+        for (var i = 0; i < vars.max_keys; i++)
+        {
+            if (('key_' + (i + 1)) in props)
+                vars.key_sprite[i] = _;
+        }
     });
     vars.hit_bad_guy_actor_sprite = vars.player_sprite_front;
     jQuery.each(vars.sprite_properties, function(_, props) {
@@ -2397,6 +2443,43 @@ function do_init_game(width, height, supersampling, data, start_level)
                 vars.trap_actor_sprite[i] = _;
         }
     });
+
+    for (var i = 0; i < vars.max_keys; i++)
+    {
+        var sprite = $('<div>').addClass('sd');
+        var v = vars.key_sprite[i];
+        if (typeof(v) === 'undefined')
+        {
+        }
+        else
+        {
+            var sprite_x = v % 8;
+            var sprite_y = Math.floor(v / 8);
+            var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+            sprite.css('display', 'inline-block');
+            sprite.css('position', 'static');
+            sprite.css('background-position', value);
+            sprite.css('opacity', '0.5');
+            sprite.attr('id', 'key_indicator_' + i);
+            $('#title_right').append(sprite);
+        }
+    }
+
+    var sprite = $('<div>').addClass('sd');
+    var v = vars.player_sprite_front;
+    var sprite_x = v % 8;
+    var sprite_y = Math.floor(v / 8);
+    var value = '-' + (sprite_x * vars.sprite_size) + 'px -' + (sprite_y * vars.sprite_size) + 'px';
+    sprite.css('display', 'inline-block');
+    sprite.css('position', 'static');
+    sprite.css('background-position', value);
+//     sprite.css('opacity', '0.75');
+    $('#title_right').append($('<span>').attr('id', 'lives_indicator'));
+    $('#title_right').append(sprite);
+    $('#lives_indicator').css('display', 'inline-block');
+    $('#lives_indicator').css('position', 'relative');
+    $('#lives_indicator').css('top', '-0.4em');
+    $('#lives_indicator').css('margin-left', '0.5em');
 
 //     backdrop.fadeIn(function() {
     $('body').css('padding', '0');
