@@ -2056,6 +2056,59 @@ function initLevel(which, wait)
 
     _fix_sizes();
     find_reachable_blocks(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24));
+
+    // fix camera
+    while (true)
+    {
+        var oldvx = vars.vx;
+        var oldvy = vars.vy;
+        if (vars.current_level_copy.width < 28)
+        {
+            vars.vx = -Math.floor(((28 - vars.current_level_copy.width) / 2) * 24);
+        }
+        else
+        {
+            if (vars.player_x - vars.vx > 20 * 24 && vars.vx < (vars.reachable_xmax - 28 + 2) * 24)
+                vars.vx += 6;
+            if (vars.player_x - vars.vx < 8 * 24 && vars.vx > (vars.reachable_xmin - 2) * 24)
+                vars.vx -= 6;
+            if (vars.vx < 0)
+                vars.vx = 0;
+            if (vars.vx > (vars.current_level_copy.width - 28) * 24)
+                vars.vx = (vars.current_level_copy.width - 28) * 24;
+        }
+        if (vars.current_level_copy.height < 15)
+        {
+            vars.vy = -Math.floor(((15 - vars.current_level_copy.height) / 2) * 24);
+        }
+        else
+        {
+            if (vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 15 + 2) * 24)
+                vars.vy += 12;
+            if (vars.player_y - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
+                vars.vy -= 6;
+            if (vars.vy < 0)
+                vars.vy = 0;
+            if (vars.vy > (vars.current_level_copy.height - 15) * 24)
+                vars.vy = (vars.current_level_copy.height - 15) * 24;
+        }
+
+        // pan player into view
+        if (vars.vx > vars.player_x - 12)
+            vars.vx = vars.player_x - 12;
+        if (vars.vx + 28 * 24 < vars.player_x + 12)
+            vars.vx = vars.player_x + 12 - 28 * 24;
+        if (vars.vy > vars.player_y - 23)
+            vars.vy = vars.player_y - 23;
+        if (vars.vy + 15 * 24 < vars.player_y)
+        {
+            if (!vars.dropped_out_of_level)
+                vars.vy = vars.player_y - 15 * 24;
+        }
+        if (oldvx == vars.vx && oldvy == vars.vy)
+            break;
+    }
+
     if (wait)
     {
         vars.backdrop.fadeIn(1000);
