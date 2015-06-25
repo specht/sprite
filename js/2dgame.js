@@ -375,11 +375,18 @@ function render()
 
 //     draw_sprite(vars.player_x + player_shift_x - dx - 12, vars.player_y + player_shift_y - dy - 23, use_sprite);
 
-    var passed_seconds = Math.floor((update_rate * vars.level_time_elapsed) / 1000.0);
+    var seconds = (update_rate * vars.level_time_elapsed) / 1000.0;
+    var passed_seconds = Math.floor(seconds);
     var passed_minutes = Math.floor(passed_seconds / 60.0);
     passed_seconds -= passed_minutes * 60;
     passed_minutes = ('' + passed_minutes);
     passed_seconds = ('' + passed_seconds).lpad('0', 2);
+    var time_score = 1000.0 - (seconds * 0.2 * vars.loss_per_second);
+    time_score = Math.floor(time_score);
+    if (time_score > 1000)
+        time_score = 1000;
+    if (time_score < 0)
+        time_score = 0;
 
     $('#title_left').html("Level: " + (vars.display_level_number_for_level[vars.current_level]) + "   Punkte: " + vars.level_points + "   Zeit: " + passed_minutes + ':' + passed_seconds);
     $('#lives_indicator').html('' + vars.lives_left + ' x ');
@@ -767,7 +774,21 @@ function _move_player_small(move_x, move_y)
         // see if we've captured the flag
         if (applies(_get_field(pix, piy), 'level_finished'))
         {
-            start_next_level();
+            var seconds = (update_rate * vars.level_time_elapsed) / 1000.0;
+            var time_score = 1000.0 - (seconds * 0.2 * vars.loss_per_second);
+            time_score = Math.floor(time_score);
+            if (time_score > 1000)
+                time_score = 1000;
+            if (time_score < 0)
+                time_score = 0;
+            var time_factor = (time_score / 1000.0) + 1.0;
+            var total_points = Math.floor(vars.level_points * time_factor);
+            show_card("Level " + vars.display_level_number_for_level[vars.current_level] + " geschafft!", "Punkte: " + vars.level_points +
+                "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
+                "<b>Gesamt: " + total_points + " Punkte</b>", 500, 500, true, null, function() {
+                start_next_level();
+            }
+            );
         }
 
         // see if we found a trap
@@ -1307,13 +1328,13 @@ function game_logic_loop()
     }
 
     // handle keys, move player
-    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[37])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[37] && vars.showing_card == 0)
     {
         // left
         if (vars.keys_ax > -6.0)
             vars.keys_ax -= 3.0;
     }
-    else if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[39])
+    else if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[39] && vars.showing_card == 0)
     {
         // right
         if (vars.keys_ax < 6.0)
@@ -1335,7 +1356,7 @@ function game_logic_loop()
         }
     }
 
-    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[38])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[38] && vars.showing_card == 0)
     {
         // up
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb'))
@@ -1352,7 +1373,7 @@ function game_logic_loop()
         }
     }
 
-    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[40])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[40] && vars.showing_card == 0)
     {
         // down
         if (applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb') ||
@@ -1374,7 +1395,7 @@ function game_logic_loop()
         vars.player_walk_phase = 0;
     }
 
-    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[16])
+    if ((vars.found_trap === null && !vars.dropped_out_of_level && !vars.hit_bad_guy) && vars.pressed_keys[16] && vars.showing_card == 0)
     {
         // jump
         if ((mod(vars.player_y, 24) == 23) || applies(_get_field(Math.floor(vars.player_x / 24), Math.floor(vars.player_y / 24)), 'can_climb') || vars.standing_on_vertical_platform === true)
@@ -1850,6 +1871,7 @@ function initLevel(which, wait)
     vars.invincible_sprite_showing = -1;
     vars.current_level = which;
     vars.current_level_copy = jQuery.extend(true, {}, vars.levels[vars.current_level])
+    vars.loss_per_second = 1000.0 / Math.sqrt(vars.current_level_copy.width * vars.current_level_copy.height);
     vars.last_checkpoint_position = null;
     var found_player = false;
     vars.vx = 0;
