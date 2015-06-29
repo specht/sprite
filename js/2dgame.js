@@ -388,11 +388,16 @@ function render()
     if (time_score < 0)
         time_score = 0;
 
-    $('#title_left').html("Level: " + (vars.display_level_number_for_level[vars.current_level]) + "   Punkte: " + vars.level_points + "   Zeit: " + passed_minutes + ':' + passed_seconds);
+    var l = "Level: " + (vars.display_level_number_for_level[vars.current_level]) + "   Punkte: " + vars.level_points + "   Zeit: " + passed_minutes + ':' + passed_seconds;
+    if (vars.total_points > 0)
+    {
+        l = "Level: " + (vars.display_level_number_for_level[vars.current_level]) + "   Punkte: " + vars.level_points + " (+" + vars.total_points + ")" + "   Zeit: " + passed_minutes + ':' + passed_seconds;
+    }
+    $('#title_left').html(l);
     $('#lives_indicator').html('' + vars.lives_left + ' x ');
     for (var i = 0; i < vars.max_keys; i++)
     {
-        $('#key_indicator_' + i).css('opacity', ((vars.got_key[i] === true) ? 1.0 : 0.5));
+        $('#key_indicator_' + i).css('opacity', ((vars.got_key[i] === true) ? 1.0 : 0.3));
     }
 
     return;
@@ -772,7 +777,7 @@ function _move_player_small(move_x, move_y)
         }
 
         // see if we've captured the flag
-        if (applies(_get_field(pix, piy), 'level_finished'))
+        if (applies(_get_field(pix, piy), 'level_finished') && vars.showing_card == 0)
         {
             var seconds = (update_rate * vars.level_time_elapsed) / 1000.0;
             var time_score = 1000.0 - (seconds * 0.2 * vars.loss_per_second);
@@ -783,12 +788,28 @@ function _move_player_small(move_x, move_y)
                 time_score = 0;
             var time_factor = (time_score / 1000.0) + 1.0;
             var total_points = Math.floor(vars.level_points * time_factor);
-            show_card("Level " + vars.display_level_number_for_level[vars.current_level] + " geschafft!", "Punkte: " + vars.level_points +
-                "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
-                "<b>Gesamt: " + total_points + " Punkte</b>", 500, 500, true, null, function() {
-                start_next_level();
+            if (vars.current_level == vars.last_playable_level)
+            {
+                // we finished the game
+                show_card("Herzlichen Gl&uuml;ckwunsch!", "Du hast <b style='color: #fff;'>" + vars.game_options['game_title'] + "</b> geschafft!<br />" + "Punkte: " + vars.level_points +
+                    "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
+                    "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": " + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "<br /><br />" +
+                    "<span style='font-size: 120%;'>Dein Gesamtscore: <b style='color: #fff;'>" + (vars.total_points + total_points) + " Punkt" + ((vars.total_points + total_points) != 1 ? "e" : "") + "</b></span>", 500, 500, true, null, function() {
+                        vars.total_points += total_points;
+                        vars.game_finished = true;
+                    }
+                );
             }
-            );
+            else
+            {
+                show_card("Level " + vars.display_level_number_for_level[vars.current_level] + " geschafft!", "Punkte: " + vars.level_points +
+                    "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
+                    "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": <b style='color: #fff;'>" + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "</b>", 500, 500, true, null, function() {
+                        vars.total_points += total_points;
+                        start_next_level();
+                    }
+                );
+            }
         }
 
         // see if we found a trap
@@ -1050,6 +1071,8 @@ function try_lock_to_bad_guy()
 function game_logic_loop()
 {
     if (vars.showing_card != 0 && (!vars.showing_card_but_contine_animation))
+        return;
+    if (vars.game_finished)
         return;
     vars.animation_phase++;
     if (vars.showing_card === 0 || !vars.showing_card_but_contine_animation)
@@ -2208,6 +2231,7 @@ function do_init_game(width, height, supersampling, data, start_level)
     if (typeof(start_level) === 'undefined')
         start_level = 0;
     vars = {
+        game_finished: false,
         need_to_move_sprite_divs_in_previous_iteration: true,
         vertical_platforms_by_x: [],
         locked_to_bad_guy: null,
@@ -2265,7 +2289,9 @@ function do_init_game(width, height, supersampling, data, start_level)
         game_options: {},
         music_ready: false,
         display_level_number_for_level: {},
-        key_sprite: {}
+        last_playable_level: 0,
+        key_sprite: {},
+        total_points: 0
     };
     vars.play_sounds = false;
     if (typeof(supersampling) == 'undefined')
@@ -2588,6 +2614,7 @@ function do_init_game(width, height, supersampling, data, start_level)
         if (vars.levels[i].use)
         {
             vars.display_level_number_for_level[i] = c;
+            vars.last_playable_level = i;
             c += 1;
         }
     }
