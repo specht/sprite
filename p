@@ -2,8 +2,7 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no,maximum-scale=1">
 <title>Hackschule</title>
-<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
-<link rel="stylesheet" href="css/2dgame.css?4339508345" type="text/css"/>
+<link rel="stylesheet" href="css/2dgame.css?43395083451" type="text/css"/>
 <script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
 <script type="text/javascript" src="js/jquery-ui.min.js"></script>
 <script type="text/javascript" src="js/cling-colors.js"></script>
@@ -11,7 +10,7 @@
 <script type="text/javascript" src="js/csscolorparser.js"></script>
 <script type="text/javascript" src="js/jszip.min.js"></script>
 <script type="text/javascript" src="js/TinyColor-1.0.0/tinycolor.js"></script>
-<script type="text/javascript" src="js/2dgame.js?hLsioiXwDk5N4"></script>
+<script type="text/javascript" src="js/2dgame.js?hLsioiXwDk5N41"></script>
 <script type="text/javascript" src="js/sha1.js"></script>
 
 </head>
@@ -37,9 +36,13 @@
 <!-- <object height="400" width="400"><param name="movie" value=" http://www.youtube.com/v/oehWQSda0ZA?version=3&feature=player_detailpage&autoplay=1&loop=1"><param name="allowFullScreen" value="true"><param name="allowScriptAccess" value="always"><embed src="http://www.youtube.com/v/oehWQSda0ZA?version=3&feature=player_detailpage&autoplay=1" type="application/x-shockwave-flash" allowfullscreen="true" allowScriptAccess="always" width="400" height="400"></object> -->
 
 <script type='text/javascript'>
-function switchPane() {}
+function switchPane(which) {
+    if (which === 'sprites')
+        window.location.href = 'http://hackschule.de/wordpress/die-fertigen-spiele/ ';
+}
+
 current_pane = 'play';
-not_in_editor = true;
+// not_in_editor = false;
 
 if (window.location.hash !== '')
 {
