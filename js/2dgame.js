@@ -2647,9 +2647,21 @@ function do_init_game(width, height, supersampling, data, start_level)
         if ('actor_back' in props)
             vars.player_sprite_back = _;
         if ('actor_left' in props)
+        {
             vars.player_sprite_left = _;
+            if (vars.player_sprite_walk_left == -1)
+                vars.player_sprite_walk_left = _;
+            if (vars.player_sprite_jump_left == -1)
+                vars.player_sprite_jump_left = _;
+        }
         if ('actor_right' in props)
+        {
             vars.player_sprite_right = _;
+            if (vars.player_sprite_walk_right == -1)
+                vars.player_sprite_walk_right = _;
+            if (vars.player_sprite_jump_right == -1)
+                vars.player_sprite_jump_right = _;
+        }
         if ('actor_walk_left' in props)
             vars.player_sprite_walk_left = _;
         if ('actor_walk_right' in props)
