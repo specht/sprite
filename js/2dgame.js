@@ -589,7 +589,7 @@ function ur_ded()
         var message = ouch[Math.floor(Math.random()*ouch.length)];
         if (vars.lives_left == 2)
             message = "Jetzt wird es eng. Gib alles!";
-        show_card(message, 'Dr&uuml;cke eine Taste...', 500, 500, true, function() {
+        show_card(message, 'Dr&uuml;cke eine Taste...', 500, 500, true, false, function() {
             vars.sprite_container.fadeOut(500);
         }, function() {
             vars.lives_left -= 1;
@@ -794,7 +794,7 @@ function _move_player_small(move_x, move_y)
                 show_card("Herzlichen Gl&uuml;ckwunsch!", "Du hast <b style='color: #fff;'>" + vars.game_options['game_title'] + "</b> geschafft!<br />" + "Punkte: " + vars.level_points +
                     "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
                     "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": " + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "<br /><br />" +
-                    "<span style='font-size: 120%;'>Dein Gesamtscore: <b style='color: #fff;'>" + (vars.total_points + total_points) + " Punkt" + ((vars.total_points + total_points) != 1 ? "e" : "") + "</b></span>", 500, 500, true, false, null, function() {
+                    "<span style='font-size: 120%;'>Dein Gesamtscore: <b style='color: #fff;'>" + (vars.total_points + total_points) + " Punkt" + ((vars.total_points + total_points) != 1 ? "e" : "") + "</b></span>", 500, 500, true, true, null, function() {
                         vars.total_points += total_points;
                         vars.game_finished = true;
                     }
@@ -804,7 +804,7 @@ function _move_player_small(move_x, move_y)
             {
                 show_card("Level " + vars.display_level_number_for_level[vars.current_level] + " geschafft!", "Punkte: " + vars.level_points +
                     "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
-                    "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": <b style='color: #fff;'>" + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "</b>", 500, 500, true, true, function() {
+                    "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": <b style='color: #fff;'>" + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "</b>", 500, 500, true, false, function() {
                     }, function() {
                         vars.total_points += total_points;
                         start_next_level();
@@ -1685,20 +1685,33 @@ function keydown(code)
         return;
     if (vars.showing_card == 2)
     {
-        if (Date.now() - vars.showing_card_time > 300)
+        if (vars.showing_card_awaiting_input)
         {
-            if (code != 16 && code != 17 && code != 18 && code != 92 && code != 93)
+            console.log(code);
+            if (code == 9)
+                return false;
+            if (code == 13)
             {
-                if (Object.keys(vars.showing_card_pressed_keys).length == 0)
+
+            }
+        }
+        else
+        {
+            if (Date.now() - vars.showing_card_time > 300)
+            {
+                if (code != 16 && code != 17 && code != 18 && code != 92 && code != 93)
                 {
-                    vars.showing_card = 1;
-                    if (vars.showing_card_hide_function !== null)
-                        vars.showing_card_hide_function();
-                    $('#title_card').fadeOut(vars.showing_card_fadeout_duration, function() {
-                        vars.showing_card = 0;
-                        if (vars.showing_card_completion_function !== null)
-                            vars.showing_card_completion_function();
-                    });
+                    if (Object.keys(vars.showing_card_pressed_keys).length == 0)
+                    {
+                        vars.showing_card = 1;
+                        if (vars.showing_card_hide_function !== null)
+                            vars.showing_card_hide_function();
+                        $('#title_card').fadeOut(vars.showing_card_fadeout_duration, function() {
+                            vars.showing_card = 0;
+                            if (vars.showing_card_completion_function !== null)
+                                vars.showing_card_completion_function();
+                        });
+                    }
                 }
             }
         }
@@ -1811,6 +1824,7 @@ function init() {
     setTimeout(_game_logic_loop, update_rate);
     _fix_sizes();
     vars.showing_card = 0;
+    vars.showing_card_awaiting_input = false;
     vars.showing_card_but_contine_animation = false;
     vars.showing_card_completion_function = null;
     vars.showing_card_hide_function = null;
@@ -2659,14 +2673,17 @@ function show_card(first, second, speed, fadeout_speed, continue_animation, show
     vars.showing_card_fadeout_duration = fadeout_speed;
 
     $('.game_title').html(first);
-//     if (show_input_field)
-//     {
-//         second += "<br /><input type='text' class='enter_highscore_name' value='HELLO' />";
-//     }
+    vars.showing_card_awaiting_input = show_input_field;
+    vars.showing_card_awaiting_input = false;
+
+    if (show_input_field)
+    {
+        second += "<br /><input type='text' class='enter_highscore_name' value='' size='30' placeholder='Gib deinen Namen ein!' />";
+    }
     $('.game_subtitle').html(second);
     vars.showing_card = 1;
     $('#title_card').hide().fadeIn(speed, function() {
-//         $('input.enter_highscore_name').focus();
+        $('input.enter_highscore_name').focus();
         vars.showing_card = 2;
         vars.showing_card_time = Date.now();
     });
