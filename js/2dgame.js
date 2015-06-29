@@ -1679,14 +1679,14 @@ function keydown(code)
             }
         }
     }
-    if (code == 82)
-    {
-        restart_level();
-    }
-    if (code == 76)
-    {
-        start_next_level();
-    }
+//     if (code == 82)
+//     {
+//         restart_level();
+//     }
+//     if (code == 76)
+//     {
+//         start_next_level();
+//     }
     if (code == 27)
     {
         stopTheGame();
