@@ -2343,6 +2343,7 @@ function do_init_game(width, height, supersampling, data, start_level)
     if (typeof(start_level) === 'undefined')
         start_level = 0;
     vars = {
+        first_start_level: start_level,
         old_high_scores: [],
         user_wants_out: false,
         game_finished: false,
@@ -2731,7 +2732,7 @@ function do_init_game(width, height, supersampling, data, start_level)
 
 function main_screen()
 {
-    vars.current_level = 0;
+    vars.current_level = vars.first_start_level;
     var c = 1;
     for (var i = 0; i < vars.levels.length; i++)
     {
