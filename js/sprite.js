@@ -159,13 +159,14 @@ function swap_sprites_in_all_levels(a, b)
 function set_current_level(which)
 {
     if (!(which in level_props))
-        level_props[which] = {offset: [0, 0], background: '#000'}
+        level_props[which] = {offset: [0, 0], background: '#000', title: ''}
     current_level = which;
     draw_level();
     $('#level_lineup span').removeClass('active-level');
     $('span#level_' + which).addClass('active-level');
     $('#use-level').prop('checked', level_use[current_level] === true);
     $('#level-background-color').val(level_props[current_level].background);
+    $('#level-title').val(level_props[current_level].title);
     if (level_use[current_level] === true)
         $('span#level_' + which + ' div').removeClass('inactive');
     else
@@ -685,6 +686,9 @@ function loadLevels(info)
             $('span#level_' + i + ' div').addClass('inactive');
 
         level_props[i].background = l.background;
+        level_props[i].title = '';
+        if (typeof(l.title) !== 'undefined')
+            level_props[i].title = l.title;
         level[i] = {};
         jQuery.each(l.data, function(yd, row) {
             jQuery.each(row, function(xd, cell) {
@@ -1527,6 +1531,9 @@ $().ready(function() {
         level_props[current_level].background = $(e.target).val();
         set_current_level(current_level);
     });
+    $('#level-title').change(function(e) {
+        level_props[current_level].title = $(e.target).val();
+    });
     $('#load_image').load(function(e) {
         var image = $(e.target);
         console.log('loadSprites', e);
@@ -1816,13 +1823,14 @@ function get_level_descriptions()
     {
         if (!(i in level_props))
         {
-            level_props[i] = {offset: [0, 0], background: '#000'}
+            level_props[i] = {offset: [0, 0], background: '#000', title: ''}
         }
         if (typeof(level[i]) === 'undefined')
             level[i] = {};
         var l = {};
         l.use = level_use[i];
         l.background = level_props[i].background;
+        l.title = level_props[i].title;
         // find x / y ranges
         var xmin = null, xmax = null, ymin = null, ymax = null;
         jQuery.each(Object.keys(level[i]), function(_, key) {

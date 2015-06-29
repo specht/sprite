@@ -577,7 +577,7 @@ function ur_ded()
 {
     if (vars.lives_left <= 1)
     {
-        show_card("GAME OVER", 'Sorry, das Spiel ist vorbei.<br /><br />Geh vielleicht ein bisschen raus!<br />Spielen oder so.', 500, 500, true, null, null);
+        show_card("GAME OVER", 'Sorry, das Spiel ist vorbei.<br /><br />Geh vielleicht ein bisschen raus!<br />Spielen oder so.', 500, 500, true, false, null, null);
     }
     else
     {
@@ -794,7 +794,7 @@ function _move_player_small(move_x, move_y)
                 show_card("Herzlichen Gl&uuml;ckwunsch!", "Du hast <b style='color: #fff;'>" + vars.game_options['game_title'] + "</b> geschafft!<br />" + "Punkte: " + vars.level_points +
                     "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
                     "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": " + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "<br /><br />" +
-                    "<span style='font-size: 120%;'>Dein Gesamtscore: <b style='color: #fff;'>" + (vars.total_points + total_points) + " Punkt" + ((vars.total_points + total_points) != 1 ? "e" : "") + "</b></span>", 500, 500, true, null, function() {
+                    "<span style='font-size: 120%;'>Dein Gesamtscore: <b style='color: #fff;'>" + (vars.total_points + total_points) + " Punkt" + ((vars.total_points + total_points) != 1 ? "e" : "") + "</b></span>", 500, 500, true, false, null, function() {
                         vars.total_points += total_points;
                         vars.game_finished = true;
                     }
@@ -804,7 +804,8 @@ function _move_player_small(move_x, move_y)
             {
                 show_card("Level " + vars.display_level_number_for_level[vars.current_level] + " geschafft!", "Punkte: " + vars.level_points +
                     "<br />Zeitbonus: +" + Math.floor(time_factor * 100 - 100.0).toString() + "%<br />" +
-                    "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": <b style='color: #fff;'>" + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "</b>", 500, 500, true, null, function() {
+                    "Punkte f&uuml;r Level " + vars.display_level_number_for_level[vars.current_level] + ": <b style='color: #fff;'>" + total_points + " Punkt" + (total_points != 1 ? "e" : "") + "</b>", 500, 500, true, true, function() {
+                    }, function() {
                         vars.total_points += total_points;
                         start_next_level();
                     }
@@ -2171,7 +2172,10 @@ function initLevel(which, wait)
         var player = $('#yt')[0];
         if (typeof(player) !== 'undefined' && vars.play_sounds)
             player.playVideo();
-        show_card("Level " + vars.display_level_number_for_level[which], "Dr&uuml;ck eine Taste...", 500, 500, false, null, null);
+        var level_title = '';
+        if (typeof(vars.current_level_copy.title) !== 'undefined' && vars.current_level_copy.title.length > 0)
+            level_title = "<br /><span style='font-size: 70%;'>" + vars.current_level_copy.title + "</span>";
+        show_card("Level " + vars.display_level_number_for_level[which] + level_title, "Dr&uuml;ck eine Taste...", 500, 500, false, false, null, null);
     }
 }
 
@@ -2634,7 +2638,7 @@ function do_init_game(width, height, supersampling, data, start_level)
     var author = "";
     if (typeof(vars.game_options['game_author']) !== 'undefined')
         author = jQuery.trim(vars.game_options['game_author']);
-    show_card(title, "Ein Spiel von " + author + "<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, null, function() {
+    show_card(title, "Ein Spiel von " + author + "<br /><br />Bitte dr&uuml;cke eine Taste...", 1, 500, false, false, null, function() {
         vars.sprite_container.fadeIn(1);
         initLevel(vars.current_level);
         $('#title_left').fadeIn(500);
@@ -2643,7 +2647,7 @@ function do_init_game(width, height, supersampling, data, start_level)
     $('#play_container').show();
 }
 
-function show_card(first, second, speed, fadeout_speed, continue_animation, message_hide, complete)
+function show_card(first, second, speed, fadeout_speed, continue_animation, show_input_field, message_hide, complete)
 {
     if (vars.showing_card != 0)
         return;
@@ -2655,9 +2659,14 @@ function show_card(first, second, speed, fadeout_speed, continue_animation, mess
     vars.showing_card_fadeout_duration = fadeout_speed;
 
     $('.game_title').html(first);
+//     if (show_input_field)
+//     {
+//         second += "<br /><input type='text' class='enter_highscore_name' value='HELLO' />";
+//     }
     $('.game_subtitle').html(second);
     vars.showing_card = 1;
     $('#title_card').hide().fadeIn(speed, function() {
+//         $('input.enter_highscore_name').focus();
         vars.showing_card = 2;
         vars.showing_card_time = Date.now();
     });
