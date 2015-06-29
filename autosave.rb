@@ -21,7 +21,7 @@ response = {'status' => 'stored', 'timestamp' => Time.now.to_i, 'body_length' =>
 response_body = response.to_json
 response_str = ''
 response_str += "Content-Type: application/json; charset=utf-8\r\n"
-response_str += "Content-Length: #{response_body.size}\r\n"
+response_str += "Content-Length: #{response_body.bytesize}\r\n"
 response_str += "\r\n"
 response_str += response_body
 print(response_str)
