@@ -144,6 +144,10 @@ function _fix_sizes()
             tile.css('top', (y * vars.sprite_size) + 'px');
         }
     }
+    jQuery.each($('.auto_fix_size'), function(_, e) {
+        var value = '-' + ($(e).data('sprite_x') * vars.sprite_size) + 'px -' + ($(e).data('sprite_y') * vars.sprite_size) + 'px';
+        $(e).css('background-position', value);
+    });
     if (typeof(vars.display_sprite) !== 'undefined' && vars.display_sprite.length > 0)
     {
         for (var y = 0; y < 16; y++)
@@ -2211,8 +2215,6 @@ function initLevel(which, wait)
     }
 
 //     console.log(vars.levels[vars.current_level]);
-    vars.backdrop.css('background-color', vars.current_level_copy.background);
-
     vars.pressed_keys = {};
 
     _fix_sizes();
@@ -2696,10 +2698,7 @@ function do_init_game(width, height, supersampling, data, start_level)
     {
         var sprite = $('<div>').addClass('sd');
         var v = vars.key_sprite[i];
-        if (typeof(v) === 'undefined')
-        {
-        }
-        else
+        if (typeof(v) !== 'undefined')
         {
             var sprite_x = v % 8;
             var sprite_y = Math.floor(v / 8);
@@ -2710,6 +2709,9 @@ function do_init_game(width, height, supersampling, data, start_level)
             sprite.css('opacity', '0.5');
             sprite.attr('id', 'key_indicator_' + i);
             $('#title_right').append(sprite);
+            sprite.addClass('auto_fix_size');
+            sprite.data('sprite_x', sprite_x);
+            sprite.data('sprite_y', sprite_y);
         }
     }
 
@@ -2721,6 +2723,9 @@ function do_init_game(width, height, supersampling, data, start_level)
     sprite.css('display', 'inline-block');
     sprite.css('position', 'static');
     sprite.css('background-position', value);
+    sprite.addClass('auto_fix_size');
+    sprite.data('sprite_x', sprite_x);
+    sprite.data('sprite_y', sprite_y);
 //     sprite.css('opacity', '0.75');
     $('#title_right').append($('<span>').attr('id', 'lives_indicator'));
     $('#title_right').append(sprite);
@@ -2743,6 +2748,8 @@ function do_init_game(width, height, supersampling, data, start_level)
 
 function main_screen()
 {
+    vars.backdrop.css('background-color', '#000');
+
     vars.current_level = vars.first_start_level;
     var c = 1;
     for (var i = 0; i < vars.levels.length; i++)
@@ -2844,6 +2851,7 @@ function main_screen()
             {
                 if (index === 0)
                 {
+                    vars.backdrop.css('background-color', vars.current_level_copy.background);
                     vars.sprite_container.fadeIn(1);
                     initLevel(vars.current_level);
                     $('#title_left').fadeIn(500);
