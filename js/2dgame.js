@@ -281,15 +281,15 @@ function render()
             }
             else
             {
-//                 tile.css('width', vars.sprite_size + 'px');
-//                 tile.css('height', vars.sprite_size + 'px');
-                if (tile.data('opacity') != 1.0)
-                {
-                    tile.css('opacity', 1.0);
-                    tile.data('opacity', 1.0);
-                }
                 if (vars.display_sprite[y][x] != v)
                 {
+                    if (tile.data('opacity') != 1.0)
+                    {
+                        tile.css('opacity', 1.0);
+                        tile.data('opacity', 1.0);
+                    }
+                    tile.css('width', vars.sprite_size + 'px');
+                    tile.css('height', vars.sprite_size + 'px');
                     vars.display_sprite[y][x] = v;
                     tile.css('display', (v == -1) ? 'none' : 'block');
                     var sprite_x = v % 8;
