@@ -1721,29 +1721,28 @@ function keydown(code)
                     current_index = (current_index + vars.showing_card_menu.length - 1) % vars.showing_card_menu.length;
                 else if (code == 40)
                     current_index = (current_index + 1) % vars.showing_card_menu.length;
-                else if (code == 27)
-                {
-                    vars.showing_card = 1;
-                    if (vars.showing_card_hide_function !== null)
-                        vars.showing_card_hide_function();
-                    stopTheGame();
+//                else if (code == 27)
+//                {
 //                     $('#title_card').fadeOut(vars.showing_card_fadeout_duration, function() {
 //                         vars.showing_card = 0;
 //                     });
-                }
+//                }
                 $('.menuitem.active').removeClass('active');
                 $('#menuitem_' + current_index).addClass('active');
             }
             if (code == 27)
             {
                 // TODO: Cancel entering the name, but don't stop the game.
-                vars.showing_card = 1;
-                $('#title_card').fadeOut(vars.showing_card_fadeout_duration, function() {
-                    vars.showing_card = 0;
-                    if (vars.showing_card_completion_function !== null)
-                        vars.showing_card_completion_function(current_index);
-                    main_screen();
-                });
+                if (vars.showing_card_menu === null)
+                {
+                    vars.showing_card = 1;
+                    $('#title_card').fadeOut(vars.showing_card_fadeout_duration, function() {
+                        vars.showing_card = 0;
+                        if (vars.showing_card_completion_function !== null)
+                            vars.showing_card_completion_function(current_index);
+                        main_screen();
+                    });
+                }
             }
             if (code == 13)
             {
@@ -2776,7 +2775,7 @@ function main_screen()
         author = jQuery.trim(vars.game_options['game_author']);
 
     show_card(title,
-            "Ein Spiel von " + author, 1, 500, false, false, ['Start', 'Highscores', 'Hilfe'],
+            "Ein Spiel von " + author, 1, 500, false, false, ['Start', 'Highscores', 'Hilfe', 'Beenden'],
         function(index) {
             if (index === 0)
             {
@@ -2825,7 +2824,15 @@ function main_screen()
                 $('.game_subtitle').html("<span style='color: #fff; font-size: 150%;'><b>Steuerung des Spiels</b></span><br /><br />Bewege die Spielfigur mit den <span style='color: #fff;'>Pfeiltasten</span>, springen kannst du mit <span style='color: #fff;'>Shift</span>.<br />Sammle Punkte und pass auf, dass du nicht in Fallen ger&auml;tst oder Gegner ber&uuml;hrst!");
                 _fix_sizes();
             }
-            return false;
+            else if (index === 3)
+            {
+                vars.showing_card = 1;
+                if (vars.showing_card_hide_function !== null)
+                    vars.showing_card_hide_function();
+                stopTheGame();
+            }
+            //else
+            //    return false;
         },
         function(index) {
             if (typeof(index) === 'undefined')
