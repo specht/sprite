@@ -142,6 +142,8 @@ function _fix_sizes()
             var tile = vars.sprite_div[y][x];
             tile.css('left', (x * vars.sprite_size) + 'px');
             tile.css('top', (y * vars.sprite_size) + 'px');
+            tile.css('width', vars.sprite_size + 'px');
+            tile.css('height', vars.sprite_size + 'px');
         }
     }
     jQuery.each($('.auto_fix_size'), function(_, e) {
@@ -234,6 +236,7 @@ function render()
                 tile.css('width', Math.floor(vars.field_offset[poskey].w * vars.sprite_size / 24) + 'px');
                 tile.css('height', Math.floor(vars.field_offset[poskey].h * vars.sprite_size / 24) + 'px');
                 tile.css('opacity', vars.field_offset[poskey].alpha);
+                tile.data('opacity', vars.field_offset[poskey].alpha);
 //                 fill_rect(x * 24 - (mod(dx, 24)), y * 24 - (mod(dy, 24)), x * 24 - (mod(dx, 24)) + 23, y * 24 - (mod(dy, 24)) + 23, '#000');
 //                 draw_sprite_special(x * 24 - (mod(dx, 24)) + vars.field_offset[poskey].dx,
 //                                     y * 24 - (mod(dy, 24)) + vars.field_offset[poskey].dy,
@@ -248,7 +251,11 @@ function render()
                 {
                     tile.css('width', vars.sprite_size + 'px');
                     tile.css('height', vars.sprite_size + 'px');
-                    tile.css('opacity', 1.0);
+                    if (tile.data('opacity') != 1.0)
+                    {
+                        tile.css('opacity', 1.0);
+                        tile.data('opacity', 1.0);
+                    }
                     if (vars.display_sprite[y][x] != v)
                     {
                         vars.display_sprite[y][x] = v;
@@ -264,15 +271,23 @@ function render()
                     if (vars.display_sprite[y][x] != v)
                     {
                         vars.display_sprite[y][x] = v;
-                        tile.css('opacity', 0.0);
+                        if (tile.data('opacity') != 0.0)
+                        {
+                            tile.css('opacity', 0.0);
+                            tile.data('opacity', 0.0);
+                        }
                     }
                 }
             }
             else
             {
-                tile.css('width', vars.sprite_size + 'px');
-                tile.css('height', vars.sprite_size + 'px');
-                tile.css('opacity', 1.0);
+//                 tile.css('width', vars.sprite_size + 'px');
+//                 tile.css('height', vars.sprite_size + 'px');
+                if (tile.data('opacity') != 1.0)
+                {
+                    tile.css('opacity', 1.0);
+                    tile.data('opacity', 1.0);
+                }
                 if (vars.display_sprite[y][x] != v)
                 {
                     vars.display_sprite[y][x] = v;
@@ -404,7 +419,13 @@ function render()
     $('#lives_indicator').html('' + vars.lives_left + ' x ');
     for (var i = 0; i < vars.max_keys; i++)
     {
-        $('#key_indicator_' + i).css('opacity', ((vars.got_key[i] === true) ? 1.0 : 0.3));
+        var v = (vars.got_key[i] === true) ? 1.0 : 0.3;
+        if ($('#key_indicator_' + i).data('opacity') != v)
+        {
+            $('#key_indicator_' + i).css('opacity', v);
+            $('#key_indicator_' + i).data('opacity', v);
+
+        }
     }
 
     return;
@@ -2706,7 +2727,7 @@ function do_init_game(width, height, supersampling, data, start_level)
             sprite.css('display', 'inline-block');
             sprite.css('position', 'static');
             sprite.css('background-position', value);
-            sprite.css('opacity', '0.5');
+            sprite.css('opacity', '0.3');
             sprite.attr('id', 'key_indicator_' + i);
             $('#title_right').append(sprite);
             sprite.addClass('auto_fix_size');
