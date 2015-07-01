@@ -932,12 +932,14 @@ function _move_player_small(move_x, move_y)
         if (applies(_get_field(pix, piy), 'invincible') || applies(_get_field(pix, piy), 'baddie_be_gone'))
         {
             var anim_key = '' + (pix) + '/' + piy;
-            if (!(anim_key in vars.animations))
+            if (!(anim_key in vars.animations) || (vars.animations[anim_key].type != 'fadeout'))
             {
 //                 vars.level_points += p;
                 if (vars.play_sounds)
                     vars.sounds['pick_up'].play();
                 vars.invincible = true;
+                vars.invincible_flicker = false;
+
                 var player = $('#yt')[0];
                 if (typeof(player) !== 'undefined' && vars.play_sounds)
                     player.pauseVideo();
