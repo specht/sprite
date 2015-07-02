@@ -1,0 +1,140 @@
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no,maximum-scale=1">
+<title>Hackschule</title>
+<link rel="stylesheet" href="css/2dgame.css?43395083451" type="text/css"/>
+<script type="text/javascript" src="js/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="js/jquery-ui.min.js"></script>
+<script type="text/javascript" src="js/cling-colors.js"></script>
+<script type="text/javascript" src="js/generatepng.js"></script>
+<script type="text/javascript" src="js/csscolorparser.js"></script>
+<script type="text/javascript" src="js/jszip.min.js"></script>
+<script type="text/javascript" src="js/TinyColor-1.0.0/tinycolor.js"></script>
+<script type="text/javascript" src="js/2dgame.js?hLsioiXwDk5N41"></script>
+<script type="text/javascript" src="js/sha1.js"></script>
+<script type="text/javascript" src="js/coverflow/jquery.coverflow.js"></script>
+
+<style type='text/css'>
+body {
+    overflow: hidden;
+    background-color: #111;
+}
+
+.cover {
+    color: #fff;
+    text-align: center;
+    font-size: 2.5vw;
+    font-family: "Drescher Grotesk BT Small Sizes";
+    max-height: 50%;
+    margin-top: 10%;
+}
+.cover img {
+    border-radius: 30px;
+    border: 0.3em solid #333;
+    height: 100%;
+    width: auto;
+}
+
+</style>
+
+</head>
+
+<body>
+<div class="coverflow">
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#112e6b1d'><img src='scaled/yolojojo.png' /></a><br /><br />
+        Yolojojo
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#6cd9ca6e'><img src='scaled/minecraft.png' /></a><br /><br />
+        Minecraft
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#75f7945f'><img src='scaled/meerschweinchen-missionen.png' /></a><br /><br />
+        Meerschweinchen Missionen
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#a8f0af59'><img src='scaled/minion-jagd.png' /></a><br /><br />
+        Die Minion-Jagd
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#5eefa944'><img src='scaled/blockeinsammler.png' /></a><br /><br />
+        Blockeinsammler
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#3408f5b4'><img src='scaled/der-ueberlebende.png' /></a><br /><br />
+        Der &Uuml;berlebende 2
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#ada5453e'><img src='scaled/miguel.png' /></a><br /><br />
+        Wie soll dieses Spiel nur hei&szlig;en?
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#d8afd981'><img src='scaled/fabrik-run.png' /></a><br /><br />
+        Fabrik-Run
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#f9ae3d9f'><img src='scaled/hadader.png' /></a><br /><br />
+        Hadader
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#ce3c56f7'><img src='scaled/brot-das-bernd.png' /></a><br /><br />
+        Brot das Bernd &quot;Das Spiel&quot;
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#bbbaf81a'><img src='scaled/weil-yolo.png' /></a><br /><br />
+        Weil Yolo
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#8319220b'><img src='scaled/gurken-game.png' /></a><br /><br />
+        Gurken-Game
+    </div>
+    <div class="cover">
+        <a href='http://hackschule.de/sprite/p#df6c0977'><img src='scaled/super-run.png' /></a><br /><br />
+        SUPER RUN
+    </div>
+</div>
+
+<script>
+$(function() {
+    var index = 0;
+    if (typeof(document.cookie) !== 'undefined')
+    {
+        var i = Number.parseInt(document.cookie);
+        if (!isNaN(i))
+            index = i;
+    }
+    $('.coverflow').coverflow({enableKeyboard: false, index: index});
+    $('.coverflow').focus();
+
+    window.addEventListener("keydown", __keydown, false);
+});
+
+function __keydown(e)
+{
+    if (e.which == 39)
+    {
+        $('.coverflow').coverflow('index', $('.coverflow').coverflow('index') + 1);
+        e.preventDefault();
+    }
+    else if (e.which == 37)
+    {
+        if ($('.coverflow').coverflow('index') > 0)
+            $('.coverflow').coverflow('index', $('.coverflow').coverflow('index') - 1);
+        e.preventDefault();
+    }
+    else if (e.which == 9 || e.which == 8)
+    {
+        e.preventDefault();
+    }
+    else if (e.which == 13)
+    {
+        document.cookie = "" + $('.coverflow').coverflow('index');
+        window.location.href = $('.coverflow').coverflow('cover').find('a').attr('href');
+    }
+}
+
+</script>
+
+</body>
+</html>

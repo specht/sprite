@@ -38,7 +38,7 @@
 <script type='text/javascript'>
 function switchPane(which) {
     if (which === 'sprites')
-        window.location.href = 'http://hackschule.de/wordpress/die-fertigen-spiele/ ';
+        window.location.href = 'http://hackschule.de/sprite/2015.html';
 }
 
 current_pane = 'play';

@@ -27,7 +27,7 @@ function mark_dirty(x, y)
 
 function _get_field(x, y)
 {
-    if (isNaN(x) || isNaN(y))
+if (isNaN(x) || isNaN(y))
         return -1;
     var clevel = vars.current_level_copy;
     if (clevel.use !== true)
@@ -41,6 +41,8 @@ function _get_field(x, y)
 
 function _set_field(x, y, v)
 {
+    if (isNaN(x) || isNaN(y))
+        return;
     var clevel = vars.current_level_copy;
     if (clevel.use !== true)
         return;
@@ -53,6 +55,8 @@ function _set_field(x, y, v)
 
 function _get_reachable(x, y)
 {
+    if (isNaN(x) || isNaN(y))
+        return 0;
     var clevel = vars.current_level_copy;
     if (y < 0 || y >= clevel.height)
         return 0;
@@ -63,6 +67,8 @@ function _get_reachable(x, y)
 
 function _set_reachable(x, y, v)
 {
+    if (isNaN(x) || isNaN(y))
+        return;
     var clevel = vars.current_level_copy;
     if (y < 0 || y >= clevel.height)
         return;
@@ -2056,6 +2062,8 @@ function initLevel(which, wait)
     vars.vertical_platforms_by_x = [];
     vars.locked_to_bad_guy = null;
     vars.standing_on_vertical_platform = false;
+    vars.initial_player_x = vars.current_level_copy.xmin;
+    vars.initial_player_y = vars.current_level_copy.ymin;
 
     jQuery.each(vars.current_level_copy.data, function(y, row) {
         var platform_horizontal_line = [];
