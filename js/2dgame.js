@@ -1258,7 +1258,7 @@ function game_logic_loop()
             vars.vy += 1;
             _ -= 1;
         }
-        _ = 6;
+        _ = 12;
         while (_ > 0 && vars.player_y - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
         {
             vars.vy -= 1;
