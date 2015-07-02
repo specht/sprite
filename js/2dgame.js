@@ -1252,7 +1252,7 @@ function game_logic_loop()
     }
     else
     {
-        var _ = 6;
+        var _ = 12;
         while (_ > 0 && vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 15 + 2) * 24)
         {
             vars.vy += 1;

@@ -10,7 +10,7 @@
 <script type="text/javascript" src="js/csscolorparser.js"></script>
 <script type="text/javascript" src="js/jszip.min.js"></script>
 <script type="text/javascript" src="js/TinyColor-1.0.0/tinycolor.js"></script>
-<script type="text/javascript" src="js/2dgame.js?hLsioiXwDk5N41"></script>
+<script type="text/javascript" src="js/2dgame.js?hLsioiXwaDk5N41"></script>
 <script type="text/javascript" src="js/sha1.js"></script>
 
 </head>
