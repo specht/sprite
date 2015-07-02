@@ -1222,10 +1222,18 @@ function game_logic_loop()
     }
     else
     {
-        while (vars.player_x - vars.vx > 20 * 24 && vars.vx < (vars.reachable_xmax - 28 + 2) * 24)
+        var _ = 6;
+        while (_ > 0 && vars.player_x - vars.vx > 20 * 24 && vars.vx < (vars.reachable_xmax - 28 + 2) * 24)
+        {
             vars.vx += 1;
-        while (vars.player_x - vars.vx < 8 * 24 && vars.vx > (vars.reachable_xmin - 2) * 24)
+            _ -= 1;
+        }
+        _ = 6;
+        while (_ > 0 && vars.player_x - vars.vx < 8 * 24 && vars.vx > (vars.reachable_xmin - 2) * 24)
+        {
             vars.vx -= 1;
+            _ -= 1;
+        }
         if (vars.vx < 0)
             vars.vx = 0;
         if (vars.vx > (vars.current_level_copy.width - 28) * 24)
@@ -1238,10 +1246,18 @@ function game_logic_loop()
     }
     else
     {
-        while (vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 15 + 2) * 24)
+        var _ = 6;
+        while (_ > 0 && vars.player_y - vars.vy > 10 * 24 && vars.vy < (vars.reachable_ymax - 15 + 2) * 24)
+        {
             vars.vy += 1;
-        while (vars.player_y - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
+            _ -= 1;
+        }
+        _ = 6;
+        while (_ > 0 && vars.player_y - vars.vy < 5 * 24 && vars.vy > (vars.reachable_ymin - 2) * 24)
+        {
             vars.vy -= 1;
+            _ -= 1;
+        }
         if (vars.vy < 0)
             vars.vy = 0;
         if (vars.vy > (vars.current_level_copy.height - 15) * 24)
