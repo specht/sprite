@@ -954,6 +954,7 @@ function _move_player_small(move_x, move_y)
 //                     vars.sounds['invincible'].currentTime = 0;
 //                     vars.sounds['invincible'].play();
 //                 }
+//                 console.log(pix, piy, _get_field(pix, piy));
                 vars.invincible_sprite = _get_field(pix, piy);
                 vars.invincible_start_time = Date.now();
                 var v = vars.invincible_sprite;
