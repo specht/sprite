@@ -892,8 +892,8 @@ function _move_player_small(move_x, move_y)
                 var anim_key = '' + (pix) + '/' + piy;
                 if (!(anim_key in vars.animations))
                 {
-                    if (vars.play_sounds)
-                        vars.sounds['pick_up'].play();
+//                     if (vars.play_sounds)
+//                         vars.sounds['pick_up'].play();
                     vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
                         _set_field(x, y, -1);
                     }};
@@ -915,8 +915,8 @@ function _move_player_small(move_x, move_y)
                 if (!(anim_key in vars.animations))
                 {
                     vars.level_points += p;
-                    if (vars.play_sounds)
-                        vars.sounds['pick_up'].play();
+//                     if (vars.play_sounds)
+//                         vars.sounds['pick_up'].play();
                     vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
                         _set_field(x, y, -1);
                     }};
@@ -941,19 +941,19 @@ function _move_player_small(move_x, move_y)
             if (!(anim_key in vars.animations) || (vars.animations[anim_key].type != 'fadeout'))
             {
 //                 vars.level_points += p;
-                if (vars.play_sounds)
-                    vars.sounds['pick_up'].play();
+//                 if (vars.play_sounds)
+//                     vars.sounds['pick_up'].play();
                 vars.invincible = true;
                 vars.invincible_flicker = false;
 
                 var player = $('#yt')[0];
                 if (typeof(player) !== 'undefined' && vars.play_sounds)
-                    player.pauseVideo();
-                if (vars.play_sounds)
-                {
-                    vars.sounds['invincible'].currentTime = 0;
-                    vars.sounds['invincible'].play();
-                }
+//                     player.pauseVideo();
+//                 if (vars.play_sounds)
+//                 {
+//                     vars.sounds['invincible'].currentTime = 0;
+//                     vars.sounds['invincible'].play();
+//                 }
                 vars.invincible_sprite = _get_field(pix, piy);
                 vars.invincible_start_time = Date.now();
                 var v = vars.invincible_sprite;
@@ -980,8 +980,8 @@ function _move_player_small(move_x, move_y)
                 if (!(anim_key in vars.animations))
                 {
     //                 vars.level_points += p;
-                    if (vars.play_sounds)
-                        vars.sounds['pick_up'].play();
+//                     if (vars.play_sounds)
+//                         vars.sounds['pick_up'].play();
                     vars.lives_left += 1;
                     vars.animations[anim_key] = {type: 'pick_up', done: function(x, y) {
                         _set_field(x, y, -1);
@@ -1005,8 +1005,8 @@ function _move_player_small(move_x, move_y)
                             var anim_key = '' + (pix + dx) + '/' + piy;
                             if (!(anim_key in vars.animations))
                             {
-                                if (vars.play_sounds)
-                                    vars.sounds['power_up'].play();
+//                                 if (vars.play_sounds)
+//                                     vars.sounds['power_up'].play();
                                 vars.animations[anim_key] = {type: 'slide_door_up'};
                             }
                         }
@@ -1669,9 +1669,9 @@ function game_logic_loop()
             vars.field_offset[key].dy += 12;
             if (applies(_get_field(x, y + Math.floor(vars.field_offset[key].dy / 24)), 'is_solid'))
             {
-                vars.sounds['hit_hurt'].currentTime = 0;
-                if (vars.play_sounds)
-                    vars.sounds['hit_hurt'].play();
+//                 vars.sounds['hit_hurt'].currentTime = 0;
+//                 if (vars.play_sounds)
+//                     vars.sounds['hit_hurt'].play();
                 if (typeof(info.done) === 'function')
                     info.done(x, y);
                 delete vars.field_offset[key];
@@ -1701,9 +1701,9 @@ function game_logic_loop()
         if (elapsed > 14.8)
         {
             vars.invincible = false;
-            var player = $('#yt')[0];
-            if (typeof(player) !== 'undefined' && vars.play_sounds)
-                player.playVideo();
+//             var player = $('#yt')[0];
+//             if (typeof(player) !== 'undefined' && vars.play_sounds)
+//                 player.playVideo();
             vars.player_sprite_overlay_div.fadeOut();
         }
         else if (elapsed > 10.0)
@@ -1722,10 +1722,10 @@ function stopTheGame()
     $('#play_container').empty();
     $('#play_container').remove();
     switchPane('sprites');
-    vars.sounds['invincible'].pause();
-    var player = $('#yt')[0];
-    if (typeof(player) !== 'undefined' && vars.play_sounds)
-        player.pauseVideo();
+//     vars.sounds['invincible'].pause();
+//     var player = $('#yt')[0];
+//     if (typeof(player) !== 'undefined' && vars.play_sounds)
+//         player.pauseVideo();
 }
 
 function start_next_level()
@@ -2045,7 +2045,7 @@ function initLevel(which, wait)
         wait = true;
     if (wait)
         vars.sprite_container.hide();
-    vars.sounds['invincible'].pause();
+//     vars.sounds['invincible'].pause();
     vars.need_to_move_sprite_divs_in_previous_iteration = true;
     vars.animation_phase = 0;
     vars.level_time_elapsed = 0;
@@ -2330,11 +2330,13 @@ function initLevel(which, wait)
 
     if (wait)
     {
+        vars.backdrop.hide();
+        vars.backdrop.css('background-color', vars.current_level_copy.background);
         vars.backdrop.fadeIn(1000);
         vars.sprite_container.fadeIn(1000);
-        var player = $('#yt')[0];
-        if (typeof(player) !== 'undefined' && vars.play_sounds)
-            player.playVideo();
+//         var player = $('#yt')[0];
+//         if (typeof(player) !== 'undefined' && vars.play_sounds)
+//             player.playVideo();
         var level_title = '';
         if (typeof(vars.current_level_copy.title) !== 'undefined' && vars.current_level_copy.title.length > 0)
             level_title = "<br /><span style='font-size: 70%;'>" + vars.current_level_copy.title + "</span>";
@@ -2631,16 +2633,16 @@ function do_init_game(width, height, supersampling, data, start_level)
 //     canvas.css('display', 'none');
     $('body').append(container);
 
-    vars.sounds['hit_hurt'] = new Audio('sounds/Hit_Hurt41.wav');
-    vars.sounds['hit_hurt'].volume = 0.5;
-    vars.sounds['invincible'] = new Audio('sounds/invincible-15s.mp3');
-    vars.sounds['invincible'].volume = 0.8;
+//     vars.sounds['hit_hurt'] = new Audio('sounds/Hit_Hurt41.wav');
+//     vars.sounds['hit_hurt'].volume = 0.5;
+//     vars.sounds['invincible'] = new Audio('sounds/invincible-15s.mp3');
+//     vars.sounds['invincible'].volume = 0.8;
 //     vars.sounds['invincible'] = new Audio('sounds/invincible-jeopardy.mp3');
 //     vars.sounds['invincible'].volume = 0.8;
-    vars.sounds['pick_up'] = new Audio('sounds/Pickup_Coin36.wav');
-    vars.sounds['pick_up'].volume = 0.5;
-    vars.sounds['power_up'] = new Audio('sounds/Powerup28.wav');
-    vars.sounds['power_up'].volume = 0.5;
+//     vars.sounds['pick_up'] = new Audio('sounds/Pickup_Coin36.wav');
+//     vars.sounds['pick_up'].volume = 0.5;
+//     vars.sounds['power_up'] = new Audio('sounds/Powerup28.wav');
+//     vars.sounds['power_up'].volume = 0.5;
     vars.game_tag = CryptoJS.SHA1(data).toString(CryptoJS.enc.Hex).substr(0, 8);
 
     var zip = new JSZip(atob(data));
