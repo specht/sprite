@@ -946,8 +946,8 @@ function _move_player_small(move_x, move_y)
                 vars.invincible = true;
                 vars.invincible_flicker = false;
 
-                var player = $('#yt')[0];
-                if (typeof(player) !== 'undefined' && vars.play_sounds)
+//                 var player = $('#yt')[0];
+//                 if (typeof(player) !== 'undefined' && vars.play_sounds)
 //                     player.pauseVideo();
 //                 if (vars.play_sounds)
 //                 {
