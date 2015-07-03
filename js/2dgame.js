@@ -1050,7 +1050,9 @@ function _move_player_small(move_x, move_y)
 
 function bad_guy_turn_around(bix, biy)
 {
-    if (applies(_get_field(bix, biy), 'is_solid'))
+    if (applies(_get_field(bix, biy), 'is_solid') ||
+        applies(_get_field(bix, biy), 'checkpoint') ||
+        applies(_get_field(bix, biy), 'checkpoint_marked'))
         return true;
     if (!applies(_get_field(bix, biy + 1), 'can_stand_on'))
         return true;
@@ -1075,9 +1077,16 @@ function bad_guy_turn_around(bix, biy)
 
 function platform_turnaround(bix, biy)
 {
-    if (applies(_get_field(bix, biy), 'is_solid'))
+    var f = _get_field(bix, biy);
+    if (applies(f, 'is_solid'))
         return true;
-    if (applies(_get_field(bix, biy), 'appears') && !vars.block_visible['' + (bix) + '/' + (biy)])
+    for (var i = 0; i < vars.max_traps; i++)
+    {
+        if (applies(f, 'trap_' + (i + 1)))
+            return true;
+    }
+
+    if (applies(f, 'appears') && !vars.block_visible['' + (bix) + '/' + (biy)])
         return true;
     var found_something = false;
     jQuery.each(['stairs_up_left', 'stairs_up_right', 'stairs_up_left_2_1_left', 'stairs_up_left_2_1_right',
@@ -1085,7 +1094,7 @@ function platform_turnaround(bix, biy)
                  'slide_down_left_2_1_left', 'slide_down_left_2_1_right', 'slide_down_right_2_1_left',
                  'slide_down_right_2_1_right', 'slide_down_left_1_2_top', 'slide_down_left_1_2_bottom',
                  'slide_down_right_1_2_top', 'slide_down_right_1_2_bottom'], function(_, x) {
-        if (applies(_get_field(bix, biy), x))
+        if (applies(f, x))
             found_something = true;
     });
     if (found_something)
