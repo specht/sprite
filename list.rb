@@ -6,7 +6,7 @@ require 'base64'
 require 'fileutils'
 require 'stringio'
 require 'yaml'
-require 'zipruby'
+require 'zip'
 
 files = []
 
@@ -24,7 +24,7 @@ end.each do |path|
             end
         else
             data = Base64.decode64(File::read(path))
-            Zip::Archive.open_buffer(data) do |archive|
+            Zip::File.open_buffer(data) do |archive|
                 archive.each do |entry|
                     if entry.name == 'game.json'
                         begin
