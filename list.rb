@@ -28,7 +28,7 @@ end.each do |path|
                 archive.each do |entry|
                     if entry.name == 'game.json'
                         begin
-                            game_json = entry.read.force_encoding('UTF-8')
+                            game_json = entry.get_input_stream.read.force_encoding('UTF-8')
                             game = JSON.parse(game_json)
                             game_title = game['game_title']
                             game_author = game['game_author']
